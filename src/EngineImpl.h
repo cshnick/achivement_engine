@@ -6,6 +6,11 @@
 
 #include "Engine.h"
 
+#define dbg_fprintf(stream, message, ...) fprintf(stream, message __VA_ARGS__)
+#define SQL_ERR(...) dbg_fprintf(stderr, "SQL: ", __VA_ARGS__)
+#define DEBUG_ERR(...) dbg_fprintf(stderr, "ERR: ", __VA_ARGS__)
+#define DEBUG(...) dbg_fprintf(stderr, "DBG: ", __VA_ARGS__)
+
 namespace AE {
 
 class EngineImplPrivate;

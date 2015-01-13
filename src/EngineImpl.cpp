@@ -38,30 +38,18 @@ public:
 		m_session_id(-1)
 	{
 		if (VERBOSE) {
-			fprintf(stdout, "Initializing database\nSetting database name: %s", qPrintable(g_dbName));
+			DEBUG("Initializing database\nSetting database name: %s", qPrintable(g_dbName));
 		}
 		m_db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
 		m_db.setDatabaseName(g_dbName);
 		if (!m_db.open()) {
-			fprintf(stderr, "Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(m_db.lastError().text()));
+			DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(m_db.lastError().text()));
 		}
-		QSqlQuery q("", m_db);
-		QString tl = s_sessions;
-		if (!m_db.tables().contains(tl)) {
-			if (!q.exec("create table " + tl + " (id integer primary key, Start datetime, Finish datetime)")) {
-				fprintf(stderr, "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(q.executedQuery()));
-			}
-		}
-		tl = s_actions;
-		if (!m_db.tables().contains(tl)) {
-			if (!q.exec("create table " + tl + " (id integer primary key)")) {
-				fprintf(stderr, "last error: %s\n", qPrintable(q.lastError().text()));
-			}
-		}
+		addDefaultTables();
 	}
 	bool checkDB() {
 		if (!m_db.isOpen()) {
-			fprintf(stderr, "last error: %s\n", qPrintable(m_db.lastError().text()));
+			DEBUG_ERR( "last error: %s\n", qPrintable(m_db.lastError().text()) );
 			return false;
 		}
 		return true;
@@ -73,7 +61,7 @@ public:
 		q.prepare("insert into " + s_sessions + "(Start) values (?)");
 		q.bindValue(0, QDateTime::currentDateTime());
 		if (!q.exec()) {
-			fprintf(stderr, "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(q.executedQuery()));
+			DEBUG_ERR("last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(q.executedQuery()));
 			return;
 		}
 		m_session_id = q.lastInsertId().toInt();
@@ -82,17 +70,40 @@ public:
 		if (!checkDB()) return;
 		QSqlQuery q("", m_db);
 		if (m_session_id == -1) {
-			fprintf(stderr, "m_session_id is negtive. Called end several times?\n");
+			DEBUG_ERR("m_session_id is negtive. Called end several times?\n");
 		}
 		q.prepare("uptate table " + s_sessions +
 				" set " + f_finish + " = ? where " + f_id + " = ?");
 		q.bindValue(0, QDateTime::currentDateTime());
 		q.bindValue(1, m_session_id);
 		if (!q.exec()) {
-			fprintf(stderr, "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(q.executedQuery()));
+			SQL_ERR( "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(q.executedQuery()) );
 			return;
 		}
 		m_session_id = -1;
+	}
+
+private:
+	void addDefaultTables() {
+		QSqlQuery q("", m_db);
+		QString tl = s_sessions;
+		if (!m_db.tables().contains(tl)) {
+			if (!q.exec(QString("create table %1 (%2 integer primary key, %3 datetime, %4 datetime)")
+					.arg(tl)
+					.arg(f_id)
+					.arg(f_start)
+					.arg(f_finish))) {
+				fprintf(stderr, "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(q.executedQuery()));
+			}
+		}
+		tl = s_actions;
+		if (!m_db.tables().contains(tl)) {
+			if (!q.exec(QString("create table %1 (%2 integer primary key)")
+					.arg(tl)
+					.arg(f_id))) {
+				fprintf(stderr, "last error: %s\n", qPrintable(q.lastError().text()));
+			}
+		}
 	}
 
 private:
