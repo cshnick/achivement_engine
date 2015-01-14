@@ -10,7 +10,7 @@
 #define SQL_ERR(...) dbg_fprintf(stderr, "SQL: ", __VA_ARGS__)
 #define SQL_DEBUG(...) dbg_fprintf(stdout, "SQL: ", __VA_ARGS__)
 #define DEBUG_ERR(...) dbg_fprintf(stderr, "ERR: ", __VA_ARGS__)
-#define DEBUG(...) dbg_fprintf(stderr, "DBG: ", __VA_ARGS__)
+#define DEBUG(...) dbg_fprintf(stdout, "DBG: ", __VA_ARGS__)
 
 namespace AE {
 

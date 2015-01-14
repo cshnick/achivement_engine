@@ -11,19 +11,44 @@
 #include <iostream>
 
 #define VERBOSE getenv("VERBOSE") != NULL
-#define EXEC_AND_REPORT_COND \
+#define DROP_TABLES getenv("AE_DROP_TABLES") != NULL
+
+#define EXEC_AND_REPORT_COND_RETURN \
 		if (!q.exec()) { \
-		SQL_ERR( "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(q.executedQuery()) ); \
+			SQL_ERR( "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(q.executedQuery()) ); \
 			return; \
+		} else { \
+			SQL_DEBUG("Executed: %s\n", qPrintable(q.executedQuery())); \
 		} \
 
+#define EXEC_AND_REPORT_COND \
+		if (!q.exec()) { \
+			SQL_ERR( "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(q.executedQuery()) ); \
+		} else { \
+			SQL_DEBUG("Executed: %s\n", qPrintable(q.executedQuery())); \
+		} \
+
+
+#define STAT_IF_VERBOSE \
+		if (VERBOSE) { \
+			DEBUG("Entering ('%s':%d) : %s\n", __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+		} \
+
+#define PRINT_IF_VERBOSE(...) \
+		if (VERBOSE) { \
+			DEBUG(__VA_ARGS__); \
+		} \
+
+
 static const QString g_dbName = "/home/ilia/.local/share/action_engine/ae.db";
-static const QString s_sessions = "Sessions";
-static const QString s_actions = "Actions";
+static const QString t_sessions = "Sessions";
+static const QString t_actions = "Actions";
 static const QString f_id = "id";
 static const QString f_start = "Start";
 static const QString f_finish = "Finish";
 static const QString f_session = "Session";
+static const QString f_name = "Name";
+static const QString f_session_id = "SessionId";
 
 __attribute__((constructor)) static void initialize_db_path() {
 //	QString dirname = QFileInfo(g_dbName).dir().absolutePath();
@@ -43,9 +68,8 @@ public:
 		q(p_q),
 		m_session_id(-1)
 	{
-		if (VERBOSE) {
-			DEBUG("Initializing database\nSetting database name: %s", qPrintable(g_dbName));
-		}
+		PRINT_IF_VERBOSE("Initializing database. Setting database name: %s\n", qPrintable(g_dbName));
+
 		m_db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
 		m_db.setDatabaseName(g_dbName);
 		if (!m_db.open()) {
@@ -62,10 +86,12 @@ public:
 	}
 	void begin() {
 		if (!checkDB()) return;
+		STAT_IF_VERBOSE;
+
 		QSqlQuery q("", m_db);
 
 		q.prepare(QString("INSERT INTO %1 (%2) VALUES (?)")
-				.arg(s_sessions)
+				.arg(t_sessions)
 				.arg(f_start));
 		q.bindValue(0, QDateTime::currentDateTime());
 		EXEC_AND_REPORT_COND;
@@ -73,12 +99,14 @@ public:
 	}
 	void end() {
 		if (!checkDB()) return;
+		STAT_IF_VERBOSE;
+
 		QSqlQuery q("", m_db);
 		if (m_session_id == -1) {
 			DEBUG_ERR("m_session_id is negtive. Called end several times?\n");
 		}
 		q.prepare(QString("UPDATE %1 SET %2 = :fin_time WHERE %3 = :id")
-				.arg(s_sessions)
+				.arg(t_sessions)
 				.arg(f_finish)
 				.arg(f_id));
 		q.bindValue(":fin_time", QDateTime::currentDateTime());
@@ -88,11 +116,12 @@ public:
 	}
 	void addAction(const action_params &p_actions) {
 		if (!checkDB()) return;
+		STAT_IF_VERBOSE;
 		QSqlQuery q("", m_db);
 		if (m_session_id == -1) {
 			DEBUG_ERR("m_session_id is negtive. Haven't called begin method for engine?\n");
 		}
-		QSqlRecord rec = m_db.record(s_actions);
+		QSqlRecord rec = m_db.record(t_actions);
 		if (!rec.isEmpty()) {
 			std::map<std::string, std::string>::const_iterator i = p_actions.begin();
 			std::map<std::string, std::string>::const_iterator end = p_actions.end();
@@ -105,7 +134,7 @@ public:
 				//Create non existent fields
 				if (!rec.contains(nm)) {
 					q.prepare(QString("ALTER TABLE %1 ADD %2 STRING")
-							.arg(s_actions)
+							.arg(t_actions)
 							.arg(nm));
 					EXEC_AND_REPORT_COND;
 				}
@@ -117,10 +146,13 @@ public:
 			// Prepare strings to INSERT statement
 			QString kp = kl.join(",");
 			QString vp = vl.join(",");
+			kp.append(QString(", %1").arg(f_session_id));
+			vp.append(", :id");
 			q.prepare(QString("INSERT INTO %1 (%2) VALUES (%3)")
-					.arg(s_actions)
+					.arg(t_actions)
 					.arg(kp)
 					.arg(vp));
+			q.bindValue(":id", m_session_id);
 			EXEC_AND_REPORT_COND;
 
 			SQL_DEBUG("Rec is not empty\n");
@@ -135,23 +167,39 @@ public:
 private:
 	void addDefaultTables() {
 		QSqlQuery q("", m_db);
-		QString tl = s_sessions;
+		if (DROP_TABLES) {
+			q.prepare(QString("DROP TABLE %1")
+					.arg(t_sessions));
+			EXEC_AND_REPORT_COND;
+			q.prepare(QString("DROP TABLE %1")
+					.arg(t_actions));
+			EXEC_AND_REPORT_COND;
+		}
+		QString tl = t_sessions;
 		if (!m_db.tables().contains(tl)) {
-			if (!q.exec(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 DATETIME)")
+			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 DATETIME)")
 					.arg(tl)
 					.arg(f_id)
 					.arg(f_start)
-					.arg(f_finish))) {
-				SQL_ERR("last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(q.executedQuery()));
-			}
+					.arg(f_finish));
+			EXEC_AND_REPORT_COND;
 		}
-		tl = s_actions;
+		tl = t_actions;
 		if (!m_db.tables().contains(tl)) {
-			if (!q.exec(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY)")
+			q.prepare(QString("CREATE TABLE %1 ("
+					"%2 INTEGER PRIMARY KEY, "
+					"%3 STRING, "
+					"%7 INTEGER, "
+					"FOREIGN KEY(%4) REFERENCES %5(%6)"
+					")")
 					.arg(tl)
-					.arg(f_id))) {
-				SQL_ERR("last error: %s\n", qPrintable(q.lastError().text()));
-			}
+					.arg(f_id)
+					.arg(f_name)
+					.arg(f_session_id)
+					.arg(t_sessions)
+					.arg(f_id)
+					.arg(f_session_id));
+			EXEC_AND_REPORT_COND;
 		}
 	}
 
