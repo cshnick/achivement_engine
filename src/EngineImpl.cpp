@@ -123,12 +123,12 @@ public:
 		}
 		QSqlRecord rec = m_db.record(t_actions);
 		if (!rec.isEmpty()) {
-			std::map<std::string, std::string>::const_iterator i = p_actions.begin();
-			std::map<std::string, std::string>::const_iterator end = p_actions.end();
+			std::map<std::string, AE::variant>::const_iterator i = p_actions.begin();
+			std::map<std::string, AE::variant>::const_iterator end = p_actions.end();
 			QStringList kl, vl; //Store keys and values
 			while (i != end) {
 				QString nm = QString::fromStdString(i->first);
-				QString v = QString::fromStdString(i->second);
+				QString v = QString::fromStdString(i->second.toString());
 				kl << nm;
 				vl << QString("'%1'").arg(v);
 				//Create non existent fields
@@ -226,10 +226,10 @@ void EngineImpl::end()
 }
 void EngineImpl::addAction(const action_params &p_actions)
 {
-	std::map<std::string, std::string>::const_iterator i = p_actions.begin();
-	std::map<std::string, std::string>::const_iterator end = p_actions.end();
+	std::map<std::string, AE::variant>::const_iterator i = p_actions.begin();
+	std::map<std::string, AE::variant>::const_iterator end = p_actions.end();
 	while (i != end) {
-		std::cout << i->first << " : " << i->second << std::endl;
+		std::cout << i->first << " : " << i->second.toString() << std::endl;
 		++i;
 	}
 	p->addAction(p_actions);

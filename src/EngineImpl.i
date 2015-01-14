@@ -14,8 +14,4 @@
  %include "EngineImpl.h"
  
  // Instantiate some templates
- 
- %template(pairii) std::pair<int,int>;
- %template(pairdi) std::pair<double,int>;
- %template(pairid) std::pair<int, double>;
- %template(map_ss) std::map<std::string, std::string>;
+ %template(map_sv) std::map<std::string, AE::variant>;
