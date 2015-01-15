@@ -39,10 +39,10 @@ int main (int argc, char ** argv)
 	getWords(g_words);
 
 	action_params params_map;
-	params_map["String value"] = AE::variant(getRandomWord());
-	params_map["Int value"] = AE::variant(1);
-	params_map["Float value"] = AE::variant(100.65123f);
-	params_map["Datetime value"] = AE::variant("215000");
+	params_map["string_val"] = variant(getRandomWord());
+	params_map["int_val"] = variant(1);
+	params_map["float_val"] = variant(100.65123f);
+	params_map["datetime_val"] = variant(dateTime(215000));
 
 	Engine *e = new EngineImpl();
 	e->begin();
