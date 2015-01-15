@@ -23,7 +23,8 @@ class dateTime {
 public:
 	dateTime() : m_value(-1) {}
 	dateTime(int p_var) : m_value(p_var) {}
-    operator int() {return m_value;}
+    operator int() const {return m_value;}
+    operator long long int() const {return m_value;}
 private:
 	int m_value;
 };
@@ -41,6 +42,27 @@ public:
 	variant(const dateTime &p_var) : dt_val(p_var), m_type(AE_VAR_DATETIME) {
 	}
 	int type() const {return m_type;}
+	std::string typeDBString() const {
+		switch (m_type) {
+		case AE_VAR_INVALID:
+			return "INVALID";
+			break;
+		case AE_VAR_STRING:
+			return "STRING";
+			break;
+		case AE_VAR_INT:
+			return "INTEGER";
+			break;
+		case AE_VAR_FLOAT:
+			return "FLOAT";
+			break;
+		case AE_VAR_DATETIME:
+			return "DATETIME";
+			break;
+		}
+
+		return std::string();
+	}
 
 	int toInt(bool *ok = 0) const {if (ok) *ok = (m_type == AE_VAR_INT) ? true : false; return int_val;}
 	float toFloat(bool *ok = 0) const {if (ok) *ok = (m_type == AE_VAR_FLOAT) ? true : false; return float_val;}

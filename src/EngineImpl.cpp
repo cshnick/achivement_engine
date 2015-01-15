@@ -123,19 +123,23 @@ public:
 		}
 		QSqlRecord rec = m_db.record(t_actions);
 		if (!rec.isEmpty()) {
-			std::map<std::string, AE::variant>::const_iterator i = p_actions.begin();
-			std::map<std::string, AE::variant>::const_iterator end = p_actions.end();
+			action_params::const_iterator i = p_actions.begin();
+			action_params::const_iterator end = p_actions.end();
 			QStringList kl, vl; //Store keys and values
+			QList<QVariant> vvl;
 			while (i != end) {
 				QString nm = QString::fromStdString(i->first);
-				QString v = QString::fromStdString(i->second.toString());
+				AE::variant v = i->second;
 				kl << nm;
-				vl << QString("'%1'").arg(v);
+				vl << "?";
+				vvl << fromAeVariant(v);
 				//Create non existent fields
 				if (!rec.contains(nm)) {
-					q.prepare(QString("ALTER TABLE %1 ADD %2 STRING")
+					q.prepare(QString("ALTER TABLE %1 ADD %2 %3")
 							.arg(t_actions)
-							.arg(nm));
+							.arg(nm)
+							.arg(QString::fromStdString(v.typeDBString()))
+							);
 					EXEC_AND_REPORT_COND;
 				}
 				i++;
@@ -146,13 +150,17 @@ public:
 			// Prepare strings to INSERT statement
 			QString kp = kl.join(",");
 			QString vp = vl.join(",");
-			kp.append(QString(", %1").arg(f_session_id));
-			vp.append(", :id");
+			kp.append(QString(",%1").arg(f_session_id));
+			vp.append(",?");
 			q.prepare(QString("INSERT INTO %1 (%2) VALUES (%3)")
 					.arg(t_actions)
 					.arg(kp)
 					.arg(vp));
-			q.bindValue(":id", m_session_id);
+			int k = 0;
+			for (; k < vvl.count(); k++) {
+				q.bindValue(k, vvl.at(k));
+			}
+			q.bindValue(k, m_session_id);
 			EXEC_AND_REPORT_COND;
 
 			SQL_DEBUG("Rec is not empty\n");
@@ -203,6 +211,28 @@ private:
 		}
 	}
 
+	QVariant fromAeVariant(const AE::variant &ae_val) {
+		QVariant result;
+		switch (ae_val.type()) {
+		case AE_VAR_INT:
+			result = QVariant(ae_val.toInt());
+			break;
+		case AE_VAR_FLOAT:
+			result = QVariant(ae_val.toFloat());
+			break;
+		case AE_VAR_STRING:
+			result = QVariant(QString::fromStdString(ae_val.toString()));
+			break;
+		case AE_VAR_DATETIME:
+			result = QVariant(QDateTime::fromMSecsSinceEpoch(ae_val.toDateTime()));
+			break;
+		default:
+			break;
+		}
+
+		return result;
+	}
+
 private:
 	friend class EngineImpl;
 	EngineImpl *q;
@@ -226,12 +256,6 @@ void EngineImpl::end()
 }
 void EngineImpl::addAction(const action_params &p_actions)
 {
-	std::map<std::string, AE::variant>::const_iterator i = p_actions.begin();
-	std::map<std::string, AE::variant>::const_iterator end = p_actions.end();
-	while (i != end) {
-		std::cout << i->first << " : " << i->second.toString() << std::endl;
-		++i;
-	}
 	p->addAction(p_actions);
 }
 EngineImpl::~EngineImpl()

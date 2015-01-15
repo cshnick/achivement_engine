@@ -23,8 +23,7 @@ set (PYTHON_SRC
   src/EngineImpl_wrap.cxx
 )
 
-set (CMAKE_BUILD_EXECUTABLE FALSE)
-set (CMAKE_BUILD_LIBRARY TRUE)
+set (CMAKE_BUILD_EXECUTABLE TRUE)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden" -g -O0)
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden" -g -O0)
@@ -43,11 +42,11 @@ ADD_CUSTOM_COMMAND(
 
 if (${CMAKE_BUILD_EXECUTABLE}) 
 	add_executable(${PROJECT_NAME} ${SOURCES} ${SRC_LIST} ${HEADERS})
-elseif (${CMAKE_BUILD_LIBRARY})
+else (${CMAKE_BUILD_EXECUTABLE})
 	add_library(${PROJECT_NAME} SHARED ${SOURCES} ${PYTHON_SRC} ${SRC_LIST} ${HEADERS})
 endif (${CMAKE_BUILD_EXECUTABLE}) 
 
-if (${CMAKE_BUILD_LIBRARY})
+if (NOT ${CMAKE_BUILD_EXECUTABLE})
 	ADD_CUSTOM_COMMAND( 
 	   TARGET ${PROJECT_NAME}
 	   POST_BUILD
@@ -56,9 +55,10 @@ if (${CMAKE_BUILD_LIBRARY})
 	   COMMAND /usr/bin/mkdir -p /home/ilia/Documents/script/python/achivement_engine
 	   COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/libAeCore.so /home/ilia/Documents/script/python/achivement_engine/_AeCore.so
 	   COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/AeCore.py /home/ilia/Documents/script/python/achivement_engine
+	   COMMAND /usr/bin/touch /home/ilia/Documents/script/python/achivement_engine/__init__.py
 	   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/EngineImpl.i
 )
-endif (${CMAKE_BUILD_LIBRARY})
+endif (NOT ${CMAKE_BUILD_EXECUTABLE})
 
 target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${EXT_LIBS})
 
