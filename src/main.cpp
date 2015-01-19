@@ -8,9 +8,11 @@
 #include <cstdlib>
 #include <ctime>
 
+#include <QtCore>
+
 static void getWords(std::vector<std::string> &words) {
 	std::string line;
-	std::ifstream myfile ("../files/word_set");
+	std::ifstream myfile ("../engine/files/word_set");
 	if (myfile.is_open()) {
 		while ( getline (myfile,line, ' ') ) {
 			if (line.length() > 3) {
@@ -37,6 +39,8 @@ using namespace AE;
 int main (int argc, char ** argv)
 {
 	getWords(g_words);
+	QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
+	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 
 	action_params params_map;
 	params_map["string_val"] = variant(getRandomWord());

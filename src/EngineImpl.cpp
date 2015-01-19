@@ -27,10 +27,21 @@ static QDateTime g_fakeCurrentTime;
 		} \
 
 #define EXEC_AND_REPORT_COND \
-		if (!q.exec()) { \
-			SQL_ERR( "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(q.executedQuery()) ); \
+		bool res = q.exec(); \
+		QString exQuery = q.executedQuery(); \
+		if (VERBOSE) { \
+			Q_FOREACH(QVariant val, q.boundValues().values()) { \
+				QString pval = val.toString(); \
+				if (val.type() != QVariant::Bool && val.type() != QVariant::Int && val.type() != QVariant::Double) { \
+					pval = QString("'") + pval + "'"; \
+				} \
+				exQuery = exQuery.replace(exQuery.indexOf('?'), 1, pval); \
+			} \
+		} \
+		if (!res) { \
+			SQL_ERR( "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(exQuery) ); \
 		} else { \
-			SQL_DEBUG("Executed: %s\n", qPrintable(q.executedQuery())); \
+			SQL_DEBUG("Executed: %s\n", qPrintable(exQuery)); \
 		} \
 
 
@@ -240,10 +251,11 @@ private:
 		parseXmlRows(&ach_xml, xml_rows);
 
 		QSqlQuery q("", m_db);
-		for (int i = 0; i < xml_rows.count(); i++) {
+		for (int i = 0, cnt = 0; i < xml_rows.count(); i++, cnt=0) {
 			QVariantMap mit = xml_rows.at(i);
 
-			q.prepare(QString("SELECT id FROM %1 WHERE id=?")
+			q.prepare(QString("SELECT %1 FROM %2 WHERE id=?")
+					.arg(f_id)
 					.arg(t_achivements_list));
 			q.bindValue(0, mit.value(f_id).toInt());
 			EXEC_AND_REPORT_COND;
@@ -253,12 +265,11 @@ private:
 				QStringList kl = mit.keys();
 				QStringList ptrn;
 				for (int j = 0; j < mit.count(); j++) ptrn.append("?");
-				q.prepare(QString("INSERT into %1 (%2) values(%3)")
+				q.prepare(QString("INSERT INTO %1 (%2) VALUES(%3)")
 						.arg(t_achivements_list)
 						.arg(kl.join(","))
 						.arg(ptrn.join(","))
 						);
-				int cnt = 0;
 				for (auto iter = mit.begin(); iter != mit.end(); iter++) {
 					QVariant val = iter.value();
 					if (iter.key() == f_id) {
@@ -267,8 +278,29 @@ private:
 					q.bindValue(cnt++, val);
 				}
 				EXEC_AND_REPORT_COND;
+			} else {
+				QString fields;
+				QStringList kl = mit.keys();
+				kl.append("");
+				fields = kl.join(" = ?, ");
+				fields = fields.remove(fields.lastIndexOf(","), 2); //Revmove trailing ', '
+				q.prepare(QString("UPDATE %1 SET %2 WHERE %3 = ?")
+						.arg(t_achivements_list)
+						.arg(fields)
+						.arg(f_id)
+						);
+				int ind = 0;
+				for (auto iter = mit.begin(); iter != mit.end(); iter++) {
+					QVariant val = iter.value();
+					if (iter.key() == f_id) {
+						ind = iter.value().toInt();
+						val = ind;
+					}
+					q.bindValue(cnt++, val);
+				}
+				q.bindValue(cnt, QVariant::fromValue(ind));
+				EXEC_AND_REPORT_COND;
 			}
-			int sz = q.size();
 		}
 	}
 
@@ -318,7 +350,7 @@ private:
 			result = QVariant(QString::fromStdString(ae_val.toString()));
 			break;
 		case AE_VAR_DATETIME:
-			result = QVariant(QDateTime::fromMSecsSinceEpoch(ae_val.toDateTime()));
+			result = QVariant(QDateTime::fromMSecsSinceEpoch((long long)ae_val.toDateTime()));
 			break;
 		default:
 			break;

@@ -20,5 +20,6 @@ static const QString f_session_id = "SessionId";
 static const QString f_description = "Description";
 static const QString f_condition = "Condition";
 static const QString tag_element = "achivement";
+static const QString tag_lastId = "lastId";
 
 #endif //CONVENTIONS_H
