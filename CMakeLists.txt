@@ -12,6 +12,9 @@ src
 /usr/include/python
 /usr/include
 )
+add_definitions (
+	-DENABLE_TESTS
+)
 
 set (HEADERS
 )

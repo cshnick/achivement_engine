@@ -10,6 +10,10 @@
 
 #include <iostream>
 
+#ifdef ENABLE_TESTS
+static QDateTime g_fakeCurrentTime;
+#endif //ENABLE_TESTS
+
 #define VERBOSE getenv("VERBOSE") != NULL
 #define DROP_TABLES getenv("AE_DROP_TABLES") != NULL
 
