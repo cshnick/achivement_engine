@@ -2,13 +2,14 @@
 
 #include <QtCore>
 #include <QtSql>
+#include <QtXml>
 #include <QtSql/qsqldatabase.h>
 #include <QtSql/qsqlquery.h>
 #include <QtCore/qfileinfo.h>
 #include <QtCore/qdir.h>
 #include <cstdlib>
-
 #include <iostream>
+#include "Conventions.h"
 
 #ifdef ENABLE_TESTS
 static QDateTime g_fakeCurrentTime;
@@ -43,22 +44,6 @@ static QDateTime g_fakeCurrentTime;
 			DEBUG(__VA_ARGS__); \
 		} \
 
-
-static const QString g_dbName = "/home/ilia/.local/share/action_engine/ae.db";
-static const QString t_sessions = "Sessions";
-static const QString t_actions = "Actions";
-static const QString t_achivements_list = "AchivementsList";
-static const QString t_achivements_done = "AchivementsDone";
-static const QString f_id = "id";
-static const QString f_start = "Start";
-static const QString f_finish = "Finish";
-static const QString f_time = "Time";
-static const QString f_session = "Session";
-static const QString f_name = "Name";
-static const QString f_session_id = "SessionId";
-static const QString f_description = "Description";
-static const QString f_condition = "Condition";
-
 __attribute__((constructor)) static void initialize_db_path() {
 //	QString dirname = QFileInfo(g_dbName).dir().absolutePath();
 //	if (VERBOSE) {
@@ -80,11 +65,12 @@ public:
 		PRINT_IF_VERBOSE("Initializing database. Setting database name: %s\n", qPrintable(g_dbName));
 
 		m_db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
-		m_db.setDatabaseName(g_dbName);
+		m_db.setDatabaseName(g_achivements_path + "/" + g_dbName);
 		if (!m_db.open()) {
 			DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(m_db.lastError().text()));
 		}
 		addDefaultTables();
+		synchroAvhivementsDb();
 	}
 	bool checkDB() {
 		if (!m_db.isOpen()) {
@@ -243,6 +229,80 @@ private:
 			);
 			EXEC_AND_REPORT_COND;
 		}
+	}
+	void synchroAvhivementsDb() {
+		QFile ach_xml(g_achivements_path + "/" + g_achivementsFileName);
+		if (!ach_xml.open(QIODevice::ReadOnly)) {
+			DEBUG_ERR("Can't open %s for reading\n", qPrintable(g_achivements_path + "/" + g_achivementsFileName));
+		}
+
+		QList<QVariantMap> xml_rows;
+		parseXmlRows(&ach_xml, xml_rows);
+
+		QSqlQuery q("", m_db);
+		for (int i = 0; i < xml_rows.count(); i++) {
+			QVariantMap mit = xml_rows.at(i);
+
+			q.prepare(QString("SELECT id FROM %1 WHERE id=?")
+					.arg(t_achivements_list));
+			q.bindValue(0, mit.value(f_id).toInt());
+			EXEC_AND_REPORT_COND;
+
+			bool fst = q.first();
+			if (!fst) { //No such a record
+				QStringList kl = mit.keys();
+				QStringList ptrn;
+				for (int j = 0; j < mit.count(); j++) ptrn.append("?");
+				q.prepare(QString("INSERT into %1 (%2) values(%3)")
+						.arg(t_achivements_list)
+						.arg(kl.join(","))
+						.arg(ptrn.join(","))
+						);
+				int cnt = 0;
+				for (auto iter = mit.begin(); iter != mit.end(); iter++) {
+					QVariant val = iter.value();
+					if (iter.key() == f_id) {
+						val = iter.value().toInt();
+					}
+					q.bindValue(cnt++, val);
+				}
+				EXEC_AND_REPORT_COND;
+			}
+			int sz = q.size();
+		}
+	}
+
+	bool parseXmlRows(QFile *p_file, QList<QVariantMap> &map) {
+		QDomDocument doc;
+		QString err_string;
+		int err_line;
+		int err_column;
+		if (!doc.setContent(p_file, false, &err_string, &err_line, &err_column)) {
+			DEBUG_ERR( "Can't set content for %s\n", qPrintable(p_file->fileName()) );
+			p_file->close();
+			return false;
+		}
+		QDomElement element = doc.firstChildElement().firstChildElement(tag_element);
+		while (!element.isNull()) {
+			QVariantMap dta;
+			QDomElement elAttr = element.firstChildElement();
+			while (!elAttr.isNull()) {
+				//type conversion
+				QVariant value;
+				if (elAttr.tagName() == f_id) {
+					int inttext = elAttr.text().toInt();
+					value = inttext;
+				} else {
+					value = elAttr.text();
+				}
+				dta[elAttr.tagName()] = value;
+				elAttr = elAttr.nextSiblingElement();
+			}
+			map.append(dta);
+			element = element.nextSiblingElement(tag_element);
+		}
+		p_file->close();
+		return true;
 	}
 
 	QVariant fromAeVariant(const AE::variant &ae_val) {
