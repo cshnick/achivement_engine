@@ -47,12 +47,17 @@ static QDateTime g_fakeCurrentTime;
 static const QString g_dbName = "/home/ilia/.local/share/action_engine/ae.db";
 static const QString t_sessions = "Sessions";
 static const QString t_actions = "Actions";
+static const QString t_achivements_list = "AchivementsList";
+static const QString t_achivements_done = "AchivementsDone";
 static const QString f_id = "id";
 static const QString f_start = "Start";
 static const QString f_finish = "Finish";
+static const QString f_time = "Time";
 static const QString f_session = "Session";
 static const QString f_name = "Name";
 static const QString f_session_id = "SessionId";
+static const QString f_description = "Description";
+static const QString f_condition = "Condition";
 
 __attribute__((constructor)) static void initialize_db_path() {
 //	QString dirname = QFileInfo(g_dbName).dir().absolutePath();
@@ -180,37 +185,62 @@ private:
 	void addDefaultTables() {
 		QSqlQuery q("", m_db);
 		if (DROP_TABLES) {
-			q.prepare(QString("DROP TABLE %1")
-					.arg(t_sessions));
-			EXEC_AND_REPORT_COND;
-			q.prepare(QString("DROP TABLE %1")
-					.arg(t_actions));
-			EXEC_AND_REPORT_COND;
+			QString tables = QString("%1,%2,%3,%4")
+					.arg(t_sessions)
+					.arg(t_actions)
+					.arg(t_achivements_list)
+					.arg(t_achivements_done);
+			QStringList tl = tables.split(',');
+			for (int i = 0; i < tl.size(); i++) {
+				q.prepare(QString("DROP TABLE %1")
+						.arg(tl.at(i)));
+				EXEC_AND_REPORT_COND;
+			}
 		}
-		QString tl = t_sessions;
-		if (!m_db.tables().contains(tl)) {
+		if (!m_db.tables().contains(t_sessions)) {
 			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 DATETIME)")
-					.arg(tl)
+					.arg(t_sessions)
 					.arg(f_id)
 					.arg(f_start)
 					.arg(f_finish));
 			EXEC_AND_REPORT_COND;
 		}
-		tl = t_actions;
-		if (!m_db.tables().contains(tl)) {
+		if (!m_db.tables().contains(t_actions)) {
 			q.prepare(QString("CREATE TABLE %1 ("
 					"%2 INTEGER PRIMARY KEY, "
 					"%3 STRING, "
 					"%7 INTEGER, "
 					"FOREIGN KEY(%4) REFERENCES %5(%6)"
 					")")
-					.arg(tl)
+					.arg(t_actions)
 					.arg(f_id)
 					.arg(f_name)
 					.arg(f_session_id)
 					.arg(t_sessions)
 					.arg(f_id)
 					.arg(f_session_id));
+			EXEC_AND_REPORT_COND;
+		}
+		if (!m_db.tables().contains(t_achivements_list)) {
+			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 STRING, %5 STRING, %6 STRING)")
+					.arg(t_achivements_list)
+					.arg(f_id)
+					.arg(f_time)
+					.arg(f_name)
+					.arg(f_description)
+					.arg(f_condition)
+					);
+			EXEC_AND_REPORT_COND;
+		}
+		if (!m_db.tables().contains(t_achivements_done)) {
+			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 STRING, %5 STRING, %6 STRING)")
+					.arg(t_achivements_done)
+					.arg(f_id)
+					.arg(f_time)
+					.arg(f_name)
+					.arg(f_description)
+					.arg(f_condition)
+			);
 			EXEC_AND_REPORT_COND;
 		}
 	}
