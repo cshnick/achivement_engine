@@ -5,9 +5,12 @@
 #include <QtSql>
 #include <vector>
 
+
+#define ADD_DELEGATE(name) m_delegates.push_back(new name(&m_db))
+
 namespace AE {
 
-class SessionTimeDelegate: public CalcVarDelegateBase {
+class SessionTimeDelegate: public AE::CalcVarDelegateBase {
 public:
 	SessionTimeDelegate(QSqlDatabase *p_db = 0) : CalcVarDelegateBase(), m_db(p_db) {
 		if (p_db) {
@@ -17,6 +20,22 @@ public:
 	}
 	std::string typeStr() const {return "Numeric";}
 	std::string varName() const {return "SessionTime";}
+	variant var() const {return m_var;}
+	void refresh() {;}
+private:
+	variant m_var;
+	QSqlDatabase *m_db;
+};
+class ActionTimeDelegate: public AE::CalcVarDelegateBase {
+public:
+	ActionTimeDelegate(QSqlDatabase *p_db = 0) : CalcVarDelegateBase(), m_db(p_db) {
+		if (p_db) {
+
+		}
+		m_var = 2;
+	}
+	std::string typeStr() const {return "Numeric";}
+	std::string varName() const {return "ActionTime";}
 	variant var() const {return m_var;}
 	void refresh() {;}
 private:
@@ -40,7 +59,8 @@ public:
 			DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(m_db.lastError().text()));
 		}
 
-//		m_delegates.push_back(new SessionTimeDelegate());
+		ADD_DELEGATE(SessionTimeDelegate);
+		ADD_DELEGATE(ActionTimeDelegate);
 	}
 
 private:

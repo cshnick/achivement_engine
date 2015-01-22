@@ -72,7 +72,8 @@ class EngineImplPrivate {
 public:
 	EngineImplPrivate(EngineImpl *p_q) :
 		q(p_q),
-		m_session_id(-1)
+		m_session_id(-1),
+		m_c(0)
 	{
 		PRINT_IF_VERBOSE("Initializing database. Setting database name: %s\n", qPrintable(g_dbName));
 
@@ -83,10 +84,17 @@ public:
 		}
 		addDefaultTables();
 		synchroAvhivementsDb();
-		DelegateContainer *m_c = loadDelegates();
+		m_c = loadDelegatesContainer();
 		m_c->addContext((void*)this);
+
+		PRINT_IF_VERBOSE("Reporting delegate names...\n");
+		for (auto iter = m_c->delegates().begin(); iter != m_c->delegates().end(); iter++) {
+//			CalcVarDelegateBase *d = *iter;
+//			PRINT_IF_VERBOSE("\tDelegate %d;\n", d->var().toInt());
+			(*iter)->refresh();
+		}
 	}
-	DelegateContainer *loadDelegates() {
+	DelegateContainer *loadDelegatesContainer() {
 		void *handle;
 		handle = dlopen("./Delegates/libvar_calcs.so", RTLD_LAZY);
 		if (!handle) {
@@ -94,14 +102,15 @@ public:
 			return 0;
 		}
 		dlerror();
-		void *obj = dlsym(handle, "loadFactory");
+		typedef DelegateContainer* (*loadLibrary_t)();
+		loadLibrary_t loadLibrary = (loadLibrary_t)dlsym(handle, "loadFactory");
 		char *error;
 		if ((error = dlerror()) != NULL)  {
 			DEBUG_ERR("Error reading symbol loadFactory, error text: %s\n", dlerror());
 			return 0;
 		}
 
-		return (DelegateContainer*)obj;
+		return loadLibrary();
 	}
 	bool checkDB() {
 		if (!m_db.isOpen()) {
@@ -356,7 +365,6 @@ private:
 		p_file->close();
 		return true;
 	}
-
 	QVariant fromAeVariant(const AE::variant &ae_val) {
 		QVariant result;
 		switch (ae_val.type()) {
@@ -386,6 +394,7 @@ private:
 	QSqlDatabase m_db;
 	QSqlRecord m_record;
 	int m_session_id;
+	DelegateContainer *m_c;
 };
 
 EngineImpl::EngineImpl()

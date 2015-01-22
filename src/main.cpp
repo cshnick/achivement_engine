@@ -12,7 +12,7 @@
 
 static void getWords(std::vector<std::string> &words) {
 	std::string line;
-	std::ifstream myfile ("../achivement_engine/files/word_set");
+	std::ifstream myfile ("../engine/files/word_set");
 	if (myfile.is_open()) {
 		while ( getline (myfile,line, ' ') ) {
 			if (line.length() > 3) {
@@ -35,8 +35,26 @@ std::string getRandomWord() {
 
 using namespace AE;
 
+class c {
+public:
+	c() {}
+	virtual void printme() = 0;
+	virtual ~c() {;}
+};
+
+class d: public c {
+public:
+	d(int pv = 0) {var = pv;}
+	virtual void printme() {DEBUG("Print\n");}
+private:
+	int var;
+};
+
 int main (int argc, char ** argv)
 {
+	c *cl = new d;
+	cl->printme();
+
 	getWords(g_words);
 	QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
