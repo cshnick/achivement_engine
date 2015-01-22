@@ -28,7 +28,6 @@ public:
 private:
 	int m_value;
 };
-
 class variant {
 public:
 	variant() : m_type(AE_VAR_INVALID) {

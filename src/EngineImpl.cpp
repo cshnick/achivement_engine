@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <iostream>
 #include "Conventions.h"
+#include "dlfcn.h"
 
 #ifdef ENABLE_TESTS
 static QDateTime g_fakeCurrentTime;
@@ -82,6 +83,25 @@ public:
 		}
 		addDefaultTables();
 		synchroAvhivementsDb();
+		DelegateContainer *m_c = loadDelegates();
+		m_c->addContext((void*)this);
+	}
+	DelegateContainer *loadDelegates() {
+		void *handle;
+		handle = dlopen("./Delegates/libvar_calcs.so", RTLD_LAZY);
+		if (!handle) {
+			DEBUG_ERR("Error opening library file %s\n", dlerror());
+			return 0;
+		}
+		dlerror();
+		void *obj = dlsym(handle, "loadFactory");
+		char *error;
+		if ((error = dlerror()) != NULL)  {
+			DEBUG_ERR("Error reading symbol loadFactory, error text: %s\n", dlerror());
+			return 0;
+		}
+
+		return (DelegateContainer*)obj;
 	}
 	bool checkDB() {
 		if (!m_db.isOpen()) {

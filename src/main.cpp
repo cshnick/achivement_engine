@@ -12,7 +12,7 @@
 
 static void getWords(std::vector<std::string> &words) {
 	std::string line;
-	std::ifstream myfile ("../engine/files/word_set");
+	std::ifstream myfile ("../achivement_engine/files/word_set");
 	if (myfile.is_open()) {
 		while ( getline (myfile,line, ' ') ) {
 			if (line.length() > 3) {
@@ -21,7 +21,6 @@ static void getWords(std::vector<std::string> &words) {
 		}
 		myfile.close();
 	} else DEBUG_ERR("Unable to open file");
-
 }
 static std::vector<std::string> g_words;
 

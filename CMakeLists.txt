@@ -11,6 +11,7 @@ include_directories(
 src
 /usr/include/python
 /usr/include
+src/ExpressionParser
 )
 add_definitions (
 	-DENABLE_TESTS
@@ -21,6 +22,8 @@ set (HEADERS
 set (SOURCES
   src/main.cpp
   src/EngineImpl.cpp
+  src/ExpressionParser/node.cpp
+  src/ExpressionParser/ExpressionParser.cpp
 )
 set (PYTHON_SRC
   src/EngineImpl_wrap.cxx
@@ -35,6 +38,7 @@ SET(CMAKE_CXX_FLAGS "-std=c++11")
 set (EXT_LIBS
    # curl
    # tidy
+   dl
 )
 
 ADD_CUSTOM_COMMAND(
@@ -42,6 +46,8 @@ ADD_CUSTOM_COMMAND(
    COMMAND /usr/bin/swig -c++ -python ${CMAKE_CURRENT_SOURCE_DIR}/src/EngineImpl.i
    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/EngineImpl.i ${CMAKE_CURRENT_SOURCE_DIR}/src/EngineImpl.h ${CMAKE_CURRENT_SOURCE_DIR}/src/Engine.h
 )
+
+add_subdirectory(Delegates)
 
 if (${CMAKE_BUILD_EXECUTABLE}) 
 	add_executable(${PROJECT_NAME} ${SOURCES} ${SRC_LIST} ${HEADERS})

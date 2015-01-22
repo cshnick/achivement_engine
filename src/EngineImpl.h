@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 
 #include "Engine.h"
 
@@ -13,6 +14,24 @@
 #define DEBUG(...) dbg_fprintf(stdout, "DBG: ", __VA_ARGS__)
 
 namespace AE {
+
+class CalcVarDelegateBase  {
+public:
+	CalcVarDelegateBase() {}
+	virtual std::string typeStr() const = 0;
+	virtual std::string varName() const = 0;
+	virtual void refresh() = 0;
+	virtual variant var() const;
+	virtual ~CalcVarDelegateBase() {}
+};
+
+class DelegateContainer {
+public:
+	DelegateContainer() {}
+	virtual void addContext(void *context) = 0;
+	virtual std::vector<CalcVarDelegateBase*> delegates() = 0;
+	virtual ~DelegateContainer() {}
+};
 
 class EngineImplPrivate;
 class EngineImpl : public Engine {
@@ -27,6 +46,8 @@ private:
 	friend class EngineImplPrivate;
 	EngineImplPrivate *p;
 };
-}
+} //namespace AE
+
+
 
 #endif //ENGINE_IMPL_H
