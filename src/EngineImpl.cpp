@@ -12,6 +12,7 @@
 #include <vector>
 #include "Conventions.h"
 #include "dlfcn.h"
+#include "ExpressionParser.h"
 
 #ifdef ENABLE_TESTS
 static QDateTime g_fakeCurrentTime;
@@ -137,6 +138,36 @@ public:
 			 m_achivements.append(m);
 		 } while (q.isValid());
 	}
+
+	void checkAchivements() {
+		for (int i = 0; i < m_achivements.count(); i++) {
+			QVariantMap m = m_achivements[i];
+			QString condition = m.value(f_condition).toString();
+			if (parseCondition(condition)) {
+				addAchivement(m);
+			}
+		}
+	}
+	bool parseCondition(const QString &str_cond) {
+		DEBUG("Parsing condition: %s\n", str_cond.toUtf8().constData());
+
+		Node *condition_tree = ExpressionParser().parse(str_cond);
+
+		return false;
+	}
+	bool parseConditionTree(Node *condition_tree) {
+		int result = 0;
+		foreach(Node *nd, condition_tree->children) {
+			parseConditionNode(nd, result);
+		}
+		return false;
+	}
+	bool parseConditionNode(Node *condition_node, int &result) {
+		return false;
+	}
+	void addAchivement(const QVariantMap) {
+
+	}
 	void refreshAhivementsList() {
 
 //		for () {
@@ -174,6 +205,11 @@ public:
 		m_session_id = -1;
 	}
 	void addAction(const action_params &p_actions) {
+		STAT_IF_VERBOSE;
+		addActionToDB(p_actions);
+		checkAchivements();
+	}
+	void addActionToDB(const action_params &p_actions) {
 		if (!checkDB()) return;
 		STAT_IF_VERBOSE;
 		QSqlQuery q("", m_db);
@@ -198,7 +234,7 @@ public:
 							.arg(t_actions)
 							.arg(nm)
 							.arg(QString::fromStdString(v.typeDBString()))
-							);
+					);
 					EXEC_AND_REPORT_COND;
 				}
 				i++;
