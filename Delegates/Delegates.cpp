@@ -10,7 +10,7 @@
 
 namespace AE {
 
-class SessionTimeDelegate: public AE::CalcVarDelegateBase {
+class SessionTimeDelegate: public CalcVarDelegateBase {
 public:
 	SessionTimeDelegate(QSqlDatabase *p_db = 0) : CalcVarDelegateBase(), m_db(p_db) {
 		if (p_db) {
@@ -26,7 +26,7 @@ private:
 	variant m_var;
 	QSqlDatabase *m_db;
 };
-class ActionTimeDelegate: public AE::CalcVarDelegateBase {
+class ActionTimeDelegate: public CalcVarDelegateBase {
 public:
 	ActionTimeDelegate(QSqlDatabase *p_db = 0) : CalcVarDelegateBase(), m_db(p_db) {
 		if (p_db) {
@@ -48,8 +48,8 @@ public:
 	void addContext(void *context) {
 		m_context = (EngineImpl*)context;
 	}
-	std::vector<CalcVarDelegateBase*> delegates() {
-		return m_delegates;
+	std::vector<CalcVarDelegateBase*> *delegates() {
+		return &m_delegates;
 	}
 	DCDB() : m_context(0) {
 		DEBUG("Creating DCDB object\n");

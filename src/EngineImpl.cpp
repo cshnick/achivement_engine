@@ -9,6 +9,7 @@
 #include <QtCore/qdir.h>
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 #include "Conventions.h"
 #include "dlfcn.h"
 
@@ -84,14 +85,14 @@ public:
 		}
 		addDefaultTables();
 		synchroAvhivementsDb();
+		fillAchivementsFromDB();
 		m_c = loadDelegatesContainer();
 		m_c->addContext((void*)this);
 
 		PRINT_IF_VERBOSE("Reporting delegate names...\n");
-		for (auto iter = m_c->delegates().begin(); iter != m_c->delegates().end(); iter++) {
-//			CalcVarDelegateBase *d = *iter;
-//			PRINT_IF_VERBOSE("\tDelegate %d;\n", d->var().toInt());
-			(*iter)->refresh();
+		for (auto iter = m_c->delegates()->begin(); iter != m_c->delegates()->end(); ++iter) {
+			CalcVarDelegateBase *d = *iter;
+			PRINT_IF_VERBOSE("\tDelegate %d;\n", d->var().toInt());
 		}
 	}
 	DelegateContainer *loadDelegatesContainer() {
@@ -118,6 +119,29 @@ public:
 			return false;
 		}
 		return true;
+	}
+
+	void fillAchivementsFromDB() {
+		 if (!checkDB()) return;
+		 QSqlQuery q("", m_db);
+		 q.prepare(QString("SELECT * FROM %1")
+				 .arg(t_achivements_list));
+		 EXEC_AND_REPORT_COND;
+		 do {
+			 q.next();
+			 QSqlRecord r = q.record();
+			 QVariantMap m;
+			 for (int i = 0; i < r.count(); i++) {
+				 m[r.fieldName(i)] = r.value(i);
+			 }
+			 m_achivements.append(m);
+		 } while (q.isValid());
+	}
+	void refreshAhivementsList() {
+
+//		for () {
+//
+//		}
 	}
 	void begin() {
 		if (!checkDB()) return;
@@ -395,6 +419,7 @@ private:
 	QSqlRecord m_record;
 	int m_session_id;
 	DelegateContainer *m_c;
+	QList<QVariantMap> m_achivements;
 };
 
 EngineImpl::EngineImpl()
