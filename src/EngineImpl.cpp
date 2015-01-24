@@ -158,10 +158,8 @@ public:
 		if (!parseConditionTree(condition_tree, result)) {
 			return false;
 		}
-
 		return result.toInt();
 	}
-#define rr PRINT_IF_VERBOSE("result var :%d, operator: %s\n", result.toInt(), qPrintable(str_op)); fflush(stdout);
 	bool parseConditionTree(Node *condition_tree, QVariant &result) {
 		QString str_op;
 		QVariant var;
@@ -170,16 +168,13 @@ public:
 			case Node::Identifier:
 				var = vfi(nd->str);
 				result = str_op.isNull() ? var : calc(str_op)(result, var);
-				rr;
 				break;
 			case Node::Number:
 				var = nd->str.toInt();
 				result = str_op.isNull() ? var : calc(str_op)(result, var);
-				rr;
 				break;
 			case Node::Operator:
 				str_op = nd->str;
-				rr;
 				break;
 			case Node::Punctuator:
 				break;
@@ -193,7 +188,6 @@ public:
 					return false;
 				}
 				result = str_op.isNull() ? var : calc(str_op)(result, var);
-				rr;
 				break;
 			default:
 				return false;
@@ -279,7 +273,6 @@ public:
 	}
 	void addActionToDB(const action_params &p_actions) {
 		if (!checkDB()) return;
-		STAT_IF_VERBOSE;
 		QSqlQuery q("", m_db);
 		if (m_session_id == -1) {
 			DEBUG_ERR("m_session_id is negtive. Haven't called begin method for engine?\n");
