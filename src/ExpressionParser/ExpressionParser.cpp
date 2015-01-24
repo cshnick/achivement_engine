@@ -3,23 +3,32 @@
 #include "ExpressionParser.h"
 #include "node.h"
 
-int funct(int a, int b) {}
-class functc {
-    public:
-    int operator ()(int a, int b) {}
-};
-
 Node *ExpressionParser::parse(const QString &expr)
 {
     in = expr;
     in.replace(" ", "");
     pos = 0;
 
-    int (*f)(int, int) = funct;
-    f(1, 2);
     Node *node = new Node(Node::Root);
-    addChild(node, parseOrExpression());
+    addChild(node, parseCompExpression());
     return node;
+}
+
+Node *ExpressionParser::parseCompExpression()
+{
+    Node *childNode = parseOrExpression();
+    QString tok;
+    if (matchTokens("<|>|<=|>=|!=|==", tok)) {
+        Node *node = new Node(Node::CompExpression);
+        addChild(node, childNode);
+        while (matchTokens("<|>|<=|>=|!=|==", tok)) {
+            addToken(node, tok, Node::Operator);
+            addChild(node, parseOrExpression());
+        }
+        return node;
+    } else {
+        return childNode;
+    }
 }
 
 Node *ExpressionParser::parseOrExpression()
@@ -118,8 +127,13 @@ Node *ExpressionParser::parseIdentifier()
     auto ndtype = Node::Identifier;
     QString str;
     QVariant res;
-    if (in[pos].isLetter()) {
-        while (pos < in.length() && in[pos].isLetterOrNumber()) {
+    //Variables start from "%"
+    if (in[pos] == '%') {
+        if (!in[++pos].isLetterOrNumber()) {
+            pos--;
+            return 0;
+        }
+        while (pos < in.length() && (in[pos].isLetterOrNumber())) {
             ++pos;
         }
         str = in.mid(startPos, pos - startPos);

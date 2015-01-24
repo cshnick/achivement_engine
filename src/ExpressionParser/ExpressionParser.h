@@ -9,6 +9,7 @@ public:
     Node *parse(const QString &expr);
 
 private:
+    Node *parseCompExpression();
     Node *parseOrExpression();
     Node *parseAndExpression();
     Node *parseAddExpression();

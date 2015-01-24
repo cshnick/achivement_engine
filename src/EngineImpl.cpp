@@ -58,6 +58,8 @@ static QDateTime g_fakeCurrentTime;
 			DEBUG(__VA_ARGS__); \
 		} \
 
+typedef QVariant (*qv_func_t) (QVariant v1, QVariant v2);
+
 __attribute__((constructor)) static void initialize_db_path() {
 //	QString dirname = QFileInfo(g_dbName).dir().absolutePath();
 //	if (VERBOSE) {
@@ -152,27 +154,93 @@ public:
 		DEBUG("Parsing condition: %s\n", str_cond.toUtf8().constData());
 
 		Node *condition_tree = ExpressionParser().parse(str_cond);
-
-		return false;
-	}
-	bool parseConditionTree(Node *condition_tree) {
-		int result = 0;
-		foreach(Node *nd, condition_tree->children) {
-			parseConditionNode(nd, result);
+		QVariant result;
+		if (!parseConditionTree(condition_tree, result)) {
+			return false;
 		}
-		return false;
-	}
-	bool parseConditionNode(Node *condition_node, int &result) {
-		return false;
-	}
-	void addAchivement(const QVariantMap) {
 
+		return result.toInt();
+	}
+#define rr PRINT_IF_VERBOSE("result var :%d, operator: %s\n", result.toInt(), qPrintable(str_op)); fflush(stdout);
+	bool parseConditionTree(Node *condition_tree, QVariant &result) {
+		QString str_op;
+		QVariant var;
+		foreach(Node *nd, condition_tree->children) {
+			switch(static_cast<int>(nd->type)) {
+			case Node::Identifier:
+				var = vfi(nd->str);
+				result = str_op.isNull() ? var : calc(str_op)(result, var);
+				rr;
+				break;
+			case Node::Number:
+				var = nd->str.toInt();
+				result = str_op.isNull() ? var : calc(str_op)(result, var);
+				rr;
+				break;
+			case Node::Operator:
+				str_op = nd->str;
+				rr;
+				break;
+			case Node::Punctuator:
+				break;
+			case Node::CompExpression:
+			case Node::OrExpression:
+			case Node::AndExpression:
+			case Node::AddExpression:
+			case Node::MulExpression:
+			case Node::Atom:
+				if (!parseConditionTree(nd, var)) {
+					return false;
+				}
+				result = str_op.isNull() ? var : calc(str_op)(result, var);
+				rr;
+				break;
+			default:
+				return false;
+			}
+		}
+		return true;
+	}
+
+	QVariant vfi(const QString &p_id) { //Qvariant from identifier
+		QVariant result = 1;
+		return result;
+	}
+	qv_func_t calc(const QString &op) {
+	    if(op == "<") {
+	        return [](QVariant v1, QVariant v2) -> QVariant {return v1.toInt() < v2.toInt();};
+	    } else if (op == ">") {
+	    	return [](QVariant v1, QVariant v2) -> QVariant {return v1.toInt() > v2.toInt();};
+	    } else if (op == "<=") {
+	    	return [](QVariant v1, QVariant v2) -> QVariant {return v1.toInt() <= v2.toInt();};
+	    } else if (op == ">=") {
+	    	return [](QVariant v1, QVariant v2) -> QVariant {return v1.toInt() >= v2.toInt();};
+	    } else if (op == "!=") {
+	    	return [](QVariant v1, QVariant v2) -> QVariant {return v1 != v2;};
+	    } else if (op == "==") {
+	    	return [](QVariant v1, QVariant v2) -> QVariant {return v1 == v2;};
+	    } else if (op == "||") {
+	    	return [](QVariant v1, QVariant v2) -> QVariant {return v1.toInt() || v2.toInt();};
+	    } else if (op == "&&") {
+	    	return [](QVariant v1, QVariant v2) -> QVariant {return v1.toInt() && v2.toInt();};
+	    } else if (op == "+") {
+	    	return [](QVariant v1, QVariant v2) -> QVariant {return v1.toInt() + v2.toInt();};
+	    } else if (op == "-") {
+	    	return [](QVariant v1, QVariant v2) -> QVariant {return v1.toInt() - v2.toInt();};
+	    } else if (op == "*") {
+	    	return [](QVariant v1, QVariant v2) -> QVariant {return v1.toInt() * v2.toInt();};
+	    } else if (op == "/") {
+	    	return [](QVariant v1, QVariant v2) -> QVariant {return v1.toInt() / v2.toInt();};
+	    }
+
+	    //By default return first value
+	    return [](QVariant , QVariant ) -> QVariant {return QVariant();};
+	}
+
+	void addAchivement(const QVariantMap &m) {
+		PRINT_IF_VERBOSE("Reached an achivement: %s!\n", qPrintable(m.value(f_name).toString()));
 	}
 	void refreshAhivementsList() {
-
-//		for () {
-//
-//		}
 	}
 	void begin() {
 		if (!checkDB()) return;

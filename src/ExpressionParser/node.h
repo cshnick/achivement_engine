@@ -9,6 +9,7 @@ class Node
 {
 public:
     enum Type { Root,
+    			CompExpression,
                 OrExpression,
                 AndExpression,
                 AddExpression,
