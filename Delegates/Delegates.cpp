@@ -16,15 +16,19 @@ public:
 		if (p_db) {
 
 		}
-		m_var = 1;
+		m_var = 1000;
 	}
 	std::string typeStr() const {return "Numeric";}
-	std::string varName() const {return "SessionTime";}
+	std::string varName() const {return "%st";}
+	std::string varAlias() const {return "SessionTime";}
 	variant var() const {return m_var;}
+//	void addContext(void *context) {m_session_id = (int)*context;}
+	void addContext(void *context) {int *i = (int*)context; m_session_id = *i;}
 	void refresh() {;}
 private:
 	variant m_var;
 	QSqlDatabase *m_db;
+	int m_session_id = -1;
 };
 class ActionTimeDelegate: public CalcVarDelegateBase {
 public:
@@ -32,21 +36,28 @@ public:
 		if (p_db) {
 
 		}
-		m_var = 2;
+		m_var = 3;
 	}
 	std::string typeStr() const {return "Numeric";}
-	std::string varName() const {return "ActionTime";}
+	std::string varName() const {return "%at";}
+	std::string varAlias() const {return "ActionTime";}
 	variant var() const {return m_var;}
-	void refresh() {;}
+//	void addContext(void *context) {m_session_id = (int)*context;}
+	void addContext(void *context) {int *i = (int*)context; m_session_id = *i;}
+	void refresh() {
+		QSqlQuery q("", *m_db);
+
+	}
 private:
 	variant m_var;
 	QSqlDatabase *m_db;
+	int m_session_id = -1;
 };
 
 class DCDB : public DelegateContainer {
 public:
 	void addContext(void *context) {
-		m_context = (EngineImpl*)context;
+		m_context = (int*)context;
 	}
 	std::vector<CalcVarDelegateBase*> *delegates() {
 		return &m_delegates;
@@ -64,7 +75,7 @@ public:
 	}
 
 private:
-	EngineImpl *m_context;
+	int *m_context;
 	std::vector<CalcVarDelegateBase*> m_delegates;
 	QSqlDatabase m_db;
 };

@@ -18,10 +18,10 @@ Node *ExpressionParser::parseCompExpression()
 {
     Node *childNode = parseOrExpression();
     QString tok;
-    if (matchTokens("<|>|<=|>=|!=|==", tok)) {
+    if (matchTokens("<=|>=|<|>|!=|==", tok)) {
         Node *node = new Node(Node::CompExpression);
         addChild(node, childNode);
-        while (matchTokens("<|>|<=|>=|!=|==", tok)) {
+        while (matchTokens("<=|>=|<|>|!=|==", tok)) {
             addToken(node, tok, Node::Operator);
             addChild(node, parseOrExpression());
         }

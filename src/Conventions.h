@@ -14,6 +14,7 @@ static const QString f_id = "id";
 static const QString f_start = "Start";
 static const QString f_finish = "Finish";
 static const QString f_time = "Time";
+static const QString f_actTime = "ActionTime";
 static const QString f_session = "Session";
 static const QString f_name = "Name";
 static const QString f_session_id = "SessionId";

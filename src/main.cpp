@@ -12,7 +12,7 @@
 
 static void getWords(std::vector<std::string> &words) {
 	std::string line;
-	std::ifstream myfile ("../achivement_engine/files/word_set");
+	std::ifstream myfile ("../engine/files/word_set");
 	if (myfile.is_open()) {
 		while ( getline (myfile,line, ' ') ) {
 			if (line.length() > 3) {
@@ -53,9 +53,16 @@ int main (int argc, char ** argv)
 	params_map["float_val"] = variant(100.65123f);
 	params_map["datetime_val"] = variant(dateTime(215000));
 
+	action_params params_map1;
+	params_map1["string_val"] = variant(getRandomWord());
+	params_map1["int_val"] = variant(1);
+	params_map1["float_val"] = variant(100.65123f);
+	params_map1["datetime_val"] = variant(dateTime(215000));
+
 	Engine *e = new EngineImpl();
 	e->begin();
 	e->addAction(params_map);
+	e->addAction(params_map1);
 	e->end();
 
 	DEBUG("Main finished\n");

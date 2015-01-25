@@ -15,7 +15,7 @@
 #include "ExpressionParser.h"
 
 #ifdef ENABLE_TESTS
-static QDateTime g_fakeCurrentTime;
+static QDateTime g_fakeCurrentTime = QDateTime::currentDateTime().addSecs(-60);
 #endif //ENABLE_TESTS
 
 #define VERBOSE getenv("VERBOSE") != NULL
@@ -60,24 +60,13 @@ static QDateTime g_fakeCurrentTime;
 
 typedef QVariant (*qv_func_t) (QVariant v1, QVariant v2);
 
-__attribute__((constructor)) static void initialize_db_path() {
-//	QString dirname = QFileInfo(g_dbName).dir().absolutePath();
-//	if (VERBOSE) {
-//		fprintf(stdout, "Retreiving dir name: %s", qPrintable(dirname));
-//	}
-//	if (!QFile::exists(dirname)) {
-//		QDir().mkpath(dirname);
-//	}
-}
-
 namespace AE {
 
 class EngineImplPrivate {
 public:
 	EngineImplPrivate(EngineImpl *p_q) :
 		q(p_q),
-		m_session_id(-1),
-		m_c(0)
+		m_session_id(-1)
 	{
 		PRINT_IF_VERBOSE("Initializing database. Setting database name: %s\n", qPrintable(g_dbName));
 
@@ -89,16 +78,9 @@ public:
 		addDefaultTables();
 		synchroAvhivementsDb();
 		fillAchivementsFromDB();
-		m_c = loadDelegatesContainer();
-		m_c->addContext((void*)this);
-
-		PRINT_IF_VERBOSE("Reporting delegate names...\n");
-		for (auto iter = m_c->delegates()->begin(); iter != m_c->delegates()->end(); ++iter) {
-			CalcVarDelegateBase *d = *iter;
-			PRINT_IF_VERBOSE("\tDelegate %d;\n", d->var().toInt());
-		}
+		fillCalcDelegatesMap();
 	}
-	DelegateContainer *loadDelegatesContainer() {
+	DelegateContainer *loadCalcDelegatesContainer() {
 		void *handle;
 		handle = dlopen("./Delegates/libvar_calcs.so", RTLD_LAZY);
 		if (!handle) {
@@ -116,6 +98,17 @@ public:
 
 		return loadLibrary();
 	}
+	void fillCalcDelegatesMap() {
+		DelegateContainer *c = loadCalcDelegatesContainer();
+		c->addContext((void*)this);
+		PRINT_IF_VERBOSE("Filling calc's map...\n");
+		for (auto iter = c->delegates()->begin(); iter != c->delegates()->end(); ++iter) {
+			CalcVarDelegateBase *d = *iter;
+			PRINT_IF_VERBOSE("\t[%s] = %s (%p);\n", d->varName().c_str(), d->varAlias().c_str(), d);
+			m_calcVars[QString::fromStdString(d->varName())] = d;
+		}
+	}
+
 	bool checkDB() {
 		if (!m_db.isOpen()) {
 			DEBUG_ERR( "last error: %s\n", qPrintable(m_db.lastError().text()) );
@@ -130,17 +123,28 @@ public:
 		 q.prepare(QString("SELECT * FROM %1")
 				 .arg(t_achivements_list));
 		 EXEC_AND_REPORT_COND;
-		 do {
-			 q.next();
+		 q.next();
+		 while (q.isValid()) {
 			 QSqlRecord r = q.record();
 			 QVariantMap m;
 			 for (int i = 0; i < r.count(); i++) {
 				 m[r.fieldName(i)] = r.value(i);
 			 }
 			 m_achivements.append(m);
-		 } while (q.isValid());
+			 q.next();
+		 }
 	}
 
+	void refreshCalcVars() {
+		PRINT_IF_VERBOSE("Refreshing calc vars...\n");
+		QList<CalcVarDelegateBase*> c = m_calcVars.values();
+		for (auto iter = m_calcVars.begin(); iter != m_calcVars.end(); ++iter) {
+			CalcVarDelegateBase *d = iter.value();
+			QString k = iter.key();
+			d->refresh();
+			PRINT_IF_VERBOSE("\t[%s] = %s;\n", d->varName().c_str(), printable(d->var()));
+		}
+	}
 	void checkAchivements() {
 		for (int i = 0; i < m_achivements.count(); i++) {
 			QVariantMap m = m_achivements[i];
@@ -151,13 +155,14 @@ public:
 		}
 	}
 	bool parseCondition(const QString &str_cond) {
-		DEBUG("Parsing condition: %s\n", str_cond.toUtf8().constData());
+		PRINT_IF_VERBOSE("Parsing condition: %s\n", str_cond.toUtf8().constData());
 
 		Node *condition_tree = ExpressionParser().parse(str_cond);
 		QVariant result;
 		if (!parseConditionTree(condition_tree, result)) {
 			return false;
 		}
+		PRINT_IF_VERBOSE("Reporting condition result: %s\n", printable(result));
 		return result.toInt();
 	}
 	bool parseConditionTree(Node *condition_tree, QVariant &result) {
@@ -197,8 +202,11 @@ public:
 	}
 
 	QVariant vfi(const QString &p_id) { //Qvariant from identifier
-		QVariant result = 1;
-		return result;
+		QVariant result;
+		variant res = m_calcVars.value(p_id)->var();
+		PRINT_IF_VERBOSE("vfi for %s = %s\n", p_id.toUtf8().constData(), printable(res));
+
+		return fromAeVariant(res) ;
 	}
 	qv_func_t calc(const QString &op) {
 	    if(op == "<") {
@@ -245,7 +253,7 @@ public:
 		q.prepare(QString("INSERT INTO %1 (%2) VALUES (?)")
 				.arg(t_sessions)
 				.arg(f_start));
-		q.bindValue(0, QDateTime::currentDateTime());
+		q.bindValue(0, currentTime());
 		EXEC_AND_REPORT_COND;
 		m_session_id = q.lastInsertId().toInt();
 	}
@@ -261,7 +269,7 @@ public:
 				.arg(t_sessions)
 				.arg(f_finish)
 				.arg(f_id));
-		q.bindValue(":fin_time", QDateTime::currentDateTime());
+		q.bindValue(":fin_time", currentTime());
 		q.bindValue(":id", m_session_id);
 		EXEC_AND_REPORT_COND;
 		m_session_id = -1;
@@ -269,6 +277,8 @@ public:
 	void addAction(const action_params &p_actions) {
 		STAT_IF_VERBOSE;
 		addActionToDB(p_actions);
+		refreshCalcVars();
+
 		checkAchivements();
 	}
 	void addActionToDB(const action_params &p_actions) {
@@ -277,6 +287,7 @@ public:
 		if (m_session_id == -1) {
 			DEBUG_ERR("m_session_id is negtive. Haven't called begin method for engine?\n");
 		}
+		//Insert new actions passed from the client
 		QSqlRecord rec = m_db.record(t_actions);
 		if (!rec.isEmpty()) {
 			action_params::const_iterator i = p_actions.begin();
@@ -300,14 +311,20 @@ public:
 				}
 				i++;
 			}
-
 			q.clear();
 			q = QSqlQuery("", m_db);
+
+			QDateTime curTime = currentTime();
+			int et = calculateElapsedSecsTo(curTime);
 			// Prepare strings to INSERT statement
 			QString kp = kl.join(",");
 			QString vp = vl.join(",");
 			kp.append(QString(",%1").arg(f_session_id));
-			vp.append(",?");
+			kp.append(QString(",%1").arg(f_time));
+			kp.append(QString(",%1").arg(f_actTime));
+			vp.append(",?"); //session id
+			vp.append(",?"); //action time
+			vp.append(",?"); //action time elapsed
 			q.prepare(QString("INSERT INTO %1 (%2) VALUES (%3)")
 					.arg(t_actions)
 					.arg(kp)
@@ -316,7 +333,9 @@ public:
 			for (; k < vvl.count(); k++) {
 				q.bindValue(k, vvl.at(k));
 			}
-			q.bindValue(k, m_session_id);
+			q.bindValue(k++, m_session_id);
+			q.bindValue(k++, currentTime());
+			q.bindValue(k++, et);
 			EXEC_AND_REPORT_COND;
 
 			SQL_DEBUG("Rec is not empty\n");
@@ -326,6 +345,101 @@ public:
 			}
 			SQL_DEBUG("Finished checking field names\n");
 		}
+	}
+
+	int calculateElapsedSecsTo(const QDateTime &ct) {
+		QSqlQuery q("", m_db);
+		//check previous time
+		int result = -1;
+		q.prepare(QString("SELECT MAX(%1) FROM %2 WHERE %3 = ?")
+				.arg(f_actTime)
+				.arg(t_actions)
+				.arg(f_session_id)
+		);
+		q.bindValue(0, m_session_id);
+		EXEC_AND_REPORT_COND;
+		q.first();
+		QDateTime dt = q.value(0).toDateTime();
+		if (dt.isValid()) {
+			SQL_DEBUG("DateTime value: %s, current time: %s\n", qPrintable(dt.toString()), qPrintable(ct.toString()));
+			result = dt.secsTo(ct);
+		} else { //Take time from session start time
+			q.prepare(QString("SELECT %1 FROM %2 WHERE %3 = ?")
+					.arg(f_start)
+					.arg(t_sessions)
+					.arg(f_id)
+					);
+			q.bindValue(0, m_session_id);
+			EXEC_AND_REPORT_COND;
+			q.first();
+			QDateTime st = q.value(0).toDateTime();
+			SQL_DEBUG("DateTime value: %s, current time: %s\n", qPrintable(st.toString()), qPrintable(ct.toString()));
+			if (!st.isValid()) {
+				DEBUG_ERR("Unable to retreive session start id... \n");
+			}
+			result = st.secsTo(ct);
+		}
+
+		return result;
+	}
+
+	//Printable variant for debug
+	const char *printable(const variant &v) {
+		const char *result;
+		switch (v.type()) {
+		case AE_VAR_INT:
+			result = QString("AE::variant(AE_VAR_INT, %2)").arg(v.toInt()).toUtf8().constData();
+			break;
+		case AE_VAR_DOUBLE:
+			result = QString("AE::variant(AE_VAR_DOUBLE, %2)").arg(v.toDouble()).toUtf8().constData();
+			break;
+		case AE_VAR_STRING:
+			result = QString("AE::variant(AE_VAR_STRING, %2)").arg(v.toString().c_str()).toUtf8().constData();
+			break;
+		case AE_VAR_DATETIME:
+			result = QString("AE::variant(AE_VAR_DATETIME, %2)").arg(QDateTime::fromMSecsSinceEpoch((long long)v.toDateTime()).toString()).toUtf8().constData();
+			break;
+		default:
+			break;
+		}
+
+		return result;
+	}
+	//Printable QVariant for debug
+	const char *printable(const QVariant &v) {
+		const char *result;
+		switch (v.type()) {
+		case QVariant::Bool:
+			result = QString("QVariant(Bool, %2)").arg(v.toBool()).toUtf8().constData();
+			break;
+		case QVariant::Int:
+			result = QString("QVariant(Int, %2)").arg(v.toInt()).toUtf8().constData();
+			break;
+		case QVariant::Double:
+			result = QString("QVariant(Double, %2)").arg(v.toDouble()).toUtf8().constData();
+			break;
+		case QVariant::String:
+			result = QString("QVariant(String, %2)").arg(v.toString()).toUtf8().constData();
+			break;
+		case QVariant::DateTime:
+			result = QString("QVariant(DateTime, %2)").arg(v.toDateTime().toString()).toUtf8().constData();
+			break;
+		default:
+			result = QString("Invalid QVariant").toUtf8().constData();
+			break;
+		}
+
+		return result;
+	}
+
+	static QDateTime currentTime() {
+#ifdef ENABLE_TESTS
+		qsrand(g_fakeCurrentTime.toMSecsSinceEpoch());
+		g_fakeCurrentTime = g_fakeCurrentTime.addSecs(qrand() % 60);
+		return g_fakeCurrentTime;
+#else
+		return QDateTime::currentDateTime();
+#endif
 	}
 
 private:
@@ -352,20 +466,24 @@ private:
 					.arg(f_finish));
 			EXEC_AND_REPORT_COND;
 		}
+		//Actions table
 		if (!m_db.tables().contains(t_actions)) {
 			q.prepare(QString("CREATE TABLE %1 ("
 					"%2 INTEGER PRIMARY KEY, "
 					"%3 STRING, "
+					"%4 INTEGER, "
+					"%6 DATETIME, "
 					"%7 INTEGER, "
-					"FOREIGN KEY(%4) REFERENCES %5(%6)"
+					"FOREIGN KEY(%4) REFERENCES %5(%2)"
 					")")
 					.arg(t_actions)
 					.arg(f_id)
 					.arg(f_name)
 					.arg(f_session_id)
 					.arg(t_sessions)
-					.arg(f_id)
-					.arg(f_session_id));
+					.arg(f_time)
+					.arg(f_actTime)
+					);
 			EXEC_AND_REPORT_COND;
 		}
 		if (!m_db.tables().contains(t_achivements_list)) {
@@ -492,8 +610,8 @@ private:
 		case AE_VAR_INT:
 			result = QVariant(ae_val.toInt());
 			break;
-		case AE_VAR_FLOAT:
-			result = QVariant(ae_val.toFloat());
+		case AE_VAR_DOUBLE:
+			result = QVariant(ae_val.toDouble());
 			break;
 		case AE_VAR_STRING:
 			result = QVariant(QString::fromStdString(ae_val.toString()));
@@ -508,6 +626,26 @@ private:
 		return result;
 	}
 
+	variant fromQVariant(const QVariant &q_val) {
+		variant result;
+		switch (q_val.type()) {
+		case QVariant::Int:
+			result = variant(q_val.toInt());
+			break;
+		case QVariant::Double:
+			result = variant(q_val.toDouble());
+			break;
+		case QVariant::String:
+			result = variant(q_val.toString().toStdString());
+			break;
+		case QVariant::DateTime:
+			result = variant(dateTime(q_val.toDateTime().toMSecsSinceEpoch()));
+			break;
+		}
+
+		return result;
+	}
+
 private:
 	friend class EngineImpl;
 	EngineImpl *q;
@@ -515,8 +653,8 @@ private:
 	QSqlDatabase m_db;
 	QSqlRecord m_record;
 	int m_session_id;
-	DelegateContainer *m_c;
 	QList<QVariantMap> m_achivements;
+	QMap<QString, CalcVarDelegateBase*> m_calcVars;
 };
 
 EngineImpl::EngineImpl()

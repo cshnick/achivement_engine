@@ -15,7 +15,7 @@ enum varType {
 	AE_VAR_INVALID = 0x00,
 	AE_VAR_STRING,
 	AE_VAR_INT,
-	AE_VAR_FLOAT,
+	AE_VAR_DOUBLE,
 	AE_VAR_DATETIME
 };
 
@@ -26,7 +26,7 @@ public:
     operator int() const {return m_value;}
     operator long long int() const {return m_value;}
 private:
-	int m_value;
+	long long m_value;
 };
 class variant {
 public:
@@ -34,7 +34,7 @@ public:
 	}
 	variant(int p_var) : int_val(p_var), m_type(AE_VAR_INT) {
 	}
-	variant(float p_var) : float_val(p_var), m_type(AE_VAR_FLOAT){
+	variant(double p_var) : float_val(p_var), m_type(AE_VAR_DOUBLE){
 	}
 	variant(const std::string &p_var) : str_val(p_var), m_type(AE_VAR_STRING) {
 	}
@@ -52,8 +52,8 @@ public:
 		case AE_VAR_INT:
 			return "INTEGER";
 			break;
-		case AE_VAR_FLOAT:
-			return "FLOAT";
+		case AE_VAR_DOUBLE:
+			return "DOUBLE";
 			break;
 		case AE_VAR_DATETIME:
 			return "DATETIME";
@@ -64,7 +64,7 @@ public:
 	}
 
 	int toInt(bool *ok = 0) const {if (ok) *ok = (m_type == AE_VAR_INT) ? true : false; return int_val;}
-	float toFloat(bool *ok = 0) const {if (ok) *ok = (m_type == AE_VAR_FLOAT) ? true : false; return float_val;}
+	float toDouble(bool *ok = 0) const {if (ok) *ok = (m_type == AE_VAR_DOUBLE) ? true : false; return float_val;}
 	std::string toString(bool *ok = 0) const {if (ok) *ok = (m_type == AE_VAR_STRING) ? true : false; return str_val;}
 	dateTime toDateTime(bool *ok = 0) const {if (ok) *ok = (m_type == AE_VAR_DATETIME) ? true : false; return dt_val;}
 
