@@ -136,14 +136,14 @@ public:
 	}
 
 	void refreshCalcVars() {
-		PRINT_IF_VERBOSE("Refreshing calc vars...\n");
-		QList<CalcVarDelegateBase*> c = m_calcVars.values();
-		for (auto iter = m_calcVars.begin(); iter != m_calcVars.end(); ++iter) {
-			CalcVarDelegateBase *d = iter.value();
-			QString k = iter.key();
-			d->refresh();
-			PRINT_IF_VERBOSE("\t[%s] = %s;\n", d->varName().c_str(), printable(d->var()));
-		}
+//		PRINT_IF_VERBOSE("Refreshing calc vars...\n");
+//		QList<CalcVarDelegateBase*> c = m_calcVars.values();
+//		for (auto iter = m_calcVars.begin(); iter != m_calcVars.end(); ++iter) {
+//			CalcVarDelegateBase *d = iter.value();
+//			QString k = iter.key();
+//			d->refresh();
+//			PRINT_IF_VERBOSE("\t[%s] = %s;\n", d->varName().c_str(), printable(d->var()));
+//		}
 	}
 	void checkAchivements() {
 		for (int i = 0; i < m_achivements.count(); i++) {
@@ -203,10 +203,13 @@ public:
 
 	QVariant vfi(const QString &p_id) { //Qvariant from identifier
 		QVariant result;
-		variant res = m_calcVars.value(p_id)->var();
-		PRINT_IF_VERBOSE("vfi for %s = %s\n", p_id.toUtf8().constData(), printable(res));
+		CalcVarDelegateBase *delegate = m_calcVars.value(p_id);
+		if (delegate) {
+			result = fromAeVariant(delegate->var());
+		}
+		PRINT_IF_VERBOSE("vfi for %s = %s\n", p_id.toUtf8().constData(), printable(result));
 
-		return fromAeVariant(res) ;
+		return result;
 	}
 	qv_func_t calc(const QString &op) {
 	    if(op == "<") {
@@ -620,6 +623,7 @@ private:
 			result = QVariant(QDateTime::fromMSecsSinceEpoch((long long)ae_val.toDateTime()));
 			break;
 		default:
+			result = QVariant();
 			break;
 		}
 

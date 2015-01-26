@@ -5,7 +5,6 @@
 #include <QtSql>
 #include <vector>
 
-
 #define ADD_DELEGATE(name) m_delegates.push_back(new name(&m_db))
 
 namespace AE {
@@ -22,9 +21,10 @@ public:
 	std::string varName() const {return "%st";}
 	std::string varAlias() const {return "SessionTime";}
 	variant var() const {return m_var;}
-//	void addContext(void *context) {m_session_id = (int)*context;}
-	void addContext(void *context) {int *i = (int*)context; m_session_id = *i;}
-	void refresh() {;}
+	void refresh() {
+		QSqlQuery q("", *m_db);
+		q.prepare(QString("SELECT MAX(%1) FROM %2"));
+	}
 private:
 	variant m_var;
 	QSqlDatabase *m_db;
@@ -42,8 +42,6 @@ public:
 	std::string varName() const {return "%at";}
 	std::string varAlias() const {return "ActionTime";}
 	variant var() const {return m_var;}
-//	void addContext(void *context) {m_session_id = (int)*context;}
-	void addContext(void *context) {int *i = (int*)context; m_session_id = *i;}
 	void refresh() {
 		QSqlQuery q("", *m_db);
 

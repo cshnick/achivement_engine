@@ -23,9 +23,6 @@ public:
 	virtual std::string varAlias() const = 0;
 	virtual void refresh() = 0;
 	virtual variant var() const = 0;
-	virtual void addContext(void *context) = 0;
-//	virtual void setSessionId(int id) = 0;
-//	virtual void setActionId(int id) = 0;
 	virtual ~CalcVarDelegateBase() {}
 };
 
