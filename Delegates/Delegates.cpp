@@ -9,21 +9,28 @@
 
 namespace AE {
 
+//SessionTime
 class SessionTimeDelegate: public CalcVarDelegateBase {
 public:
-	SessionTimeDelegate(QSqlDatabase *p_db = 0) : CalcVarDelegateBase(), m_db(p_db) {
-		if (p_db) {
-
-		}
-		m_var = 1000;
-	}
+	SessionTimeDelegate(QSqlDatabase *p_db = 0) : CalcVarDelegateBase(), m_db(p_db) {}
 	std::string typeStr() const {return "Numeric";}
 	std::string varName() const {return "%st";}
 	std::string varAlias() const {return "SessionTime";}
 	variant var() const {return m_var;}
 	void refresh() {
 		QSqlQuery q("", *m_db);
-		q.prepare(QString("SELECT MAX(%1) FROM %2"));
+		q.prepare(QString("SELECT sum(%1) FROM %2 WHERE %3 = ("
+				"SELECT %3 from (SELECT %3, max(%4) FROM %2)"
+				")")
+				.arg(f_actTime)
+				.arg(t_actions)
+				.arg(f_session_id)
+				.arg(f_time)
+		);
+		EXEC_AND_REPORT_COND;
+		if (q.first()) {
+			m_var = fromQVariant(q.value(0));
+		}
 	}
 private:
 	variant m_var;
@@ -44,7 +51,15 @@ public:
 	variant var() const {return m_var;}
 	void refresh() {
 		QSqlQuery q("", *m_db);
-
+		q.prepare(QString("SELECT MAX(%1),%2 FROM %3")
+				.arg(f_time)
+				.arg(f_actTime)
+				.arg(t_actions));
+		EXEC_AND_REPORT_COND;
+		if (q.first()) {
+			QVariant var = q.value(1);
+			m_var = fromQVariant(var);
+		}
 	}
 private:
 	variant m_var;

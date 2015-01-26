@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "EngineImpl.h"
+#include "Conventions.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -12,7 +13,7 @@
 
 static void getWords(std::vector<std::string> &words) {
 	std::string line;
-	std::ifstream myfile ("../achivement_engine/files/word_set");
+	std::ifstream myfile ("../engine/files/word_set");
 	if (myfile.is_open()) {
 		while ( getline (myfile,line, ' ') ) {
 			if (line.length() > 3) {

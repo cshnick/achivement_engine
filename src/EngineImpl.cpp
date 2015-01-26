@@ -18,49 +18,101 @@
 static QDateTime g_fakeCurrentTime = QDateTime::currentDateTime().addSecs(-60);
 #endif //ENABLE_TESTS
 
-#define VERBOSE getenv("VERBOSE") != NULL
-#define DROP_TABLES getenv("AE_DROP_TABLES") != NULL
-
-#define EXEC_AND_REPORT_COND_RETURN \
-		if (!q.exec()) { \
-			SQL_ERR( "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(q.executedQuery()) ); \
-			return; \
-		} else { \
-			SQL_DEBUG("Executed: %s\n", qPrintable(q.executedQuery())); \
-		} \
-
-#define EXEC_AND_REPORT_COND \
-		bool res = q.exec(); \
-		QString exQuery = q.executedQuery(); \
-		if (VERBOSE) { \
-			Q_FOREACH(QVariant val, q.boundValues().values()) { \
-				QString pval = val.toString(); \
-				if (val.type() != QVariant::Bool && val.type() != QVariant::Int && val.type() != QVariant::Double) { \
-					pval = QString("'") + pval + "'"; \
-				} \
-				exQuery = exQuery.replace(exQuery.indexOf('?'), 1, pval); \
-			} \
-		} \
-		if (!res) { \
-			SQL_ERR( "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(exQuery) ); \
-		} else { \
-			SQL_DEBUG("Executed: %s\n", qPrintable(exQuery)); \
-		} \
-
-
-#define STAT_IF_VERBOSE \
-		if (VERBOSE) { \
-			DEBUG("Entering ('%s':%d) : %s\n", __FILE__, __LINE__, __PRETTY_FUNCTION__); \
-		} \
-
-#define PRINT_IF_VERBOSE(...) \
-		if (VERBOSE) { \
-			DEBUG(__VA_ARGS__); \
-		} \
-
 typedef QVariant (*qv_func_t) (QVariant v1, QVariant v2);
 
 namespace AE {
+
+//Printable variant for debug
+const char *printable(const variant &v) {
+	const char *result;
+	switch (v.type()) {
+	case AE_VAR_INT:
+		result = QString("AE::variant(AE_VAR_INT, %2)").arg(v.toInt()).toUtf8().constData();
+		break;
+	case AE_VAR_DOUBLE:
+		result = QString("AE::variant(AE_VAR_DOUBLE, %2)").arg(v.toDouble()).toUtf8().constData();
+		break;
+	case AE_VAR_STRING:
+		result = QString("AE::variant(AE_VAR_STRING, %2)").arg(v.toString().c_str()).toUtf8().constData();
+		break;
+	case AE_VAR_DATETIME:
+		result = QString("AE::variant(AE_VAR_DATETIME, %2)").arg(QDateTime::fromMSecsSinceEpoch((long long)v.toDateTime()).toString()).toUtf8().constData();
+		break;
+	default:
+		break;
+	}
+
+	return result;
+}
+//Printable QVariant for debug
+const char *printable(const QVariant &v) {
+	const char *result;
+	switch (v.type()) {
+	case QVariant::Bool:
+		result = QString("QVariant(Bool, %2)").arg(v.toBool()).toUtf8().constData();
+		break;
+	case QVariant::Int:
+		result = QString("QVariant(Int, %2)").arg(v.toInt()).toUtf8().constData();
+		break;
+	case QVariant::Double:
+		result = QString("QVariant(Double, %2)").arg(v.toDouble()).toUtf8().constData();
+		break;
+	case QVariant::String:
+		result = QString("QVariant(String, %2)").arg(v.toString()).toUtf8().constData();
+		break;
+	case QVariant::DateTime:
+		result = QString("QVariant(DateTime, %2)").arg(v.toDateTime().toString()).toUtf8().constData();
+		break;
+	default:
+		result = QString("Invalid QVariant").toUtf8().constData();
+		break;
+	}
+
+	return result;
+}
+QVariant fromAeVariant(const AE::variant &ae_val) {
+	QVariant result;
+	switch (ae_val.type()) {
+	case AE_VAR_INT:
+		result = QVariant(ae_val.toInt());
+		break;
+	case AE_VAR_DOUBLE:
+		result = QVariant(ae_val.toDouble());
+		break;
+	case AE_VAR_STRING:
+		result = QVariant(QString::fromStdString(ae_val.toString()));
+		break;
+	case AE_VAR_DATETIME:
+		result = QVariant(QDateTime::fromMSecsSinceEpoch((long long)ae_val.toDateTime()));
+		break;
+	default:
+		result = QVariant();
+		break;
+	}
+
+	return result;
+}
+
+variant fromQVariant(const QVariant &q_val) {
+	variant result;
+	switch (q_val.type()) {
+	case QVariant::Int:
+	case QVariant::LongLong:
+		result = variant(q_val.toInt());
+		break;
+	case QVariant::Double:
+		result = variant(q_val.toDouble());
+		break;
+	case QVariant::String:
+		result = variant(q_val.toString().toStdString());
+		break;
+	case QVariant::DateTime:
+		result = variant(dateTime(q_val.toDateTime().toMSecsSinceEpoch()));
+		break;
+	}
+
+	return result;
+}
 
 class EngineImplPrivate {
 public:
@@ -136,14 +188,12 @@ public:
 	}
 
 	void refreshCalcVars() {
-//		PRINT_IF_VERBOSE("Refreshing calc vars...\n");
-//		QList<CalcVarDelegateBase*> c = m_calcVars.values();
-//		for (auto iter = m_calcVars.begin(); iter != m_calcVars.end(); ++iter) {
-//			CalcVarDelegateBase *d = iter.value();
-//			QString k = iter.key();
-//			d->refresh();
-//			PRINT_IF_VERBOSE("\t[%s] = %s;\n", d->varName().c_str(), printable(d->var()));
-//		}
+		PRINT_IF_VERBOSE("Refreshing calc vars...\n");
+		for (auto iter = m_calcVars.begin(); iter != m_calcVars.end(); ++iter) {
+			CalcVarDelegateBase *d = iter.value();
+			d->refresh();
+			PRINT_IF_VERBOSE("\t[%s] = %s;\n", d->varName().c_str(), printable(d->var()));
+		}
 	}
 	void checkAchivements() {
 		for (int i = 0; i < m_achivements.count(); i++) {
@@ -386,55 +436,6 @@ public:
 		return result;
 	}
 
-	//Printable variant for debug
-	const char *printable(const variant &v) {
-		const char *result;
-		switch (v.type()) {
-		case AE_VAR_INT:
-			result = QString("AE::variant(AE_VAR_INT, %2)").arg(v.toInt()).toUtf8().constData();
-			break;
-		case AE_VAR_DOUBLE:
-			result = QString("AE::variant(AE_VAR_DOUBLE, %2)").arg(v.toDouble()).toUtf8().constData();
-			break;
-		case AE_VAR_STRING:
-			result = QString("AE::variant(AE_VAR_STRING, %2)").arg(v.toString().c_str()).toUtf8().constData();
-			break;
-		case AE_VAR_DATETIME:
-			result = QString("AE::variant(AE_VAR_DATETIME, %2)").arg(QDateTime::fromMSecsSinceEpoch((long long)v.toDateTime()).toString()).toUtf8().constData();
-			break;
-		default:
-			break;
-		}
-
-		return result;
-	}
-	//Printable QVariant for debug
-	const char *printable(const QVariant &v) {
-		const char *result;
-		switch (v.type()) {
-		case QVariant::Bool:
-			result = QString("QVariant(Bool, %2)").arg(v.toBool()).toUtf8().constData();
-			break;
-		case QVariant::Int:
-			result = QString("QVariant(Int, %2)").arg(v.toInt()).toUtf8().constData();
-			break;
-		case QVariant::Double:
-			result = QString("QVariant(Double, %2)").arg(v.toDouble()).toUtf8().constData();
-			break;
-		case QVariant::String:
-			result = QString("QVariant(String, %2)").arg(v.toString()).toUtf8().constData();
-			break;
-		case QVariant::DateTime:
-			result = QString("QVariant(DateTime, %2)").arg(v.toDateTime().toString()).toUtf8().constData();
-			break;
-		default:
-			result = QString("Invalid QVariant").toUtf8().constData();
-			break;
-		}
-
-		return result;
-	}
-
 	static QDateTime currentTime() {
 #ifdef ENABLE_TESTS
 		qsrand(g_fakeCurrentTime.toMSecsSinceEpoch());
@@ -606,48 +607,6 @@ private:
 		}
 		p_file->close();
 		return true;
-	}
-	QVariant fromAeVariant(const AE::variant &ae_val) {
-		QVariant result;
-		switch (ae_val.type()) {
-		case AE_VAR_INT:
-			result = QVariant(ae_val.toInt());
-			break;
-		case AE_VAR_DOUBLE:
-			result = QVariant(ae_val.toDouble());
-			break;
-		case AE_VAR_STRING:
-			result = QVariant(QString::fromStdString(ae_val.toString()));
-			break;
-		case AE_VAR_DATETIME:
-			result = QVariant(QDateTime::fromMSecsSinceEpoch((long long)ae_val.toDateTime()));
-			break;
-		default:
-			result = QVariant();
-			break;
-		}
-
-		return result;
-	}
-
-	variant fromQVariant(const QVariant &q_val) {
-		variant result;
-		switch (q_val.type()) {
-		case QVariant::Int:
-			result = variant(q_val.toInt());
-			break;
-		case QVariant::Double:
-			result = variant(q_val.toDouble());
-			break;
-		case QVariant::String:
-			result = variant(q_val.toString().toStdString());
-			break;
-		case QVariant::DateTime:
-			result = variant(dateTime(q_val.toDateTime().toMSecsSinceEpoch()));
-			break;
-		}
-
-		return result;
 	}
 
 private:

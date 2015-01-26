@@ -2,6 +2,62 @@
 #define CONVENTIONS_H
 
 #include <QtCore>
+#include "Engine.h"
+
+#define dbg_fprintf(stream, message, ...) fprintf(stream, message __VA_ARGS__)
+#define SQL_ERR(...) dbg_fprintf(stderr, "SQL: ", __VA_ARGS__)
+#define SQL_DEBUG(...) dbg_fprintf(stdout, "SQL: ", __VA_ARGS__)
+#define DEBUG_ERR(...) dbg_fprintf(stderr, "ERR: ", __VA_ARGS__)
+#define DEBUG(...) dbg_fprintf(stdout, "DBG: ", __VA_ARGS__)
+
+#define EXEC_AND_REPORT_COND_RETURN \
+		if (!q.exec()) { \
+			SQL_ERR( "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(q.executedQuery()) ); \
+			return; \
+		} else { \
+			SQL_DEBUG("Executed: %s\n", qPrintable(q.executedQuery())); \
+		} \
+
+#define EXEC_AND_REPORT_COND \
+		QTime label = QTime::currentTime(); \
+		bool res = q.exec(); \
+		int msecs = label.msecsTo(QTime::currentTime()); \
+		QString exQuery = q.executedQuery(); \
+		if (VERBOSE) { \
+			Q_FOREACH(QVariant val, q.boundValues().values()) { \
+			QString pval = val.toString(); \
+			if (val.type() != QVariant::Bool && val.type() != QVariant::Int && val.type() != QVariant::Double) { \
+				pval = QString("'") + pval + "'"; \
+			} \
+			exQuery = exQuery.replace(exQuery.indexOf('?'), 1, pval); \
+		} \
+		} \
+		if (!res) { \
+			SQL_ERR( "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(exQuery) ); \
+		} else { \
+			SQL_DEBUG("Executed: %s\n", qPrintable(exQuery)); \
+		} \
+		SQL_DEBUG("Query length: %d\n", msecs); \
+
+#define STAT_IF_VERBOSE \
+		if (VERBOSE) { \
+			DEBUG("Entering ('%s':%d) : %s\n", __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+		} \
+
+#define PRINT_IF_VERBOSE(...) \
+		if (VERBOSE) { \
+			DEBUG(__VA_ARGS__); \
+		} \
+
+#define VERBOSE getenv("VERBOSE") != NULL
+#define DROP_TABLES getenv("AE_DROP_TABLES") != NULL
+
+namespace AE {
+const char *printable(const variant &v);
+const char *printable(const QVariant &v);
+QVariant fromAeVariant(const AE::variant &ae_val);
+variant fromQVariant(const QVariant &q_val);
+} // namespace AE
 
 static const QString g_achivements_path = "/home/ilia/.local/share/action_engine";
 static const QString g_dbName = "ae.db";
