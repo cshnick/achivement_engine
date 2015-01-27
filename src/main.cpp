@@ -13,7 +13,7 @@
 
 static void getWords(std::vector<std::string> &words) {
 	std::string line;
-	std::ifstream myfile ("../achivement_engine/files/word_set");
+	std::ifstream myfile ("../engine/files/word_set");
 	if (myfile.is_open()) {
 		while ( getline (myfile,line, ' ') ) {
 			if (line.length() > 3) {
@@ -36,12 +36,38 @@ std::string getRandomWord() {
 
 using namespace AE;
 
-int main (int argc, char ** argv)
-{
-//	c *cl = new d;
-//	cl->printme();
-	DEBUG("Main start\n");
+static std::string f_statement = "Statement";
+static std::string f_result = "Result";
+static std::string f_success = "Success";
 
+action_params genAction() {
+	qsrand(QDateTime::currentDateTime().toMSecsSinceEpoch());
+	action_params res;
+	int num1 = qrand() % 9;
+	int num2 = qrand() % 9;
+
+    int ri = num1*num2 + (num1 > 5 ? 1: 0);
+
+	res[f_statement] = variant(QString("%1x%2").arg(num1).arg(num2).toStdString());
+	res[f_result] = variant(QString("%1").arg(ri).toStdString());
+	res[f_success] = variant(num1*num2==ri);
+
+	return res;
+}
+
+void autoTest() {
+	//1000 sessions
+	EngineImpl *e = new EngineImpl();
+	for (int i = 0; i < 50; i++) {
+		e->begin();
+		for (int j = 0; j < 50; j++) {
+			e->addAction(genAction());
+		}
+		e->end();
+	}
+}
+
+void smallTest() {
 	getWords(g_words);
 	const char lc[] = "UTF-8";
 	DEBUG("Setting locale: %s\n", lc);
@@ -65,7 +91,12 @@ int main (int argc, char ** argv)
 	e->addAction(params_map);
 	e->addAction(params_map1);
 	e->end();
+}
 
+int main (int argc, char ** argv)
+{
+	DEBUG("Main start\n");
+	autoTest();
 	DEBUG("Main finished\n");
 	return 0;
 }

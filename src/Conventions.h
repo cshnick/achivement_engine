@@ -4,7 +4,11 @@
 #include <QtCore>
 #include "Engine.h"
 
+#ifndef NDEBUG
 #define dbg_fprintf(stream, message, ...) fprintf(stream, message __VA_ARGS__)
+#else
+#define dbg_fprintf(stream, message, ...)
+#endif
 #define SQL_ERR(...) dbg_fprintf(stderr, "SQL: ", __VA_ARGS__)
 #define SQL_DEBUG(...) dbg_fprintf(stdout, "SQL: ", __VA_ARGS__)
 #define DEBUG_ERR(...) dbg_fprintf(stderr, "ERR: ", __VA_ARGS__)
@@ -37,7 +41,7 @@
 		} else { \
 			SQL_DEBUG("Executed: %s; ", qPrintable(exQuery)); \
 		} \
-		printf("Query length: %d\n", msecs); \
+		dbg_fprintf("Query length: %d\n", msecs); \
 
 #define STAT_IF_VERBOSE \
 		if (VERBOSE) { \

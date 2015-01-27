@@ -236,6 +236,7 @@ public:
 				break;
 			case Node::AchCount:
 				var = vfa(nd->str);
+				result = str_op.isNull() ? var : calc(str_op)(result, var);
 //				rr;
 				break;
 			case Node::Punctuator:
@@ -266,7 +267,6 @@ public:
 			delegate->refresh();
 			result = fromAeVariant(delegate->var());
 		}
-//		PRINT_IF_VERBOSE("vfi for %s = %s\n", p_id.toUtf8().constData(), printable(result));
 		QString pIdTrimmed = p_id;
 		pIdTrimmed.replace("%", "");
 		PRINT_IF_VERBOSE("vfi for %s: %s\n", qPrintable(pIdTrimmed), printable(result));
@@ -285,7 +285,7 @@ public:
 		}
 		QString pIdTrimmed = p_id;
 		pIdTrimmed.replace("%", "");
-		PRINT_IF_VERBOSE("vfi for %s: %s\n", qPrintable(pIdTrimmed), printable(result));
+		PRINT_IF_VERBOSE("vfa for %s: %s\n", qPrintable(pIdTrimmed), printable(result));
 
 		return result;
 	}
@@ -322,6 +322,25 @@ public:
 
 	void addAchivement(const QVariantMap &m) {
 		PRINT_IF_VERBOSE("Reached an achivement: %s!\n", qPrintable(m.value(f_name).toString()));
+		addAchivementToDb(m);
+	}
+	void addAchivementToDb(const QVariantMap &m) {
+		QSqlQuery q("", m_db);
+		QStringList kl;
+		kl << f_condition << f_description << f_name << f_time << f_ach_id << f_session_id;
+		QString vl = "?,?,?,?,?,?";
+		q.prepare(QString("INSERT INTO %1 (%2) VALUES (%3)")
+				.arg(t_achivements_done)
+				.arg(kl.join(","))
+				.arg(vl)
+		);
+		q.bindValue(0, m.value(f_condition));
+		q.bindValue(1, m.value(f_description));
+		q.bindValue(2, m.value(f_name));
+		q.bindValue(3, currentTime());
+		q.bindValue(4, m.value(f_id));
+		q.bindValue(5, m_session_id);
+		EXEC_AND_REPORT_COND;
 	}
 	void refreshAhivementsList() {
 	}

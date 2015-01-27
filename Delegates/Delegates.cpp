@@ -51,7 +51,6 @@ void refresh(const variant &) {
 			.arg(f_time)
 			.arg(f_actTime)
 			.arg(t_actions)
-			.arg(f_session_id)
 	);
 	EXEC_AND_REPORT_COND;
 	if (q.first()) {
@@ -60,7 +59,7 @@ void refresh(const variant &) {
 	}
 }
 END_DECLARE_DELEGATE(ActionTimeDelegate)
-BEGIN_DECLARE_DELEGATE(AhivementsCount, "$", "AchivementsCount", "Achivements");
+BEGIN_DECLARE_DELEGATE(AhivementsCount, "$", "AchivementsCount", "Achievements");
 void refresh(const variant &p_id) {
 	QSqlQuery q("", *m_db);
 	int id = p_id.toInt();
@@ -73,6 +72,9 @@ void refresh(const variant &p_id) {
 	EXEC_AND_REPORT_COND;
 	if (q.first()) {
 		QVariant var = q.value(0);
+		if (!var.isValid()) {
+			var = QVariant(0);
+		}
 		m_var = fromQVariant(var);
 	}
 }

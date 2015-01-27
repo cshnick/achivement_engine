@@ -15,6 +15,7 @@ src/ExpressionParser
 )
 add_definitions (
 	-DENABLE_TESTS
+	-DNDEBUG
 )
 
 set (HEADERS
