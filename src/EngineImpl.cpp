@@ -49,19 +49,19 @@ const char *printable(const QVariant &v) {
 	const char *result;
 	switch (v.type()) {
 	case QVariant::Bool:
-		result = QString("QVariant(Bool, %2)").arg(v.toBool()).toUtf8().constData();
+		result = QString("QVariant(Bool, %1)").arg(v.toBool()).toUtf8().constData();
 		break;
 	case QVariant::Int:
-		result = QString("QVariant(Int, %2)").arg(v.toInt()).toUtf8().constData();
+		result = QString("QVariant(Int, %1)").arg(v.toInt()).toUtf8().constData();
 		break;
 	case QVariant::Double:
-		result = QString("QVariant(Double, %2)").arg(v.toDouble()).toUtf8().constData();
+		result = QString("QVariant(Double, %1)").arg(v.toDouble()).toUtf8().constData();
 		break;
 	case QVariant::String:
-		result = QString("QVariant(String, %2)").arg(v.toString()).toUtf8().constData();
+		result = QString("QVariant(String, %1)").arg(v.toString()).toUtf8().constData();
 		break;
 	case QVariant::DateTime:
-		result = QString("QVariant(DateTime, %2)").arg(v.toDateTime().toString()).toUtf8().constData();
+		result = QString("QVariant(DateTime, %1)").arg(v.toDateTime().toString()).toUtf8().constData();
 		break;
 	default:
 		result = QString("Invalid QVariant").toUtf8().constData();
@@ -215,6 +215,7 @@ public:
 		PRINT_IF_VERBOSE("Reporting condition result: %s\n", printable(result));
 		return result.toInt();
 	}
+#define rr PRINT_IF_VERBOSE("next result %d, operator: %s\n", result.toInt(), qPrintable(str_op)); fflush(stdout);
 	bool parseConditionTree(Node *condition_tree, QVariant &result) {
 		QString str_op;
 		QVariant var;
@@ -223,13 +224,19 @@ public:
 			case Node::Identifier:
 				var = vfi(nd->str);
 				result = str_op.isNull() ? var : calc(str_op)(result, var);
+//				rr;
 				break;
 			case Node::Number:
 				var = nd->str.toInt();
 				result = str_op.isNull() ? var : calc(str_op)(result, var);
+//				rr;
 				break;
 			case Node::Operator:
 				str_op = nd->str;
+				break;
+			case Node::AchCount:
+				var = vfa(nd->str);
+//				rr;
 				break;
 			case Node::Punctuator:
 				break;
@@ -243,6 +250,7 @@ public:
 					return false;
 				}
 				result = str_op.isNull() ? var : calc(str_op)(result, var);
+//				rr;
 				break;
 			default:
 				return false;
@@ -255,9 +263,29 @@ public:
 		QVariant result;
 		CalcVarDelegateBase *delegate = m_calcVars.value(p_id);
 		if (delegate) {
+			delegate->refresh();
 			result = fromAeVariant(delegate->var());
 		}
-		PRINT_IF_VERBOSE("vfi for %s = %s\n", p_id.toUtf8().constData(), printable(result));
+//		PRINT_IF_VERBOSE("vfi for %s = %s\n", p_id.toUtf8().constData(), printable(result));
+		QString pIdTrimmed = p_id;
+		pIdTrimmed.replace("%", "");
+		PRINT_IF_VERBOSE("vfi for %s: %s\n", qPrintable(pIdTrimmed), printable(result));
+
+		return result;
+	}
+	QVariant vfa(const QString &p_id) {
+		QVariant result;
+		QString pp_id = p_id;
+		pp_id.remove('$');
+		int iid = pp_id.toInt();
+		CalcVarDelegateBase *delegate = m_calcVars.value("$");
+		if (delegate) {
+			delegate->refresh(variant(iid));
+			result = fromAeVariant(delegate->var());
+		}
+		QString pIdTrimmed = p_id;
+		pIdTrimmed.replace("%", "");
+		PRINT_IF_VERBOSE("vfi for %s: %s\n", qPrintable(pIdTrimmed), printable(result));
 
 		return result;
 	}
@@ -309,6 +337,7 @@ public:
 		q.bindValue(0, currentTime());
 		EXEC_AND_REPORT_COND;
 		m_session_id = q.lastInsertId().toInt();
+		PRINT_IF_VERBOSE("Starting session: %d\n", m_session_id);
 	}
 	void end() {
 		if (!checkDB()) return;
@@ -330,8 +359,6 @@ public:
 	void addAction(const action_params &p_actions) {
 		STAT_IF_VERBOSE;
 		addActionToDB(p_actions);
-		refreshCalcVars();
-
 		checkAchivements();
 	}
 	void addActionToDB(const action_params &p_actions) {
@@ -502,13 +529,20 @@ private:
 			EXEC_AND_REPORT_COND;
 		}
 		if (!m_db.tables().contains(t_achivements_done)) {
-			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 STRING, %5 STRING, %6 STRING)")
+			q.prepare(QString("CREATE TABLE %1 "
+					"(%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 STRING,"
+					" %5 STRING, %6 STRING, %7 INTEGER, %8 INTEGER,"
+					"FOREIGN KEY(%7) REFERENCES %9(%2)"
+					")")
 					.arg(t_achivements_done)
 					.arg(f_id)
 					.arg(f_time)
 					.arg(f_name)
 					.arg(f_description)
 					.arg(f_condition)
+					.arg(f_ach_id)
+					.arg(f_session_id)
+					.arg(t_achivements_list)
 			);
 			EXEC_AND_REPORT_COND;
 		}

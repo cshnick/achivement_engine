@@ -14,8 +14,9 @@ public:
 	virtual std::string typeStr() const = 0;
 	virtual std::string varName() const = 0;
 	virtual std::string varAlias() const = 0;
-	virtual void refresh() = 0;
+	virtual void refresh(const variant &p = variant()) = 0;
 	virtual variant var() const = 0;
+	virtual void addContext(void **v) = 0;
 	virtual ~CalcVarDelegateBase() {}
 };
 

@@ -6,66 +6,77 @@
 #include <vector>
 
 #define ADD_DELEGATE(name) m_delegates.push_back(new name(&m_db))
+#define BEGIN_DECLARE_DELEGATE(name, vName, vAlias, vType) \
+		class name: public CalcVarDelegateBase { \
+		public: \
+		name(QSqlDatabase *p_db = 0) : CalcVarDelegateBase(), m_db(p_db) {} \
+		variant var() const {return m_var;} \
+		std::string varName() const {return vName;} \
+		std::string varAlias() const {return vAlias;} \
+		std::string typeStr() const {return vType;} \
+		void addContext(void **p_context) {m_context = p_context;} \
+
+#define END_DECLARE_DELEGATE(name) \
+		private: \
+		variant m_var; \
+		QSqlDatabase *m_db; \
+		int m_session_id = -1; \
+		void **m_context; \
+}; \
 
 namespace AE {
 
 //SessionTime
-class SessionTimeDelegate: public CalcVarDelegateBase {
-public:
-	SessionTimeDelegate(QSqlDatabase *p_db = 0) : CalcVarDelegateBase(), m_db(p_db) {}
-	std::string typeStr() const {return "Numeric";}
-	std::string varName() const {return "%st";}
-	std::string varAlias() const {return "SessionTime";}
-	variant var() const {return m_var;}
-	void refresh() {
-		QSqlQuery q("", *m_db);
-		q.prepare(QString("SELECT sum(%1) FROM %2 WHERE %3 = ("
-				"SELECT %3 from (SELECT %3, max(%4) FROM %2)"
-				")")
-				.arg(f_actTime)
-				.arg(t_actions)
-				.arg(f_session_id)
-				.arg(f_time)
-		);
-		EXEC_AND_REPORT_COND;
-		if (q.first()) {
-			m_var = fromQVariant(q.value(0));
-		}
+BEGIN_DECLARE_DELEGATE(SessionTimeDelegate, "%st", "SessionTime", "Numeric");
+void refresh(const variant &) {
+	QSqlQuery q("", *m_db);
+	q.prepare(QString("SELECT sum(%1) FROM %2 WHERE %3 = ("
+			"SELECT %3 from (SELECT %3, max(%4) FROM %2)"
+			")")
+			.arg(f_actTime)
+			.arg(t_actions)
+			.arg(f_session_id)
+			.arg(f_time)
+	);
+	EXEC_AND_REPORT_COND;
+	if (q.first()) {
+		m_var = fromQVariant(q.value(0));
 	}
-private:
-	variant m_var;
-	QSqlDatabase *m_db;
-	int m_session_id = -1;
-};
-class ActionTimeDelegate: public CalcVarDelegateBase {
-public:
-	ActionTimeDelegate(QSqlDatabase *p_db = 0) : CalcVarDelegateBase(), m_db(p_db) {
-		if (p_db) {
-
-		}
-		m_var = 3;
+}
+END_DECLARE_DELEGATE(SessionTimeDelegate)
+BEGIN_DECLARE_DELEGATE(ActionTimeDelegate, "%at", "ActionTime", "Numeric");
+void refresh(const variant &) {
+	QSqlQuery q("", *m_db);
+	q.prepare(QString("SELECT MAX(%1),%2 FROM %3")
+			.arg(f_time)
+			.arg(f_actTime)
+			.arg(t_actions)
+			.arg(f_session_id)
+	);
+	EXEC_AND_REPORT_COND;
+	if (q.first()) {
+		QVariant var = q.value(1);
+		m_var = fromQVariant(var);
 	}
-	std::string typeStr() const {return "Numeric";}
-	std::string varName() const {return "%at";}
-	std::string varAlias() const {return "ActionTime";}
-	variant var() const {return m_var;}
-	void refresh() {
-		QSqlQuery q("", *m_db);
-		q.prepare(QString("SELECT MAX(%1),%2 FROM %3")
-				.arg(f_time)
-				.arg(f_actTime)
-				.arg(t_actions));
-		EXEC_AND_REPORT_COND;
-		if (q.first()) {
-			QVariant var = q.value(1);
-			m_var = fromQVariant(var);
-		}
+}
+END_DECLARE_DELEGATE(ActionTimeDelegate)
+BEGIN_DECLARE_DELEGATE(AhivementsCount, "$", "AchivementsCount", "Achivements");
+void refresh(const variant &p_id) {
+	QSqlQuery q("", *m_db);
+	int id = p_id.toInt();
+	q.prepare(QString("SELECT COUNT(%1) FROM %2 WHERE %3 = ?")
+			.arg(f_id)
+			.arg(t_achivements_done)
+			.arg(f_ach_id)
+	);
+	q.bindValue(0, id);
+	EXEC_AND_REPORT_COND;
+	if (q.first()) {
+		QVariant var = q.value(0);
+		m_var = fromQVariant(var);
 	}
-private:
-	variant m_var;
-	QSqlDatabase *m_db;
-	int m_session_id = -1;
-};
+}
+END_DECLARE_DELEGATE(AhivementsCount)
 
 class DCDB : public DelegateContainer {
 public:
@@ -85,6 +96,7 @@ public:
 
 		ADD_DELEGATE(SessionTimeDelegate);
 		ADD_DELEGATE(ActionTimeDelegate);
+		ADD_DELEGATE(AhivementsCount);
 	}
 
 private:

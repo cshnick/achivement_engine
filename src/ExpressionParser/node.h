@@ -19,6 +19,7 @@ public:
                 NotExpression,
                 Atom,
                 Identifier,
+				AchCount,
                 Operator,
                 Punctuator,
                 Number

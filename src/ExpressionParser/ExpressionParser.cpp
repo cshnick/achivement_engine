@@ -10,25 +10,8 @@ Node *ExpressionParser::parse(const QString &expr)
     pos = 0;
 
     Node *node = new Node(Node::Root);
-    addChild(node, parseCompExpression());
+    addChild(node, parseOrExpression());
     return node;
-}
-
-Node *ExpressionParser::parseCompExpression()
-{
-    Node *childNode = parseOrExpression();
-    QString tok;
-    if (matchTokens("<=|>=|<|>|!=|==", tok)) {
-        Node *node = new Node(Node::CompExpression);
-        addChild(node, childNode);
-        while (matchTokens("<=|>=|<|>|!=|==", tok)) {
-            addToken(node, tok, Node::Operator);
-            addChild(node, parseOrExpression());
-        }
-        return node;
-    } else {
-        return childNode;
-    }
 }
 
 Node *ExpressionParser::parseOrExpression()
@@ -49,12 +32,29 @@ Node *ExpressionParser::parseOrExpression()
 
 Node *ExpressionParser::parseAndExpression()
 {
-    Node *childNode = parseAddExpression();
+    Node *childNode = parseCompExpression();
     if (matchToken("&&")) {
         Node *node = new Node(Node::AndExpression);
         addChild(node, childNode);
         while (matchToken("&&")) {
             addToken(node, "&&", Node::Operator);
+            addChild(node, parseCompExpression());
+        }
+        return node;
+    } else {
+        return childNode;
+    }
+}
+
+Node *ExpressionParser::parseCompExpression()
+{
+    Node *childNode = parseAddExpression();
+    QString tok;
+    if (matchTokens("<=|>=|<|>|!=|==", tok)) {
+        Node *node = new Node(Node::CompExpression);
+        addChild(node, childNode);
+        while (matchTokens("<=|>=|<|>|!=|==", tok)) {
+            addToken(node, tok, Node::Operator);
             addChild(node, parseAddExpression());
         }
         return node;
@@ -138,6 +138,17 @@ Node *ExpressionParser::parseIdentifier()
         }
         str = in.mid(startPos, pos - startPos);
         res = str;
+    } else if (in[pos] == '$') {
+    	if (!in[++pos].isNumber()) {
+    		pos--;
+    		return 0;
+    	}
+    	while (pos < in.length() && (in[pos].isNumber())) {
+    		++pos;
+    	}
+    	str = in.mid(startPos, pos - startPos);
+    	res = str;
+    	ndtype = Node::AchCount;
     } else if (in[pos].isNumber()) {
         while (pos < in.length() && in[pos].isNumber()) {
             ++pos;

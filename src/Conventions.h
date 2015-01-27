@@ -33,11 +33,11 @@
 		} \
 		} \
 		if (!res) { \
-			SQL_ERR( "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(exQuery) ); \
+			SQL_ERR( "last error: %s, executed query: %s; ", qPrintable(q.lastError().text()), qPrintable(exQuery) ); \
 		} else { \
-			SQL_DEBUG("Executed: %s\n", qPrintable(exQuery)); \
+			SQL_DEBUG("Executed: %s; ", qPrintable(exQuery)); \
 		} \
-		SQL_DEBUG("Query length: %d\n", msecs); \
+		printf("Query length: %d\n", msecs); \
 
 #define STAT_IF_VERBOSE \
 		if (VERBOSE) { \
@@ -67,6 +67,7 @@ static const QString t_actions = "Actions";
 static const QString t_achivements_list = "AchivementsList";
 static const QString t_achivements_done = "AchivementsDone";
 static const QString f_id = "id";
+static const QString f_ach_id = "AchivementId";
 static const QString f_start = "Start";
 static const QString f_finish = "Finish";
 static const QString f_time = "Time";
