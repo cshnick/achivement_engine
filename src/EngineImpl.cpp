@@ -15,7 +15,7 @@
 #include "ExpressionParser.h"
 
 #ifdef ENABLE_TESTS
-static QDateTime g_fakeCurrentTime = QDateTime::currentDateTime().addSecs(-60);
+extern QDateTime g_fakeCurrentTime;
 #endif //ENABLE_TESTS
 
 typedef QVariant (*qv_func_t) (QVariant v1, QVariant v2);
@@ -484,7 +484,7 @@ public:
 
 	static QDateTime currentTime() {
 #ifdef ENABLE_TESTS
-		qsrand(g_fakeCurrentTime.toMSecsSinceEpoch());
+//		qsrand(g_fakeCurrentTime.toMSecsSinceEpoch());
 		g_fakeCurrentTime = g_fakeCurrentTime.addSecs(qrand() % 60);
 		return g_fakeCurrentTime;
 #else

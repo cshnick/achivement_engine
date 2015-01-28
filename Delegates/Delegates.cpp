@@ -79,6 +79,76 @@ void refresh(const variant &p_id) {
 	}
 }
 END_DECLARE_DELEGATE(AhivementsCount)
+BEGIN_DECLARE_DELEGATE(AllTimeSpent, "%spTime", "SpentTime", "Statistics");
+void refresh(const variant &) {
+	QSqlQuery q("", *m_db);
+	q.prepare(QString("SELECT SUM(%1) FROM %2")
+			.arg(f_actTime)
+			.arg(t_actions)
+	);
+	EXEC_AND_REPORT_COND;
+	if (q.first()) {
+		QVariant var = q.value(0);
+		if (!var.isValid()) {
+			var = QVariant(0);
+		}
+		m_var = fromQVariant(var);
+	}
+}
+END_DECLARE_DELEGATE(AllTimeSpent)
+BEGIN_DECLARE_DELEGATE(ActionsCount, "%aCount", "ActionsCount", "Statistics");
+void refresh(const variant &) {
+	QSqlQuery q("", *m_db);
+	q.prepare(QString("SELECT COUNT(%1) FROM %2")
+			.arg(f_actTime)
+			.arg(t_actions)
+	);
+	EXEC_AND_REPORT_COND;
+	if (q.first()) {
+		QVariant var = q.value(0);
+		if (!var.isValid()) {
+			var = QVariant(0);
+		}
+		m_var = fromQVariant(var);
+	}
+}
+END_DECLARE_DELEGATE(ActionsCount)
+BEGIN_DECLARE_DELEGATE(TrueActionsCount, "%taCount", "TrueActionsCount", "Statistics");
+void refresh(const variant &) {
+	QSqlQuery q("", *m_db);
+	q.prepare(QString("SELECT COUNT(%1) FROM %2 WHERE %3 > 0")
+			.arg(f_actTime)
+			.arg(t_actions)
+			.arg(QString::fromStdString(f_success))
+	);
+	EXEC_AND_REPORT_COND;
+	if (q.first()) {
+		QVariant var = q.value(0);
+		if (!var.isValid()) {
+			var = QVariant(0);
+		}
+		m_var = fromQVariant(var);
+	}
+}
+END_DECLARE_DELEGATE(TrueActionsCount)
+BEGIN_DECLARE_DELEGATE(FalseActionsCount, "%faCount", "FalseActionsCount", "Statistics");
+void refresh(const variant &) {
+	QSqlQuery q("", *m_db);
+	q.prepare(QString("SELECT COUNT(%1) FROM %2 WHERE %3 = 0")
+			.arg(f_actTime)
+			.arg(t_actions)
+			.arg(QString::fromStdString(f_success))
+	);
+	EXEC_AND_REPORT_COND;
+	if (q.first()) {
+		QVariant var = q.value(0);
+		if (!var.isValid()) {
+			var = QVariant(0);
+		}
+		m_var = fromQVariant(var);
+	}
+}
+END_DECLARE_DELEGATE(FalseActionCount)
 
 class DCDB : public DelegateContainer {
 public:
@@ -99,6 +169,10 @@ public:
 		ADD_DELEGATE(SessionTimeDelegate);
 		ADD_DELEGATE(ActionTimeDelegate);
 		ADD_DELEGATE(AhivementsCount);
+		ADD_DELEGATE(AllTimeSpent);
+		ADD_DELEGATE(ActionsCount);
+		ADD_DELEGATE(TrueActionsCount);
+		ADD_DELEGATE(FalseActionsCount);
 	}
 
 private:

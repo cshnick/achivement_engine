@@ -11,6 +11,8 @@
 
 #include <QtCore>
 
+QDateTime g_fakeCurrentTime = QDateTime::currentDateTime();
+
 static void getWords(std::vector<std::string> &words) {
 	std::string line;
 	std::ifstream myfile ("../engine/files/word_set");
@@ -36,10 +38,6 @@ std::string getRandomWord() {
 
 using namespace AE;
 
-static std::string f_statement = "Statement";
-static std::string f_result = "Result";
-static std::string f_success = "Success";
-
 action_params genAction() {
 	qsrand(QDateTime::currentDateTime().toMSecsSinceEpoch());
 	action_params res;
@@ -58,9 +56,9 @@ action_params genAction() {
 void autoTest() {
 	//1000 sessions
 	EngineImpl *e = new EngineImpl();
-	for (int i = 0; i < 50; i++) {
+	for (int i = 0; i < 20; i++) {
 		e->begin();
-		for (int j = 0; j < 50; j++) {
+		for (int j = 0; j < 20; j++) {
 			e->addAction(genAction());
 		}
 		e->end();
@@ -96,7 +94,7 @@ void smallTest() {
 int main (int argc, char ** argv)
 {
 	DEBUG("Main start\n");
-	autoTest();
+	smallTest();
 	DEBUG("Main finished\n");
 	return 0;
 }

@@ -41,7 +41,7 @@
 		} else { \
 			SQL_DEBUG("Executed: %s; ", qPrintable(exQuery)); \
 		} \
-		dbg_fprintf("Query length: %d\n", msecs); \
+		dbg_fprintf(stdout, "", "Query length: %d\n", msecs); \
 
 #define STAT_IF_VERBOSE \
 		if (VERBOSE) { \
@@ -83,5 +83,9 @@ static const QString f_description = "Description";
 static const QString f_condition = "Condition";
 static const QString tag_element = "achivement";
 static const QString tag_lastId = "lastId";
+
+static std::string f_statement = "Statement";
+static std::string f_result = "Result";
+static std::string f_success = "Success";
 
 #endif //CONVENTIONS_H
