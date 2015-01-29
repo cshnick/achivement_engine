@@ -3,11 +3,13 @@
 
 #include <string>
 #include <map>
+#include <list>
 
 namespace AE {
 class variant;
 }
 typedef std::map<std::string, AE::variant> action_params;
+typedef std::list<action_params> achievements_params;
 
 namespace AE {
 
@@ -82,6 +84,7 @@ public:
 	virtual void begin() = 0;
 	virtual void end() = 0;
 	virtual void addAction(const action_params &p_actions) = 0;
+	virtual achievements_params take_ach_params() = 0;
 };
 
 } //namespace AE

@@ -17,6 +17,7 @@ set (HEADERS
 )
 set (SOURCES
   Delegates.cpp
+  ../src/Conventions.cpp
 )
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=internal" -g -O0)

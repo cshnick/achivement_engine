@@ -34,6 +34,10 @@ public:
 		m_session_id(-1)
 	{
 		PRINT_IF_VERBOSE("Initializing database. Setting database name: %s\n", qPrintable(g_dbName));
+		const char lc[] = "UTF-8";
+		DEBUG("Setting locale: %s\n", lc);
+		QTextCodec::setCodecForLocale(QTextCodec::codecForName(lc));
+		QTextCodec::setCodecForCStrings(QTextCodec::codecForName(lc));
 
 		m_db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
 		m_db.setDatabaseName(g_achivements_path + "/" + g_dbName);
@@ -242,6 +246,7 @@ public:
 	void addAchivement(const QVariantMap &m) {
 		PRINT_IF_VERBOSE("Reached an achivement: %s!\n", qPrintable(m.value(f_name).toString()));
 		addAchivementToDb(m);
+		m_instant_achievements << m.value(f_id).toInt();
 	}
 	void addAchivementToDb(const QVariantMap &m) {
 		QSqlQuery q("", m_db);
@@ -370,7 +375,7 @@ public:
 		//check previous time
 		int result = -1;
 		q.prepare(QString("SELECT MAX(%1) FROM %2 WHERE %3 = ?")
-				.arg(f_actTime)
+				.arg(f_time)
 				.arg(t_actions)
 				.arg(f_session_id)
 		);
@@ -407,25 +412,37 @@ public:
 		g_fakeCurrentTime = g_fakeCurrentTime.addSecs(qrand() % 60);
 		return g_fakeCurrentTime;
 #else
+		PRINT_IF_VERBOSE("Real current time used...\n");
 		return QDateTime::currentDateTime();
 #endif
 	}
 
+	achievements_params take_ach_params() {
+		achievements_params m;
+
+		return m;
+	}
+
 private:
-	void addDefaultTables() {
+	void dropTables() {
 		QSqlQuery q("", m_db);
-		if (DROP_TABLES) {
-			QString tables = QString("%1,%2,%3,%4")
+		QString tables = QString("%1,%2,%3,%4")
 					.arg(t_sessions)
 					.arg(t_actions)
 					.arg(t_achivements_list)
 					.arg(t_achivements_done);
-			QStringList tl = tables.split(',');
-			for (int i = 0; i < tl.size(); i++) {
-				q.prepare(QString("DROP TABLE %1")
-						.arg(tl.at(i)));
-				EXEC_AND_REPORT_COND;
-			}
+		QStringList tl = tables.split(',');
+		for (int i = 0; i < tl.size(); i++) {
+			q.prepare(QString("DROP TABLE %1")
+					.arg(tl.at(i)));
+			EXEC_AND_REPORT_COND;
+		}
+	}
+
+	void addDefaultTables() {
+		QSqlQuery q("", m_db);
+		if (DROP_TABLES) {
+			dropTables();
 		}
 		if (!m_db.tables().contains(t_sessions)) {
 			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 DATETIME)")
@@ -590,6 +607,7 @@ private:
 	int m_session_id;
 	QList<QVariantMap> m_achivements;
 	QMap<QString, CalcVarDelegateBase*> m_calcVars;
+	QList<int> m_instant_achievements;
 };
 
 EngineImpl::EngineImpl()
@@ -608,9 +626,15 @@ void EngineImpl::addAction(const action_params &p_actions)
 {
 	p->addAction(p_actions);
 }
+achievements_params EngineImpl::take_ach_params() {
+	return p->take_ach_params();
+}
 EngineImpl::~EngineImpl()
 {
 	if (p) delete p;
+}
+void EngineImpl::dropTables() {
+	p->dropTables();
 }
 
 } //namespace AE

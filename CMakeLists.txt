@@ -25,6 +25,7 @@ set (SOURCES
   src/EngineImpl.cpp
   src/ExpressionParser/node.cpp
   src/ExpressionParser/ExpressionParser.cpp
+  src/Conventions.cpp
 )
 set (PYTHON_SRC
   src/EngineImpl_wrap.cxx
@@ -68,7 +69,7 @@ if (NOT ${CMAKE_BUILD_EXECUTABLE})
 	   COMMAND /usr/bin/touch /home/ilia/Documents/script/python/achivement_engine/__init__.py
 	   COMMAND /usr/bin/mkdir -p /home/ilia/Documents/script/python/achivement_engine/Delegates
 	   COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/Delegates/libvar_calcs.so /home/ilia/Documents/script/python/achivement_engine/Delegates
-	   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/EngineImpl.i
+	   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/EngineImpl.i ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 endif (NOT ${CMAKE_BUILD_EXECUTABLE})
 

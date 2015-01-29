@@ -35,7 +35,11 @@ public:
 	void begin();
 	void end();
 	void addAction(const action_params &p_actions);
+	achievements_params take_ach_params();
 	~EngineImpl();
+
+public:
+	void dropTables();
 
 private:
 	friend class EngineImplPrivate;
