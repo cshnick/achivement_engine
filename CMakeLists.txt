@@ -14,8 +14,8 @@ src
 src/ExpressionParser
 )
 add_definitions (
-	-DENABLE_TESTS
-	#	-DNDEBUG
+	#-DENABLE_TESTS
+	# -DNDEBUG
 )
 
 set (HEADERS
@@ -30,7 +30,7 @@ set (PYTHON_SRC
   src/EngineImpl_wrap.cxx
 )
 
-set (CMAKE_BUILD_EXECUTABLE TRUE)
+set (CMAKE_BUILD_EXECUTABLE False)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden" -g -O0)
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden" -g -O0)
@@ -66,6 +66,8 @@ if (NOT ${CMAKE_BUILD_EXECUTABLE})
 	   COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/libAeCore.so /home/ilia/Documents/script/python/achivement_engine/_AeCore.so
 	   COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/AeCore.py /home/ilia/Documents/script/python/achivement_engine
 	   COMMAND /usr/bin/touch /home/ilia/Documents/script/python/achivement_engine/__init__.py
+	   COMMAND /usr/bin/mkdir -p /home/ilia/Documents/script/python/achivement_engine/Delegates
+	   COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/Delegates/libvar_calcs.so /home/ilia/Documents/script/python/achivement_engine/Delegates
 	   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/EngineImpl.i
 )
 endif (NOT ${CMAKE_BUILD_EXECUTABLE})

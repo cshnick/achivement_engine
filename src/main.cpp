@@ -72,23 +72,23 @@ void smallTest() {
 	QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 
-	action_params params_map;
-	params_map["string_val"] = variant(getRandomWord());
-	params_map["int_val"] = variant(1);
-	params_map["float_val"] = variant(100.65123f);
-	params_map["datetime_val"] = variant(dateTime(215000));
-
-	action_params params_map1;
-	params_map1["string_val"] = variant(getRandomWord());
-	params_map1["int_val"] = variant(1);
-	params_map1["float_val"] = variant(100.65123f);
-	params_map1["datetime_val"] = variant(dateTime(215000));
+//	action_params params_map;
+//	params_map["string_val"] = variant(getRandomWord());
+//	params_map["int_val"] = variant(1);
+//	params_map["float_val"] = variant(100.65123f);
+//	params_map["datetime_val"] = variant(dateTime(215000));
+//
+//	action_params params_map1;
+//	params_map1["string_val"] = variant(getRandomWord());
+//	params_map1["int_val"] = variant(1);
+//	params_map1["float_val"] = variant(100.65123f);
+//	params_map1["datetime_val"] = variant(dateTime(215000));
 
 	Engine *e = new EngineImpl();
-	e->begin();
-	e->addAction(params_map);
-	e->addAction(params_map1);
-	e->end();
+//	e->begin();
+//	e->addAction(params_map);
+//	e->addAction(params_map1);
+//	e->end();
 }
 
 int main (int argc, char ** argv)
