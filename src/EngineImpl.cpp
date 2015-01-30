@@ -246,7 +246,7 @@ public:
 	void addAchivement(const QVariantMap &m) {
 		PRINT_IF_VERBOSE("Reached an achivement: %s!\n", qPrintable(m.value(f_name).toString()));
 		addAchivementToDb(m);
-		m_instant_achievements << m.value(f_id).toInt();
+		m_instant_achievements << m;
 	}
 	void addAchivementToDb(const QVariantMap &m) {
 		QSqlQuery q("", m_db);
@@ -418,12 +418,29 @@ public:
 	}
 
 	achievements_params take_ach_params() {
-		achievements_params m;
+		achievements_params apl;
 
-		return m;
+		for (int i = 0; i < m_instant_achievements.count(); i++) {
+			QVariantMap m = m_instant_achievements.at(i);
+
+			action_params ap = toActionParams(m);
+			apl.push_back(ap);
+			PRINT_IF_VERBOSE("Reporting std string: %s\n", ap[f_description.toStdString()].toString().c_str());
+		}
+		m_instant_achievements.clear();
+		return apl;
 	}
 
 private:
+	action_params toActionParams(const QVariantMap &m) {
+		action_params res;
+		for (auto iter = m.begin(); iter != m.end(); ++iter) {
+			res[iter.key().toStdString()] = fromQVariant(iter.value());
+		}
+
+		return res;
+	}
+
 	void dropTables() {
 		QSqlQuery q("", m_db);
 		QString tables = QString("%1,%2,%3,%4")
@@ -607,7 +624,7 @@ private:
 	int m_session_id;
 	QList<QVariantMap> m_achivements;
 	QMap<QString, CalcVarDelegateBase*> m_calcVars;
-	QList<int> m_instant_achievements;
+	QList<QVariantMap> m_instant_achievements;
 };
 
 EngineImpl::EngineImpl()

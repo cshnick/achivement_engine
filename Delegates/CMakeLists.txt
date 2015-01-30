@@ -10,7 +10,8 @@ include_directories(
 /usr/include
 )
 add_definitions (
-	-DENABLE_TESTS
+	#-DENABLE_TESTS
+	-DNDEBUG
 )
 
 set (HEADERS

@@ -3,6 +3,7 @@
 
 #include <QtCore>
 #include "Engine.h"
+#include "unistd.h"
 
 #ifndef NDEBUG
 #define dbg_fprintf(stream, message, ...) fprintf(stream, message __VA_ARGS__)
