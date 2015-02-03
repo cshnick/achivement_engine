@@ -55,7 +55,7 @@ public:
 		if (DELEGATES_PATH) {
 			sprintf(dpath, "%s/libvar_calcs.so", DELEGATES_PATH);
 		} else {
-			sprintf(dpath, "./Delegates/libvar_calcs.so");
+			sprintf(dpath, "./Calcs/libvar_calcs.so");
 		}
 		handle = dlopen(dpath, RTLD_LAZY);
 		if (!handle) {

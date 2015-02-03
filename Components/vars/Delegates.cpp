@@ -189,6 +189,7 @@ public:
 		ADD_DELEGATE(ActionsCount);
 		ADD_DELEGATE(TrueActionsCount);
 		ADD_DELEGATE(FalseActionsCount);
+		
 	}
 
 private:

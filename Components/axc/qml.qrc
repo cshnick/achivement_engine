@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/main.qml</file>
+        <file>qml/Circle.qml</file>
+        <file>qml/CircleButton.qml</file>
+        <file>res/achievements.svg</file>
+    </qresource>
+</RCC>

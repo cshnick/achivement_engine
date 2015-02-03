@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.8.11)
+
+add_subdirectory(ae)
+add_subdirectory(axc)
+add_subdirectory(vars)
+#add_subdirectory(tests)
