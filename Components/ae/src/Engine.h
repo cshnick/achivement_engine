@@ -25,8 +25,8 @@ class dateTime {
 public:
 	dateTime() : m_value(-1) {}
 	dateTime(int p_var) : m_value(p_var) {}
-    operator int() const {return m_value;}
-    operator long long int() const {return m_value;}
+    operator int() const {return (int)m_value;}
+    operator long long() const {return m_value;}
 private:
 	long long m_value;
 };
