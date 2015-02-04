@@ -27,9 +27,14 @@ ENDIF (NOT DEFINED QT_5_DIR)
 SET(BIN_PATH
   ${PROJECT_BINARY_DIR}/bin
 )
+IF (NOT DEFINED PYTHON_WRAPPER)
+set(PYTHON_WRAPPER TRUE)
+ENDIF (NOT DEFINED PYTHON_WRAPPER)
 
 MESSAGE("Python bindings install path: ${PYTHON_BINDINGS_INSTALL_PATH}")
 MESSAGE("Qt 5 directory: ${QT_5_DIR}")
+
+set (AeCore ${CMAKE_CURRENT_BINARY_DIR}/bin/libAeCore.so)
 
 
 add_subdirectory(Components)

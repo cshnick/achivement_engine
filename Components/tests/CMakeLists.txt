@@ -7,7 +7,6 @@ include (${QT_USE_FILE})
 include_directories(  
   .
   ${AE_SRC}
-  /usr/include/python
 )
 add_definitions (
   ${DEF_COMMON}
@@ -31,8 +30,8 @@ add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 ADD_CUSTOM_COMMAND( 
    TARGET ${PROJECT_NAME}
    POST_BUILD
-   COMMAND /usr/bin/mkdir -p ${BIN_PATH}/Calcs
-   COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME} ${BIN_PATH}/Calcs
+   COMMAND /usr/bin/mkdir -p ${BIN_PATH}
+   COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME} ${BIN_PATH}
 )
 
-target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${EXT_LIBS})
+target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${EXT_LIBS} ${AeCore})

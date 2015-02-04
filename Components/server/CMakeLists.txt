@@ -36,6 +36,7 @@ ADD_CUSTOM_COMMAND(
    POST_BUILD
    COMMAND /usr/bin/mkdir -p ${BIN_PATH}
    COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME} ${BIN_PATH}
+   COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_SOURCE_DIR}/test_content ${BIN_PATH}
 )
 
 target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${EXT_LIBS})

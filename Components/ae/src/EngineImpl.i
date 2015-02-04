@@ -1,5 +1,5 @@
  // pair.i - SWIG interface
- %module AeCore 
+ %module PyAeCore 
  %{
  #include "EngineImpl.h"
  #include <string>
