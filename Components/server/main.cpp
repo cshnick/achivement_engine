@@ -6,6 +6,40 @@
 #include <sstream>
 #include <mutex>
 
+namespace Network {
+
+void g_processor_func(IHttpRequestPtr) {
+
+}
+class RequestProcessor {
+public:
+	RequestProcessor(std::mutex *p_mtx) : m_mtx(p_mtx) {
+
+	}
+	void operator()(IHttpRequestPtr req) {
+		std::string Path = req->GetPath();
+		Path = "../text_content" + Path + (Path == "/" ? "index.html" : std::string());
+		{
+			std::stringstream Io;
+			Io << "Path: " << Path << std::endl
+					<< Http::Request::Header::Host::Name << ": "
+					<< req->GetHeaderAttr(Http::Request::Header::Host::Value) << std::endl
+					<< Http::Request::Header::Referer::Name << ": "
+					<< req->GetHeaderAttr(Http::Request::Header::Referer::Value) << std::endl;
+			std::lock_guard<std::mutex> Lock(*m_mtx);
+			std::cout << Io.str() << std::endl;
+		}
+		req->SetResponseAttr(Http::Response::Header::Server::Value, "MyTestServer");
+		req->SetResponseAttr(Http::Response::Header::ContentType::Value,
+				Http::Content::TypeFromFileName(Path));
+		req->SetResponseFile(Path);
+	}
+private:
+	std::mutex *m_mtx;
+};
+
+} //namespace Network
+
 int main()
 {
   char const SrvAddress[] = "127.0.0.1";
@@ -17,26 +51,9 @@ int main()
   try
   {
     using namespace Network;
+
     HttpServer Srv(SrvAddress, SrvPort, SrvThreadCount,
-      [&] (IHttpRequestPtr req)
-      {
-        std::string Path = req->GetPath();
-        Path = RootDir + Path + (Path == "/" ? DefaultPage : std::string());
-        {
-          std::stringstream Io;
-          Io << "Path: " << Path << std::endl
-             << Http::Request::Header::Host::Name << ": "
-                  << req->GetHeaderAttr(Http::Request::Header::Host::Value) << std::endl
-             << Http::Request::Header::Referer::Name << ": "
-                  << req->GetHeaderAttr(Http::Request::Header::Referer::Value) << std::endl;
-          std::lock_guard<std::mutex> Lock(Mtx);
-          std::cout << Io.str() << std::endl;
-        }
-        req->SetResponseAttr(Http::Response::Header::Server::Value, "MyTestServer");
-        req->SetResponseAttr(Http::Response::Header::ContentType::Value,
-                             Http::Content::TypeFromFileName(Path));
-        req->SetResponseFile(Path);
-      });
+    		RequestProcessor(&Mtx));
     std::cin.get();
   }
   catch (std::exception const &e)
