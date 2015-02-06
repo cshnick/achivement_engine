@@ -120,6 +120,14 @@ Node *ExpressionParser::parseAtom()
     }
 }
 
+//Sql expresssion
+bool ExpressionParser::matchSql() {
+	int startPos = pos;
+	QString sqmatch  = in.mid(pos, 3);
+
+	return false;
+}
+
 Node *ExpressionParser::parseIdentifier()
 {
     int startPos = pos;
@@ -138,8 +146,11 @@ Node *ExpressionParser::parseIdentifier()
         }
         str = in.mid(startPos, pos - startPos);
         res = str;
+
     } else if (in[pos] == '$') {
     	if (!in[++pos].isNumber()) {
+
+
     		pos--;
     		return 0;
     	}

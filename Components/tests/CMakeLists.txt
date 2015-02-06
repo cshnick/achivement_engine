@@ -4,6 +4,8 @@ cmake_minimum_required(VERSION 2.8.11)
 find_package(Qt4 COMPONENTS QtCore QtXml QtSql REQUIRED)
 include (${QT_USE_FILE})
 
+SET(db_test db_test)
+
 include_directories(  
   .
   ${AE_SRC}
@@ -25,6 +27,7 @@ set (EXT_LIBS
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+add_executable(${db_test} ${db_test}.cpp)
 
 #copy to binary directory
 ADD_CUSTOM_COMMAND( 
@@ -33,5 +36,12 @@ ADD_CUSTOM_COMMAND(
    COMMAND /usr/bin/mkdir -p ${BIN_PATH}
    COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME} ${BIN_PATH}
 )
+ADD_CUSTOM_COMMAND( 
+   TARGET ${db_test}
+   POST_BUILD
+   COMMAND /usr/bin/mkdir -p ${BIN_PATH}
+   COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/${db_test} ${BIN_PATH}
+)
 
 target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${EXT_LIBS} ${AeCore})
+target_link_libraries(${db_test} ${QT_LIBRARIES} ${EXT_LIBS} ${AeCore})

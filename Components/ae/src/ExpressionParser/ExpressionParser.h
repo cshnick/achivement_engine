@@ -21,6 +21,7 @@ private:
     void addToken(Node *parent, const QString &str, Node::Type type);
     bool matchToken(const QString &str) const;
     bool matchTokens(const QString &str, QString &tok) const;
+    bool matchSql();
 
     QString in;
     int pos;
