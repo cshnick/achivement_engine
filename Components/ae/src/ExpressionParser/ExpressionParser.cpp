@@ -81,10 +81,10 @@ Node *ExpressionParser::parseAddExpression() {
 Node *ExpressionParser::parseMulExpression() {
     Node *childNode = parseNotExpression();
     QString tok;
-    if (matchTokens("*|/", tok)) {
+    if (matchTokens("*|/|%", tok)) {
         Node *node = new Node(Node::MulExpression);
         addChild(node, childNode);
-        while (matchTokens("*|/", tok)) {
+        while (matchTokens("*|/|%", tok)) {
             addToken(node, tok, Node::Operator);
             addChild(node, parseNotExpression());
         }
@@ -123,8 +123,11 @@ Node *ExpressionParser::parseAtom()
 //Sql expresssion
 bool ExpressionParser::matchSql() {
 	int startPos = pos;
-	QString sqmatch  = in.mid(pos, 3);
-
+	QString sqmatch  = in.mid(pos, 5);
+	if (!sqmatch.compare("$sql{")) {
+		pos += 5;
+		return true;
+	}
 	return false;
 }
 
@@ -136,33 +139,32 @@ Node *ExpressionParser::parseIdentifier()
     QString str;
     QVariant res;
     //Variables start from "%"
-    if (in[pos] == '%') {
-        if (!in[++pos].isLetterOrNumber()) {
-            pos--;
-            return 0;
-        }
-        while (pos < in.length() && (in[pos].isLetterOrNumber())) {
-            ++pos;
-        }
-        str = in.mid(startPos, pos - startPos);
-        res = str;
-
-    } else if (in[pos] == '$') {
-    	if (!in[++pos].isNumber()) {
-
-
-    		pos--;
-    		return 0;
-    	}
-    	while (pos < in.length() && (in[pos].isNumber())) {
+    if (in[pos] == '$') {
+    	if (in[pos + 1].isNumber()) {
     		++pos;
+    		while (pos < in.length() && (in[pos].isNumber())) {
+    			++pos;
+    		}
+    		ndtype = Node::AchCount;
+    	} else if (in[pos + 1].isLetter()) {
+    		++pos;
+    		while (pos < in.length() && (in[pos].isLetterOrNumber())) {
+    			++pos;
+    		}
+    		ndtype = Node::Identifier;
+    	} else if (matchSql()) {
+    		while (pos < in.length() && in[pos] != '}') {
+    			++pos;
+    		}
+    		++pos; //include '}'
+    		ndtype = Node::SqlExpression;
     	}
     	str = in.mid(startPos, pos - startPos);
     	res = str;
-    	ndtype = Node::AchCount;
+
     } else if (in[pos].isNumber()) {
-        while (pos < in.length() && in[pos].isNumber()) {
-            ++pos;
+    	while (pos < in.length() && in[pos].isNumber()) {
+    		++pos;
         }
         str = in.mid(startPos, pos - startPos);
         res = str.toInt();

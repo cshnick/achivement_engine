@@ -46,7 +46,7 @@ action_params genAction() {
 
     int ri = num1*num2 + (num1 > 5 ? 1: 0);
 
-	res[f_statement] = variant(QString("%1x%2").arg(num1).arg(num2).toStdString());
+	res[f_statement] = variant(QString("%1x%2=").arg(num1).arg(num2).toStdString());
 	res[f_result] = variant(QString("%1").arg(ri).toStdString());
 	res[f_success] = variant(num1*num2==ri);
 
@@ -56,9 +56,9 @@ action_params genAction() {
 void autoTest() {
 	//1000 sessions
 	EngineImpl *e = new EngineImpl();
-	for (int i = 0; i < 20; i++) {
+	for (int i = 0; i < 2; i++) {
 		e->begin();
-		for (int j = 0; j < 20; j++) {
+		for (int j = 0; j < 10; j++) {
 			e->addAction(genAction());
 		}
 		e->end();
@@ -94,7 +94,7 @@ void smallTest() {
 int main (int argc, char ** argv)
 {
 	DEBUG("Main start\n");
-	smallTest();
+	autoTest();
 	DEBUG("Main finished\n");
 	return 0;
 }

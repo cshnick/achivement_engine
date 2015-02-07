@@ -17,6 +17,7 @@ public:
                 MulExpression,
                 DivExpression,
                 NotExpression,
+				SqlExpression,
                 Atom,
                 Identifier,
 				AchCount,

@@ -27,7 +27,7 @@
 namespace AE {
 
 //SessionTime
-BEGIN_DECLARE_DELEGATE(SessionTimeDelegate, "%st", "SessionTime", "Numeric");
+BEGIN_DECLARE_DELEGATE(SessionTimeDelegate, "$st", "SessionTime", "Numeric");
 void refresh(const variant &) {
 	QSqlQuery q("", *m_db);
 	q.prepare(QString("SELECT sum(%1) FROM %2 WHERE %3 = ("
@@ -44,7 +44,7 @@ void refresh(const variant &) {
 	}
 }
 END_DECLARE_DELEGATE(SessionTimeDelegate)
-BEGIN_DECLARE_DELEGATE(ActionTimeDelegate, "%at", "ActionTime", "Numeric");
+BEGIN_DECLARE_DELEGATE(ActionTimeDelegate, "$at", "ActionTime", "Numeric");
 void refresh(const variant &) {
 	QSqlQuery q("", *m_db);
 	q.prepare(QString("SELECT MAX(%1),%2 FROM %3")
@@ -59,7 +59,7 @@ void refresh(const variant &) {
 	}
 }
 END_DECLARE_DELEGATE(ActionTimeDelegate)
-BEGIN_DECLARE_DELEGATE(ActionRightDelegate, "%aright", "ActionRight", "Numeric");
+BEGIN_DECLARE_DELEGATE(ActionRightDelegate, "$aright", "ActionRight", "Numeric");
 void refresh(const variant &) {
 	QSqlQuery q("", *m_db);
 	q.prepare(QString("SELECT MAX(%1),%2 FROM %3")
@@ -94,7 +94,7 @@ void refresh(const variant &p_id) {
 	}
 }
 END_DECLARE_DELEGATE(AhivementsCount)
-BEGIN_DECLARE_DELEGATE(AllTimeSpent, "%spTime", "SpentTime", "Statistics");
+BEGIN_DECLARE_DELEGATE(AllTimeSpent, "$spTime", "SpentTime", "Statistics");
 void refresh(const variant &) {
 	QSqlQuery q("", *m_db);
 	q.prepare(QString("SELECT SUM(%1) FROM %2")
@@ -111,7 +111,7 @@ void refresh(const variant &) {
 	}
 }
 END_DECLARE_DELEGATE(AllTimeSpent)
-BEGIN_DECLARE_DELEGATE(ActionsCount, "%aCount", "ActionsCount", "Statistics");
+BEGIN_DECLARE_DELEGATE(ActionsCount, "$aCount", "ActionsCount", "Statistics");
 void refresh(const variant &) {
 	QSqlQuery q("", *m_db);
 	q.prepare(QString("SELECT COUNT(%1) FROM %2")
@@ -128,7 +128,7 @@ void refresh(const variant &) {
 	}
 }
 END_DECLARE_DELEGATE(ActionsCount)
-BEGIN_DECLARE_DELEGATE(TrueActionsCount, "%taCount", "TrueActionsCount", "Statistics");
+BEGIN_DECLARE_DELEGATE(TrueActionsCount, "$taCount", "TrueActionsCount", "Statistics");
 void refresh(const variant &) {
 	QSqlQuery q("", *m_db);
 	q.prepare(QString("SELECT COUNT(%1) FROM %2 WHERE %3 > 0")
@@ -143,10 +143,11 @@ void refresh(const variant &) {
 			var = QVariant(0);
 		}
 		m_var = fromQVariant(var);
+		PRINT_IF_VERBOSE("Calculated %s = %d\n", varName().c_str(), var.toInt());
 	}
 }
 END_DECLARE_DELEGATE(TrueActionsCount)
-BEGIN_DECLARE_DELEGATE(FalseActionsCount, "%faCount", "FalseActionsCount", "Statistics");
+BEGIN_DECLARE_DELEGATE(FalseActionsCount, "$faCount", "FalseActionsCount", "Statistics");
 void refresh(const variant &) {
 	QSqlQuery q("", *m_db);
 	q.prepare(QString("SELECT COUNT(%1) FROM %2 WHERE %3 = 0")

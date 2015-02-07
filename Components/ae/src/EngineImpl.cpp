@@ -16,7 +16,7 @@
 #include "unistd.h"
 
 #ifdef ENABLE_TESTS
-extern QDateTime g_fakeCurrentTime;
+static QDateTime g_fakeCurrentTime = QDateTime::currentDateTime();
 #endif //ENABLE_TESTS
 
 #define DELEGATES_PATH getenv("AE_DELEGATES_PATH")
@@ -24,8 +24,6 @@ extern QDateTime g_fakeCurrentTime;
 typedef QVariant (*qv_func_t) (QVariant v1, QVariant v2);
 
 namespace AE {
-
-
 
 class EngineImplPrivate {
 public:
@@ -237,6 +235,8 @@ public:
 	    	return [](QVariant v1, QVariant v2) -> QVariant {return v1.toInt() * v2.toInt();};
 	    } else if (op == "/") {
 	    	return [](QVariant v1, QVariant v2) -> QVariant {return v1.toInt() / v2.toInt();};
+	    } else if (op == "%") {
+	    	return [](QVariant v1, QVariant v2) -> QVariant {return v1.toInt() % v2.toInt();};
 	    }
 
 	    //By default return first value
@@ -409,7 +409,7 @@ public:
 	static QDateTime currentTime() {
 #ifdef ENABLE_TESTS
 //		qsrand(g_fakeCurrentTime.toMSecsSinceEpoch());
-		g_fakeCurrentTime = g_fakeCurrentTime.addSecs(qrand() % 60);
+		g_fakeCurrentTime = g_fakeCurrentTime.addSecs(qrand() % 20);
 		return g_fakeCurrentTime;
 #else
 		PRINT_IF_VERBOSE("Real current time used...\n");
