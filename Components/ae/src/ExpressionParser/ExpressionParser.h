@@ -22,6 +22,7 @@ private:
     bool matchToken(const QString &str) const;
     bool matchTokens(const QString &str, QString &tok) const;
     bool matchSql();
+    void heuristic_trim();
 
     QString in;
     int pos;

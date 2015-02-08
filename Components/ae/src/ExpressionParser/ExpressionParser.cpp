@@ -3,10 +3,39 @@
 #include "ExpressionParser.h"
 #include "node.h"
 
+void ExpressionParser::heuristic_trim()
+{
+	QString res;
+	bool q = false;
+	for (auto i = in.begin(); i < in.end(); ++i) {
+		QChar s = *i;
+		switch (s.unicode()) {
+		case 0x20: //space
+		case 0x0A: //new line
+			if (!q) {
+				continue;
+			}
+			break;
+		case 0x7b: //'{'
+			q = true;
+			break;
+		case 0x7d: //'}'
+			q = false;
+			break;
+		default:
+			break;
+		}
+
+		res.append(s);
+	}
+	in = res;
+}
+
 Node *ExpressionParser::parse(const QString &expr)
 {
     in = expr;
-    in.replace(" ", "");
+    heuristic_trim();
+//    in.replace(" ", "");
     pos = 0;
 
     Node *node = new Node(Node::Root);
@@ -122,7 +151,6 @@ Node *ExpressionParser::parseAtom()
 
 //Sql expresssion
 bool ExpressionParser::matchSql() {
-	int startPos = pos;
 	QString sqmatch  = in.mid(pos, 5);
 	if (!sqmatch.compare("$sql{")) {
 		pos += 5;
@@ -140,24 +168,24 @@ Node *ExpressionParser::parseIdentifier()
     QVariant res;
     //Variables start from "%"
     if (in[pos] == '$') {
-    	if (in[pos + 1].isNumber()) {
-    		++pos;
-    		while (pos < in.length() && (in[pos].isNumber())) {
+    	if (matchSql()) {
+    		while (pos < in.length() && in[pos] != '}') {
     			++pos;
     		}
-    		ndtype = Node::AchCount;
+    		++pos; //include '}'
+    		ndtype = Node::SqlExpression;
     	} else if (in[pos + 1].isLetter()) {
     		++pos;
     		while (pos < in.length() && (in[pos].isLetterOrNumber())) {
     			++pos;
     		}
     		ndtype = Node::Identifier;
-    	} else if (matchSql()) {
-    		while (pos < in.length() && in[pos] != '}') {
+    	} else if (in[pos + 1].isNumber()) {
+    		++pos;
+    		while (pos < in.length() && (in[pos].isNumber())) {
     			++pos;
     		}
-    		++pos; //include '}'
-    		ndtype = Node::SqlExpression;
+    		ndtype = Node::AchCount;
     	}
     	str = in.mid(startPos, pos - startPos);
     	res = str;

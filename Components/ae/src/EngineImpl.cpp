@@ -160,6 +160,10 @@ public:
 				result = str_op.isNull() ? var : calc(str_op)(result, var);
 //				rr;
 				break;
+			case Node::SqlExpression:
+				var = vfs(nd->str);
+				result = str_op.isNull() ? var : calc(str_op)(result, var);
+				break;
 			case Node::Punctuator:
 				break;
 			case Node::CompExpression:
@@ -180,7 +184,7 @@ public:
 		}
 		return true;
 	}
-
+	//variant for identifier
 	QVariant vfi(const QString &p_id) { //Qvariant from identifier
 		QVariant result;
 		CalcVarDelegateBase *delegate = m_calcVars.value(p_id);
@@ -194,6 +198,7 @@ public:
 
 		return result;
 	}
+	// variant for achievement count
 	QVariant vfa(const QString &p_id) {
 		QVariant result;
 		QString pp_id = p_id;
@@ -209,6 +214,19 @@ public:
 		PRINT_IF_VERBOSE("vfa for %s: %s\n", qPrintable(pIdTrimmed), printable(result));
 
 		return result;
+	}
+	//variant for sql expression
+	QVariant vfs(const QString &p_id) {
+		QString str = p_id;
+		str.remove("$sql{");
+		str.remove("}");
+		QSqlQuery q("", m_db);
+		q.prepare(str);
+		EXEC_AND_REPORT_COND;
+		if (q.first()) {
+			return q.value(0);
+		}
+		return QVariant();
 	}
 	qv_func_t calc(const QString &op) {
 	    if(op == "<") {
