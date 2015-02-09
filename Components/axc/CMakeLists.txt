@@ -4,24 +4,35 @@ project(Axc)
 set(CMAKE_PREFIX_PATH ${QT_5_DIR})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 SET (SRC_DIR "src")
+SET (HIGHLIGHTER_DIR ${SRC_DIR}/highlighter)
 include_directories(
 	.
 	${SRC_DIR}
 	${AE_SRC}
+	${HIGHLIGHTER_DIR}
 )
 SET (SRC_LIST
   ${SRC_DIR}/xmllistmodel.cpp
   ${SRC_DIR}/main.cpp
+  ${HIGHLIGHTER_DIR}/highlighter.cpp
 )
 
 SET (HEADERS
   ${SRC_DIR}/xmllistmodel.h
+  ${HIGHLIGHTER_DIR}/highlighter.h
 )
 find_package(Qt5 COMPONENTS Quick Core Network Xml Widgets)
 qt5_add_resources(RESOURCES qml.qrc)
 qt5_wrap_cpp(xmllistmodel_MOC ${SRC_DIR}/xmllistmodel.h)
+qt5_wrap_cpp(highlighter_MOC ${HIGHLIGHTER_DIR}/highlighter.h)
 
-add_executable(${PROJECT_NAME} ${SRC_LIST} ${xmllistmodel_MOC} ${RESOURCES} ${HEADERS})
+add_executable(${PROJECT_NAME}
+	${SRC_LIST} 
+	${xmllistmodel_MOC}
+	${highlighter_MOC}
+	${RESOURCES} 
+	${HEADERS}
+)
 
 #copy to binary directory
 ADD_CUSTOM_COMMAND( 

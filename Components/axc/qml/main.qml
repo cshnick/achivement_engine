@@ -321,6 +321,8 @@ ApplicationWindow {
             TextArea {
                 id: text_condition
 
+                //For custom highlighting. Will be used from cpp
+                textDocument.objectName: "TDHighlighted"
                 height: 200
                 style: TextAreaStyle {
                     frame: Rectangle {
