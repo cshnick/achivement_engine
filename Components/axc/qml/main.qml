@@ -340,6 +340,7 @@ ApplicationWindow {
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 10
                 font.pointSize: 14
+                font.family: "Courier"
 
 
                 text: "Условие достижения"

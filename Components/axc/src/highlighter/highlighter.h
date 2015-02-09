@@ -43,12 +43,12 @@
 
 #include <QSyntaxHighlighter>
 #include <QTextCharFormat>
+#include <QObject>
 
 QT_BEGIN_NAMESPACE
 class QTextDocument;
 QT_END_NAMESPACE
 
-//! [0]
 class Highlighter : public QSyntaxHighlighter
 {
     Q_OBJECT
@@ -57,7 +57,7 @@ public:
     Highlighter(QTextDocument *parent = 0);
 
 protected:
-    void highlightBlock(const QString &text) Q_DECL_OVERRIDE;
+    void highlightBlock(const QString &text);
 
 private:
     struct HighlightingRule
@@ -77,6 +77,5 @@ private:
     QTextCharFormat quotationFormat;
     QTextCharFormat functionFormat;
 };
-//! [0]
 
 #endif // HIGHLIGHTER_H
