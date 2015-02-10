@@ -4,14 +4,14 @@
 
 #include "Conventions.h"
 
-static const QStringList s_fields(QString(f_id + "," +
-                                          f_name + "," +
-                                          f_description + "," +
-                                          f_condition
-                                          ).split(','));
+static const QStringList s_fields(QString(QString(  AE::f_id) + "," +
+													AE::f_name + "," +
+													AE::f_description + "," +
+													AE::f_condition
+												).split(','));
 
-static const QString filePath = g_achivements_path;
-static const QString fileName = g_achivementsFileName;
+static const QString filePath = AE::g_achivements_path;
+static const QString fileName = AE::g_achivementsFileName;
 
 class XMLListModelPrivate {
     friend class XMLListModel;
@@ -89,13 +89,13 @@ public:
         writer.writeStartElement("root");
         for (int i = 0; i < m_elements.count(); i++) {
             QVariantMap element = m_elements.at(i);
-            writer.writeStartElement(tag_element);
+            writer.writeStartElement(AE::tag_element);
             for (auto j = element.begin(); j != element.end() ; j++) {
                 writer.writeTextElement(j.key(), j.value().toString());
             }
             writer.writeEndElement();
         }
-        writer.writeTextElement(tag_lastId, QString::number(m_lastId));
+        writer.writeTextElement(AE::tag_lastId, QString::number(m_lastId));
         writer.writeEndElement();
         writer.writeEndDocument();
         file.close();
@@ -117,7 +117,7 @@ public:
             file.close();
             return false;
         }
-        QDomElement element = doc.firstChildElement().firstChildElement(tag_element);
+        QDomElement element = doc.firstChildElement().firstChildElement(AE::tag_element);
         while (!element.isNull()) {
             QVariantMap dta;
             QDomElement elAttr = element.firstChildElement();
@@ -125,7 +125,7 @@ public:
                 //type conversion
 
                 QVariant value;
-                if (elAttr.tagName() == f_id) {
+                if (elAttr.tagName() == AE::f_id) {
                     int inttext = elAttr.text().toInt();
                     value = inttext;
                     m_lastId = qMax(inttext, m_lastId);
@@ -136,10 +136,10 @@ public:
                 elAttr = elAttr.nextSiblingElement();
             }
             append(dta);
-            element = element.nextSiblingElement(tag_element);
+            element = element.nextSiblingElement(AE::tag_element);
         }
         //Store last id to preserve unuque indecies
-        QDomElement lid = doc.firstChildElement().firstChildElement(tag_lastId);
+        QDomElement lid = doc.firstChildElement().firstChildElement(AE::tag_lastId);
         if (!lid.isNull()) {
             m_lastId = qMax(m_lastId, lid.text().toInt());
         }
@@ -148,26 +148,26 @@ public:
     }
     void addTest() {
         QVariantMap data1;
-        data1[f_id] = getId();
-        data1[f_name] = "Name1";
-        data1[f_description] = "Description 1";
-        data1[f_condition] = "Condition 1";
+        data1[AE::f_id] = getId();
+        data1[AE::f_name] = "Name1";
+        data1[AE::f_description] = "Description 1";
+        data1[AE::f_condition] = "Condition 1";
 
         append(data1);
 
         QVariantMap data2;
-        data2[f_id] = getId();
-        data2[f_name] = "Name2";
-        data2[f_description] = "Description 2";
-        data2[f_condition] = "Condition 2";
+        data2[AE::f_id] = getId();
+        data2[AE::f_name] = "Name2";
+        data2[AE::f_description] = "Description 2";
+        data2[AE::f_condition] = "Condition 2";
 
         append(data2);
 
         QVariantMap data3;
-        data3[f_id] = getId();
-        data3[f_name] = "Name3";
-        data3[f_description] = "Description 3";
-        data3[f_condition] = "Condition 3";
+        data3[AE::f_id] = getId();
+        data3[AE::f_name] = "Name3";
+        data3[AE::f_description] = "Description 3";
+        data3[AE::f_condition] = "Condition 3";
 
         append(data3);
     }

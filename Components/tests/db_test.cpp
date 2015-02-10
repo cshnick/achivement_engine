@@ -2,6 +2,7 @@
 #include <QtCore>
 #include <QtSql>
 
+using namespace AE;
 void smallTest()
 {
 	const char lc[] = "UTF-8";
@@ -10,7 +11,7 @@ void smallTest()
 	QTextCodec::setCodecForCStrings(QTextCodec::codecForName(lc));
 
 	QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
-	db.setDatabaseName(g_achivements_path + "/" + g_dbName);
+	db.setDatabaseName(QString(g_achivements_path) + "/" + g_dbName);
 	if (!db.open()) {
 		DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(db.lastError().text()));
 	}

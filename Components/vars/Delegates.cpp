@@ -177,7 +177,7 @@ public:
 	DCDB() : m_context(0) {
 		DEBUG("Creating DCDB object\n");
 		m_db = QSqlDatabase::addDatabase("QSQLITE", "DelegateContainer_action_db");
-		m_db.setDatabaseName(g_achivements_path + "/" + g_dbName);
+		m_db.setDatabaseName(QString(g_achivements_path) + "/" + g_dbName);
 		if (!m_db.open()) {
 			DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(m_db.lastError().text()));
 		}

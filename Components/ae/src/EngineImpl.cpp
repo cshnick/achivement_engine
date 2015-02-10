@@ -38,7 +38,7 @@ public:
 		QTextCodec::setCodecForCStrings(QTextCodec::codecForName(lc));
 
 		m_db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
-		m_db.setDatabaseName(g_achivements_path + "/" + g_dbName);
+		m_db.setDatabaseName(QString(g_achivements_path) + "/" + g_dbName);
 		if (!m_db.open()) {
 			DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(m_db.lastError().text()));
 		}
@@ -443,7 +443,7 @@ public:
 
 			action_params ap = toActionParams(m);
 			apl.push_back(ap);
-			PRINT_IF_VERBOSE("Reporting std string: %s\n", ap[f_description.toStdString()].toString().c_str());
+			PRINT_IF_VERBOSE("Reporting std string: %s\n", ap[f_description].toString().c_str());
 		}
 		m_instant_achievements.clear();
 		return apl;
@@ -538,9 +538,10 @@ private:
 		}
 	}
 	void synchroAvhivementsDb() {
-		QFile ach_xml(g_achivements_path + "/" + g_achivementsFileName);
+		QString xmlPath = QString(g_achivements_path) + "/" + QString(g_achivementsFileName);
+		QFile ach_xml(xmlPath);
 		if (!ach_xml.open(QIODevice::ReadOnly)) {
-			DEBUG_ERR("Can't open %s for reading\n", qPrintable(g_achivements_path + "/" + g_achivementsFileName));
+			DEBUG_ERR("Can't open %s for reading\n", qPrintable(xmlPath));
 		}
 
 		QList<QVariantMap> xml_rows;

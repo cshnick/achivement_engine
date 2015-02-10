@@ -1,7 +1,9 @@
 #ifndef CONVENTIONS_H
 #define CONVENTIONS_H
 
+#ifndef SWIG
 #include <QtCore>
+#endif //SWIG
 #include "Engine.h"
 #include "unistd.h"
 
@@ -58,35 +60,39 @@
 #define DROP_TABLES getenv("AE_DROP_TABLES") != NULL
 
 namespace AE {
+
+#ifndef SWIG
 const char *printable(const variant &v);
 const char *printable(const QVariant &v);
 QVariant fromAeVariant(const AE::variant &ae_val);
 variant fromQVariant(const QVariant &q_val);
+#endif //SWIG
+
+char const g_achivements_path[] = "/home/ilia/.local/share/action_engine";
+char const g_dbName[] = "ae.db";
+char const g_achivementsFileName[] = "achivements.xml";
+char const t_sessions[] = "Sessions";
+char const t_actions[] = "Actions";
+char const t_achivements_list[] = "AchivementsList";
+char const t_achivements_done[] = "AchivementsDone";
+char const f_id[] = "id";
+char const f_ach_id[] = "AchivementId";
+char const f_start[] = "Start";
+char const f_finish[] = "Finish";
+char const f_time[] = "Time";
+char const f_actTime[] = "ActionTime";
+char const f_session[] = "Session";
+char const f_name[] = "Name";
+char const f_session_id[] = "SessionId";
+char const f_description[] = "Description";
+char const f_condition[] = "Condition";
+char const tag_element[] = "achivement";
+char const tag_lastId[] = "lastId";
+
+char const f_statement[] = "Statement";
+char const f_result[] = "Result";
+char const f_success[] = "Success";
+
 } // namespace AE
-
-static const QString g_achivements_path = "/home/ilia/.local/share/action_engine";
-static const QString g_dbName = "ae.db";
-static const QString g_achivementsFileName = "achivements.xml";
-static const QString t_sessions = "Sessions";
-static const QString t_actions = "Actions";
-static const QString t_achivements_list = "AchivementsList";
-static const QString t_achivements_done = "AchivementsDone";
-static const QString f_id = "id";
-static const QString f_ach_id = "AchivementId";
-static const QString f_start = "Start";
-static const QString f_finish = "Finish";
-static const QString f_time = "Time";
-static const QString f_actTime = "ActionTime";
-static const QString f_session = "Session";
-static const QString f_name = "Name";
-static const QString f_session_id = "SessionId";
-static const QString f_description = "Description";
-static const QString f_condition = "Condition";
-static const QString tag_element = "achivement";
-static const QString tag_lastId = "lastId";
-
-static std::string f_statement = "Statement";
-static std::string f_result = "Result";
-static std::string f_success = "Success";
 
 #endif //CONVENTIONS_H
