@@ -1,6 +1,7 @@
 #ifndef CONVENTIONS_H
 #define CONVENTIONS_H
 
+#include "string_constant.h"
 #ifndef SWIG
 #include <QtCore>
 #endif //SWIG

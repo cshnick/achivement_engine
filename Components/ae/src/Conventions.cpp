@@ -68,6 +68,7 @@ QVariant fromAeVariant(const AE::variant &ae_val) {
 	default:
 		result = QVariant();
 		break;
+
 	}
 
 	return result;

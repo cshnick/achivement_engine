@@ -1,5 +1,5 @@
-#ifndef __NETWORK_STRING_CONSTANT_H__
-#define __NETWORK_STRING_CONSTANT_H__
+#ifndef __STRING_CONSTANT_H__
+#define __STRING_CONSTANT_H__
 
 #define DECLARE_STRING_CONSTANT(name_, value_) \
   namespace Private \
@@ -17,4 +17,4 @@
   } \
   typedef Private:: name_ <void> name_;
 
-#endif  // !__NETWORK_STRING_CONSTANT_H__
+#endif  // !__STRING_CONSTANT_H__
