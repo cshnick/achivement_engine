@@ -18,6 +18,7 @@ set (SOURCES
   main.cpp
   http_server.cpp
   ${AE_SRC}/Conventions.cpp
+  RequestProcessorAeQt.cpp
 )
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CXX_COMMON}")

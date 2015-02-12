@@ -1,6 +1,8 @@
 #include "http_server.h"
 #include "http_headers.h"
 #include "http_content_type.h"
+#include "RequestProcessor.h"
+#include "RequestProcessorAeQt.h"
 
 #include <iostream>
 #include <sstream>
@@ -11,14 +13,14 @@ namespace Network {
 void g_processor_func(IHttpRequestPtr) {
 
 }
-class RequestProcessor {
+class RequestProcessorDefault : public RequestProcessorBase {
 public:
-	RequestProcessor(std::mutex *p_mtx) : m_mtx(p_mtx) {
+	RequestProcessorDefault(std::mutex *p_mtx) : m_mtx(p_mtx) {
 
 	}
 	void operator()(IHttpRequestPtr req) {
 		std::string Path = req->GetPath();
-		Path = "../text_content" + Path + (Path == "/" ? "index.html" : std::string());
+		Path = "./test_content" + Path + (Path == "/" ? "index.html" : std::string());
 		{
 			std::stringstream Io;
 			Io << "Path: " << Path << std::endl
@@ -53,7 +55,7 @@ int main()
     using namespace Network;
 
     HttpServer Srv(SrvAddress, SrvPort, SrvThreadCount,
-    		RequestProcessor(&Mtx));
+    		RequestProcessorAeQt(&Mtx));
     std::cin.get();
   }
   catch (std::exception const &e)
