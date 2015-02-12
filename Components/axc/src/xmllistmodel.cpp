@@ -4,14 +4,14 @@
 
 #include "Conventions.h"
 
-static const QStringList s_fields(QString(QString(  AE::f_id) + "," +
-													AE::f_name + "," +
-													AE::f_description + "," +
-													AE::f_condition
+static const QStringList s_fields(QString(QString(  AE::f_id::Value) + "," +
+													AE::f_name::Value + "," +
+													AE::f_description::Value + "," +
+													AE::f_condition::Value
 												).split(','));
 
-static const QString filePath = AE::g_achivements_path;
-static const QString fileName = AE::g_achivementsFileName;
+static const QString filePath = AE::g_achivements_path::Value;
+static const QString fileName = AE::g_achivementsFileName::Value;
 
 class XMLListModelPrivate {
     friend class XMLListModel;
@@ -89,13 +89,13 @@ public:
         writer.writeStartElement("root");
         for (int i = 0; i < m_elements.count(); i++) {
             QVariantMap element = m_elements.at(i);
-            writer.writeStartElement(AE::tag_element);
+            writer.writeStartElement(AE::tag_element::Value);
             for (auto j = element.begin(); j != element.end() ; j++) {
                 writer.writeTextElement(j.key(), j.value().toString());
             }
             writer.writeEndElement();
         }
-        writer.writeTextElement(AE::tag_lastId, QString::number(m_lastId));
+        writer.writeTextElement(AE::tag_lastId::Value, QString::number(m_lastId));
         writer.writeEndElement();
         writer.writeEndDocument();
         file.close();
@@ -117,7 +117,7 @@ public:
             file.close();
             return false;
         }
-        QDomElement element = doc.firstChildElement().firstChildElement(AE::tag_element);
+        QDomElement element = doc.firstChildElement().firstChildElement(AE::tag_element::Value);
         while (!element.isNull()) {
             QVariantMap dta;
             QDomElement elAttr = element.firstChildElement();
@@ -125,7 +125,7 @@ public:
                 //type conversion
 
                 QVariant value;
-                if (elAttr.tagName() == AE::f_id) {
+                if (elAttr.tagName() == AE::f_id::Value) {
                     int inttext = elAttr.text().toInt();
                     value = inttext;
                     m_lastId = qMax(inttext, m_lastId);
@@ -136,10 +136,10 @@ public:
                 elAttr = elAttr.nextSiblingElement();
             }
             append(dta);
-            element = element.nextSiblingElement(AE::tag_element);
+            element = element.nextSiblingElement(AE::tag_element::Value);
         }
         //Store last id to preserve unuque indecies
-        QDomElement lid = doc.firstChildElement().firstChildElement(AE::tag_lastId);
+        QDomElement lid = doc.firstChildElement().firstChildElement(AE::tag_lastId::Value);
         if (!lid.isNull()) {
             m_lastId = qMax(m_lastId, lid.text().toInt());
         }
@@ -148,26 +148,26 @@ public:
     }
     void addTest() {
         QVariantMap data1;
-        data1[AE::f_id] = getId();
-        data1[AE::f_name] = "Name1";
-        data1[AE::f_description] = "Description 1";
-        data1[AE::f_condition] = "Condition 1";
+        data1[AE::f_id::Value] = getId();
+        data1[AE::f_name::Value] = "Name1";
+        data1[AE::f_description::Value] = "Description 1";
+        data1[AE::f_condition::Value] = "Condition 1";
 
         append(data1);
 
         QVariantMap data2;
-        data2[AE::f_id] = getId();
-        data2[AE::f_name] = "Name2";
-        data2[AE::f_description] = "Description 2";
-        data2[AE::f_condition] = "Condition 2";
+        data2[AE::f_id::Value] = getId();
+        data2[AE::f_name::Value] = "Name2";
+        data2[AE::f_description::Value] = "Description 2";
+        data2[AE::f_condition::Value] = "Condition 2";
 
         append(data2);
 
         QVariantMap data3;
-        data3[AE::f_id] = getId();
-        data3[AE::f_name] = "Name3";
-        data3[AE::f_description] = "Description 3";
-        data3[AE::f_condition] = "Condition 3";
+        data3[AE::f_id::Value] = getId();
+        data3[AE::f_name::Value] = "Name3";
+        data3[AE::f_description::Value] = "Description 3";
+        data3[AE::f_condition::Value] = "Condition 3";
 
         append(data3);
     }

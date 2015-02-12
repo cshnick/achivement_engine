@@ -11,7 +11,7 @@ void smallTest()
 	QTextCodec::setCodecForCStrings(QTextCodec::codecForName(lc));
 
 	QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
-	db.setDatabaseName(QString(g_achivements_path) + "/" + g_dbName);
+	db.setDatabaseName(QString(g_achivements_path::Value) + "/" + g_dbName::Value);
 	if (!db.open()) {
 		DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(db.lastError().text()));
 	}
@@ -32,10 +32,34 @@ void smallTest()
 	DEBUG();
 }
 
+template<size_t n>
+struct cn {
+	char data[n+1];
+};
+
+// (2)
+template<size_t n>
+cn<n> magic(cn<n>);
+
+
+void templateTest() {
+	//static counter
+	char (&GetCounterValue(void const *))[1];
+
+	// (3) текущее значение счетчика
+	DEBUG("sizeof value %d\n", sizeof(magic(cn<0>())) - 1); // 0
+
+	// (4) «инкремент»
+	cn<1> magic(cn<0>);
+
+	// (5) текущее значение счетчика
+	DEBUG("sizeof value %d\n", sizeof(magic(cn<0>())) - 1);
+}
+
 int main (int argc, char ** argv)
 {
 	DEBUG("db_start\n");
-	smallTest();
+	templateTest();
 	DEBUG("db_finished\n");
 	return 0;
 }

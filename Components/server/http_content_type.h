@@ -13,8 +13,8 @@
   DECLARE_STRING_CONSTANT(name_, value_) \
   namespace Private \
   { \
-    GET_NEXT_STATIC_COUNTER(Counter, Id__##name_) \
-    REGISTRY_ADD_TYPE(Registry, Counter::Id__##name_, \
+    GET_NEXT_STATIC_COUNTER(Counter_http, Id__##name_) \
+    REGISTRY_ADD_TYPE(Registry_http, Counter_http::Id__##name_, \
       Network::Http::Content::Type::name_) \
   }
 
@@ -28,8 +28,8 @@ namespace Network
       {
         namespace Private
         {
-          INIT_STATIC_COUNTER(Counter, 200)
-          DECLARE_TYPE_REGISTRY(Registry)
+          INIT_STATIC_COUNTER(Counter_http, 200)
+          DECLARE_TYPE_REGISTRY(Registry_http)
         }
         
         DECLARE_HTTP_CONTENT_TYPE(bin, application/octet-stream)
@@ -104,15 +104,15 @@ namespace Network
 
         namespace Private
         {
-          GET_NEXT_STATIC_COUNTER(Counter, LastTypeCounter)
+          GET_NEXT_STATIC_COUNTER(Counter_http, LastTypeCounter)
               
           template <unsigned N>
           struct FindType
           {
             static char const* Find(char const *ext)
             {
-              if (!std::strcmp(Registry<N>::Type::Name, ext))
-                return Registry<N>::Type::Value;
+              if (!std::strcmp(Registry_http<N>::Type::Name, ext))
+                return Registry_http<N>::Type::Value;
               return FindType<N - 1>::Find(ext);
             }
           };
@@ -128,10 +128,10 @@ namespace Network
           
           inline char const* FileExtToType(char const *ext)
           {
-            return FindType<Counter::LastTypeCounter - 1>::Find(ext);
+            return FindType<Counter_http::LastTypeCounter - 1>::Find(ext);
           }
           
-        }
+        } // namespace Private
       }
       
       inline char const* FileExtToType(char const *ext)

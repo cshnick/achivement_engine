@@ -3,7 +3,6 @@
  %{
  #include "EngineImpl.h"
  #include <string>
- #include "Conventions.h"
  %}
 
  // Parse the original header file
@@ -14,7 +13,6 @@
  
  %include "Engine.h"
  %include "EngineImpl.h"
- %include "Conventions.h"
  
  // Instantiate some templates
  %template(map_sv) std::map<std::string, AE::variant>;

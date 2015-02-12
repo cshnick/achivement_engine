@@ -2,63 +2,27 @@
 #define CONVENTIONS_H
 
 #include "string_constant.h"
+#include "type_registry.h"
+#include "static_counter.h"
+#include "debug_and_sql.h"
 #ifndef SWIG
 #include <QtCore>
 #endif //SWIG
 #include "Engine.h"
-#include "unistd.h"
 
-#ifndef NDEBUG
-#define dbg_fprintf(stream, message, ...) fprintf(stream, message __VA_ARGS__)
-#else
-#define dbg_fprintf(stream, message, ...)
-#endif
-#define SQL_ERR(...) dbg_fprintf(stderr, "SQL: ", __VA_ARGS__)
-#define SQL_DEBUG(...) dbg_fprintf(stdout, "SQL: ", __VA_ARGS__)
-#define DEBUG_ERR(...) dbg_fprintf(stderr, "ERR: ", __VA_ARGS__)
-#define DEBUG(...) dbg_fprintf(stdout, "DBG: ", __VA_ARGS__)
+#include <cstring>
+#include <map>
+#include <stdexcept>
+#include <string>
 
-#define EXEC_AND_REPORT_COND_RETURN \
-		if (!q.exec()) { \
-			SQL_ERR( "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(q.executedQuery()) ); \
-			return; \
-		} else { \
-			SQL_DEBUG("Executed: %s\n", qPrintable(q.executedQuery())); \
-		} \
-
-#define EXEC_AND_REPORT_COND \
-		QTime label = QTime::currentTime(); \
-		bool res = q.exec(); \
-		int msecs = label.msecsTo(QTime::currentTime()); \
-		QString exQuery = q.executedQuery(); \
-		if (VERBOSE) { \
-			Q_FOREACH(QVariant val, q.boundValues().values()) { \
-			QString pval = val.toString(); \
-			if (val.type() != QVariant::Bool && val.type() != QVariant::Int && val.type() != QVariant::Double) { \
-				pval = QString("'") + pval + "'"; \
-			} \
-			exQuery = exQuery.replace(exQuery.indexOf('?'), 1, pval); \
-		} \
-		} \
-		if (!res) { \
-			SQL_ERR( "last error: %s, executed query: %s; ", qPrintable(q.lastError().text()), qPrintable(exQuery) ); \
-		} else { \
-			SQL_DEBUG("Executed: %s; ", qPrintable(exQuery)); \
-		} \
-		dbg_fprintf(stdout, "", "Query length: %d\n", msecs); \
-
-#define STAT_IF_VERBOSE \
-		if (VERBOSE) { \
-			DEBUG("Entering ('%s':%d) : %s\n", __FILE__, __LINE__, __PRETTY_FUNCTION__); \
-		} \
-
-#define PRINT_IF_VERBOSE(...) \
-		if (VERBOSE) { \
-			DEBUG(__VA_ARGS__); \
-		} \
-
-#define VERBOSE getenv("VERBOSE") != NULL
-#define DROP_TABLES getenv("AE_DROP_TABLES") != NULL
+#define DECLARE_CONVENTION_TYPE(name_, value_) \
+  DECLARE_STRING_CONSTANT(name_, value_) \
+  namespace Private \
+  { \
+    GET_NEXT_STATIC_COUNTER(Counter_ae, Id__##name_) \
+    REGISTRY_ADD_TYPE(Registry_ae, Counter_ae::Id__##name_, \
+      AE::name_) \
+  }
 
 namespace AE {
 
@@ -69,30 +33,62 @@ QVariant fromAeVariant(const AE::variant &ae_val);
 variant fromQVariant(const QVariant &q_val);
 #endif //SWIG
 
-char const g_achivements_path[] = "/home/ilia/.local/share/action_engine";
-char const g_dbName[] = "ae.db";
-char const g_achivementsFileName[] = "achivements.xml";
-char const t_sessions[] = "Sessions";
-char const t_actions[] = "Actions";
-char const t_achivements_list[] = "AchivementsList";
-char const t_achivements_done[] = "AchivementsDone";
-char const f_id[] = "id";
-char const f_ach_id[] = "AchivementId";
-char const f_start[] = "Start";
-char const f_finish[] = "Finish";
-char const f_time[] = "Time";
-char const f_actTime[] = "ActionTime";
-char const f_session[] = "Session";
-char const f_name[] = "Name";
-char const f_session_id[] = "SessionId";
-char const f_description[] = "Description";
-char const f_condition[] = "Condition";
-char const tag_element[] = "achivement";
-char const tag_lastId[] = "lastId";
+namespace Private  {
+	INIT_STATIC_COUNTER(Counter_ae, 200)
+	DECLARE_TYPE_REGISTRY(Registry_ae)
+} //namespace Private
 
-char const f_statement[] = "Statement";
-char const f_result[] = "Result";
-char const f_success[] = "Success";
+DECLARE_STRING_CONSTANT(g_achivements_path, /home/ilia/.local/share/action_engine)
+DECLARE_STRING_CONSTANT(g_dbName, ae.db)
+DECLARE_STRING_CONSTANT(g_achivementsFileName, achivements.xml)
+//Tables
+DECLARE_CONVENTION_TYPE(t_sessions, Sessions);
+DECLARE_CONVENTION_TYPE(t_actions, Actions);
+DECLARE_CONVENTION_TYPE(t_achivements_list, AchivementsList);
+DECLARE_CONVENTION_TYPE(t_achivements_done, AchivementsDone);
+//Fields
+DECLARE_CONVENTION_TYPE(f_id, id);
+DECLARE_CONVENTION_TYPE(f_ach_id, AchivementId);
+DECLARE_CONVENTION_TYPE(f_start, Start);
+DECLARE_CONVENTION_TYPE(f_finish, Finish);
+DECLARE_CONVENTION_TYPE(f_time, Time);
+DECLARE_CONVENTION_TYPE(f_actTime, ActionTime);
+DECLARE_CONVENTION_TYPE(f_session, Session);
+DECLARE_CONVENTION_TYPE(f_name, Name);
+DECLARE_CONVENTION_TYPE(f_session_id, SessionId);
+DECLARE_CONVENTION_TYPE(f_description, Description);
+DECLARE_CONVENTION_TYPE(f_condition, Condition);
+//Tags
+DECLARE_STRING_CONSTANT(tag_element, achivement);
+DECLARE_STRING_CONSTANT(tag_lastId, lastId);
+//Coming from external
+DECLARE_CONVENTION_TYPE(f_statement, Statement);
+DECLARE_CONVENTION_TYPE(f_result, Result);
+DECLARE_CONVENTION_TYPE(f_success, Success);
+
+typedef std::map<char const*, char const*> conv_map;
+	namespace Private {
+		GET_NEXT_STATIC_COUNTER(Counter_ae, LastTypeCounter);
+		template <unsigned N>
+		struct FillMap {
+			static void Fill(conv_map &m) {
+				FillMap<N - 1>::Fill(m);
+				m[Registry_ae<N>::Type::Name] = Registry_ae<N>::Type::Value;
+			}
+		};
+		template <>
+		struct FillMap<0> {
+			static void Fill(conv_map &) {
+			}
+		};
+		inline void fillConventions(conv_map &m) {
+			FillMap<Counter_ae::LastTypeCounter - 1>::Fill(m);
+		}
+	} // namespace Private
+
+inline void fillConventions(conv_map &m) {
+	Private::fillConventions(m);
+}
 
 } // namespace AE
 

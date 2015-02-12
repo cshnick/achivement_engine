@@ -46,9 +46,9 @@ action_params genAction() {
 
     int ri = num1*num2 + (num1 > 5 ? 1: 0);
 
-	res[f_statement] = variant(QString("%1x%2=").arg(num1).arg(num2).toStdString());
-	res[f_result] = variant(QString("%1").arg(ri).toStdString());
-	res[f_success] = variant(num1*num2==ri);
+	res[f_statement::Value] = variant(QString("%1x%2=").arg(num1).arg(num2).toStdString());
+	res[f_result::Value] = variant(QString("%1").arg(ri).toStdString());
+	res[f_success::Value] = variant(num1*num2==ri);
 
 	return res;
 }
@@ -91,10 +91,19 @@ void smallTest() {
 //	e->end();
 }
 
+void misc_test() {
+	AE::conv_map m;
+	fillConventions(m);
+	DEBUG("Reporting conventions map:\n");
+	for (auto iter = m.begin(); iter != m.end(); ++iter) {
+		DEBUG("\tm[%s] = %s\n", iter->first, iter->second);
+	}
+}
+
 int main (int argc, char ** argv)
 {
 	DEBUG("Main start\n");
-	autoTest();
+	misc_test();
 	DEBUG("Main finished\n");
 	return 0;
 }

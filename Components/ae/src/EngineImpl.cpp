@@ -31,14 +31,14 @@ public:
 		q(p_q),
 		m_session_id(-1)
 	{
-		PRINT_IF_VERBOSE("Initializing database. Setting database name: %s\n", qPrintable(g_dbName));
+		PRINT_IF_VERBOSE("Initializing database. Setting database name: %s\n", qPrintable(g_dbName::Value));
 		const char lc[] = "UTF-8";
 		DEBUG("Setting locale: %s\n", lc);
 		QTextCodec::setCodecForLocale(QTextCodec::codecForName(lc));
 		QTextCodec::setCodecForCStrings(QTextCodec::codecForName(lc));
 
 		m_db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
-		m_db.setDatabaseName(QString(g_achivements_path) + "/" + g_dbName);
+		m_db.setDatabaseName(QString(g_achivements_path::Value) + "/" + g_dbName::Value);
 		if (!m_db.open()) {
 			DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(m_db.lastError().text()));
 		}
@@ -94,7 +94,7 @@ public:
 		 if (!checkDB()) return;
 		 QSqlQuery q("", m_db);
 		 q.prepare(QString("SELECT * FROM %1")
-				 .arg(t_achivements_list));
+				 .arg(t_achivements_list::Value));
 		 EXEC_AND_REPORT_COND;
 		 q.next();
 		 while (q.isValid()) {
@@ -119,7 +119,7 @@ public:
 	void checkAchivements() {
 		for (int i = 0; i < m_achivements.count(); i++) {
 			QVariantMap m = m_achivements[i];
-			QString condition = m.value(f_condition).toString();
+			QString condition = m.value(f_condition::Value).toString();
 			if (parseCondition(condition)) {
 				addAchivement(m);
 			}
@@ -262,25 +262,30 @@ public:
 	}
 
 	void addAchivement(const QVariantMap &m) {
-		PRINT_IF_VERBOSE("Reached an achivement: %s!\n", qPrintable(m.value(f_name).toString()));
+		PRINT_IF_VERBOSE("Reached an achivement: %s!\n", qPrintable(m.value(f_name::Value).toString()));
 		addAchivementToDb(m);
 		m_instant_achievements << m;
 	}
 	void addAchivementToDb(const QVariantMap &m) {
 		QSqlQuery q("", m_db);
 		QStringList kl;
-		kl << f_condition << f_description << f_name << f_time << f_ach_id << f_session_id;
+		kl << f_condition::Value <<
+				f_description::Value <<
+				f_name::Value <<
+				f_time::Value <<
+				f_ach_id::Value <<
+				f_session_id::Value;
 		QString vl = "?,?,?,?,?,?";
 		q.prepare(QString("INSERT INTO %1 (%2) VALUES (%3)")
-				.arg(t_achivements_done)
+				.arg(t_achivements_done::Value)
 				.arg(kl.join(","))
 				.arg(vl)
 		);
-		q.bindValue(0, m.value(f_condition));
-		q.bindValue(1, m.value(f_description));
-		q.bindValue(2, m.value(f_name));
+		q.bindValue(0, m.value(f_condition::Value));
+		q.bindValue(1, m.value(f_description::Value));
+		q.bindValue(2, m.value(f_name::Value));
 		q.bindValue(3, currentTime());
-		q.bindValue(4, m.value(f_id));
+		q.bindValue(4, m.value(f_id::Value));
 		q.bindValue(5, m_session_id);
 		EXEC_AND_REPORT_COND;
 	}
@@ -293,8 +298,8 @@ public:
 		QSqlQuery q("", m_db);
 
 		q.prepare(QString("INSERT INTO %1 (%2) VALUES (?)")
-				.arg(t_sessions)
-				.arg(f_start));
+				.arg(t_sessions::Value)
+				.arg(f_start::Value));
 		q.bindValue(0, currentTime());
 		EXEC_AND_REPORT_COND;
 		m_session_id = q.lastInsertId().toInt();
@@ -309,9 +314,9 @@ public:
 			DEBUG_ERR("m_session_id is negtive. Called end several times?\n");
 		}
 		q.prepare(QString("UPDATE %1 SET %2 = :fin_time WHERE %3 = :id")
-				.arg(t_sessions)
-				.arg(f_finish)
-				.arg(f_id));
+				.arg(t_sessions::Value)
+				.arg(f_finish::Value)
+				.arg(f_id::Value));
 		q.bindValue(":fin_time", currentTime());
 		q.bindValue(":id", m_session_id);
 		EXEC_AND_REPORT_COND;
@@ -329,7 +334,7 @@ public:
 			DEBUG_ERR("m_session_id is negtive. Haven't called begin method for engine?\n");
 		}
 		//Insert new actions passed from the client
-		QSqlRecord rec = m_db.record(t_actions);
+		QSqlRecord rec = m_db.record(t_actions::Value);
 		if (!rec.isEmpty()) {
 			action_params::const_iterator i = p_actions.begin();
 			action_params::const_iterator end = p_actions.end();
@@ -344,7 +349,7 @@ public:
 				//Create non existent fields
 				if (!rec.contains(nm)) {
 					q.prepare(QString("ALTER TABLE %1 ADD %2 %3")
-							.arg(t_actions)
+							.arg(t_actions::Value)
 							.arg(nm)
 							.arg(QString::fromStdString(v.typeDBString()))
 					);
@@ -360,14 +365,14 @@ public:
 			// Prepare strings to INSERT statement
 			QString kp = kl.join(",");
 			QString vp = vl.join(",");
-			kp.append(QString(",%1").arg(f_session_id));
-			kp.append(QString(",%1").arg(f_time));
-			kp.append(QString(",%1").arg(f_actTime));
+			kp.append(QString(",%1").arg(f_session_id::Value));
+			kp.append(QString(",%1").arg(f_time::Value));
+			kp.append(QString(",%1").arg(f_actTime::Value));
 			vp.append(",?"); //session id
 			vp.append(",?"); //action time
 			vp.append(",?"); //action time elapsed
 			q.prepare(QString("INSERT INTO %1 (%2) VALUES (%3)")
-					.arg(t_actions)
+					.arg(t_actions::Value)
 					.arg(kp)
 					.arg(vp));
 			int k = 0;
@@ -393,9 +398,9 @@ public:
 		//check previous time
 		int result = -1;
 		q.prepare(QString("SELECT MAX(%1) FROM %2 WHERE %3 = ?")
-				.arg(f_time)
-				.arg(t_actions)
-				.arg(f_session_id)
+				.arg(f_time::Value)
+				.arg(t_actions::Value)
+				.arg(f_session_id::Value)
 		);
 		q.bindValue(0, m_session_id);
 		EXEC_AND_REPORT_COND;
@@ -406,9 +411,9 @@ public:
 			result = dt.secsTo(ct);
 		} else { //Take time from session start time
 			q.prepare(QString("SELECT %1 FROM %2 WHERE %3 = ?")
-					.arg(f_start)
-					.arg(t_sessions)
-					.arg(f_id)
+					.arg(f_start::Value)
+					.arg(t_sessions::Value)
+					.arg(f_id::Value)
 					);
 			q.bindValue(0, m_session_id);
 			EXEC_AND_REPORT_COND;
@@ -443,7 +448,7 @@ public:
 
 			action_params ap = toActionParams(m);
 			apl.push_back(ap);
-			PRINT_IF_VERBOSE("Reporting std string: %s\n", ap[f_description].toString().c_str());
+			PRINT_IF_VERBOSE("Reporting std string: %s\n", ap[f_description::Value].toString().c_str());
 		}
 		m_instant_achievements.clear();
 		return apl;
@@ -462,10 +467,10 @@ private:
 	void dropTables() {
 		QSqlQuery q("", m_db);
 		QString tables = QString("%1,%2,%3,%4")
-					.arg(t_sessions)
-					.arg(t_actions)
-					.arg(t_achivements_list)
-					.arg(t_achivements_done);
+					.arg(t_sessions::Value)
+					.arg(t_actions::Value)
+					.arg(t_achivements_list::Value)
+					.arg(t_achivements_done::Value);
 		QStringList tl = tables.split(',');
 		for (int i = 0; i < tl.size(); i++) {
 			q.prepare(QString("DROP TABLE %1")
@@ -479,16 +484,16 @@ private:
 		if (DROP_TABLES) {
 			dropTables();
 		}
-		if (!m_db.tables().contains(t_sessions)) {
+		if (!m_db.tables().contains(t_sessions::Value)) {
 			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 DATETIME)")
-					.arg(t_sessions)
-					.arg(f_id)
-					.arg(f_start)
-					.arg(f_finish));
+					.arg(t_sessions::Value)
+					.arg(f_id::Value)
+					.arg(f_start::Value)
+					.arg(f_finish::Value));
 			EXEC_AND_REPORT_COND;
 		}
 		//Actions table
-		if (!m_db.tables().contains(t_actions)) {
+		if (!m_db.tables().contains(t_actions::Value)) {
 			q.prepare(QString("CREATE TABLE %1 ("
 					"%2 INTEGER PRIMARY KEY, "
 					"%3 STRING, "
@@ -497,48 +502,48 @@ private:
 					"%7 INTEGER, "
 					"FOREIGN KEY(%4) REFERENCES %5(%2)"
 					")")
-					.arg(t_actions)
-					.arg(f_id)
-					.arg(f_name)
-					.arg(f_session_id)
-					.arg(t_sessions)
-					.arg(f_time)
-					.arg(f_actTime)
+					.arg(t_actions::Value)
+					.arg(f_id::Value)
+					.arg(f_name::Value)
+					.arg(f_session_id::Value)
+					.arg(t_sessions::Value)
+					.arg(f_time::Value)
+					.arg(f_actTime::Value)
 					);
 			EXEC_AND_REPORT_COND;
 		}
-		if (!m_db.tables().contains(t_achivements_list)) {
+		if (!m_db.tables().contains(t_achivements_list::Value)) {
 			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 STRING, %5 STRING, %6 STRING)")
-					.arg(t_achivements_list)
-					.arg(f_id)
-					.arg(f_time)
-					.arg(f_name)
-					.arg(f_description)
-					.arg(f_condition)
+					.arg(t_achivements_list::Value)
+					.arg(f_id::Value)
+					.arg(f_time::Value)
+					.arg(f_name::Value)
+					.arg(f_description::Value)
+					.arg(f_condition::Value)
 					);
 			EXEC_AND_REPORT_COND;
 		}
-		if (!m_db.tables().contains(t_achivements_done)) {
+		if (!m_db.tables().contains(t_achivements_done::Value)) {
 			q.prepare(QString("CREATE TABLE %1 "
 					"(%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 STRING,"
 					" %5 STRING, %6 STRING, %7 INTEGER, %8 INTEGER,"
 					"FOREIGN KEY(%7) REFERENCES %9(%2)"
 					")")
-					.arg(t_achivements_done)
-					.arg(f_id)
-					.arg(f_time)
-					.arg(f_name)
-					.arg(f_description)
-					.arg(f_condition)
-					.arg(f_ach_id)
-					.arg(f_session_id)
-					.arg(t_achivements_list)
+					.arg(t_achivements_done::Value)
+					.arg(f_id::Value)
+					.arg(f_time::Value)
+					.arg(f_name::Value)
+					.arg(f_description::Value)
+					.arg(f_condition::Value)
+					.arg(f_ach_id::Value)
+					.arg(f_session_id::Value)
+					.arg(t_achivements_list::Value)
 			);
 			EXEC_AND_REPORT_COND;
 		}
 	}
 	void synchroAvhivementsDb() {
-		QString xmlPath = QString(g_achivements_path) + "/" + QString(g_achivementsFileName);
+		QString xmlPath = QString(g_achivements_path::Value) + "/" + QString(g_achivementsFileName::Value);
 		QFile ach_xml(xmlPath);
 		if (!ach_xml.open(QIODevice::ReadOnly)) {
 			DEBUG_ERR("Can't open %s for reading\n", qPrintable(xmlPath));
@@ -552,9 +557,9 @@ private:
 			QVariantMap mit = xml_rows.at(i);
 
 			q.prepare(QString("SELECT %1 FROM %2 WHERE id=?")
-					.arg(f_id)
-					.arg(t_achivements_list));
-			q.bindValue(0, mit.value(f_id).toInt());
+					.arg(f_id::Value)
+					.arg(t_achivements_list::Value));
+			q.bindValue(0, mit.value(f_id::Value).toInt());
 			EXEC_AND_REPORT_COND;
 
 			bool fst = q.first();
@@ -563,13 +568,13 @@ private:
 				QStringList ptrn;
 				for (int j = 0; j < mit.count(); j++) ptrn.append("?");
 				q.prepare(QString("INSERT INTO %1 (%2) VALUES(%3)")
-						.arg(t_achivements_list)
+						.arg(t_achivements_list::Value)
 						.arg(kl.join(","))
 						.arg(ptrn.join(","))
 						);
 				for (auto iter = mit.begin(); iter != mit.end(); iter++) {
 					QVariant val = iter.value();
-					if (iter.key() == f_id) {
+					if (iter.key() == f_id::Value) {
 						val = iter.value().toInt();
 					}
 					q.bindValue(cnt++, val);
@@ -582,14 +587,14 @@ private:
 				fields = kl.join(" = ?, ");
 				fields = fields.remove(fields.lastIndexOf(","), 2); //Revmove trailing ', '
 				q.prepare(QString("UPDATE %1 SET %2 WHERE %3 = ?")
-						.arg(t_achivements_list)
+						.arg(t_achivements_list::Value)
 						.arg(fields)
-						.arg(f_id)
+						.arg(f_id::Value)
 						);
 				int ind = 0;
 				for (auto iter = mit.begin(); iter != mit.end(); iter++) {
 					QVariant val = iter.value();
-					if (iter.key() == f_id) {
+					if (iter.key() == f_id::Value) {
 						ind = iter.value().toInt();
 						val = ind;
 					}
@@ -611,14 +616,14 @@ private:
 			p_file->close();
 			return false;
 		}
-		QDomElement element = doc.firstChildElement().firstChildElement(tag_element);
+		QDomElement element = doc.firstChildElement().firstChildElement(tag_element::Value);
 		while (!element.isNull()) {
 			QVariantMap dta;
 			QDomElement elAttr = element.firstChildElement();
 			while (!elAttr.isNull()) {
 				//type conversion
 				QVariant value;
-				if (elAttr.tagName() == f_id) {
+				if (elAttr.tagName() == f_id::Value) {
 					int inttext = elAttr.text().toInt();
 					value = inttext;
 				} else {
@@ -628,7 +633,7 @@ private:
 				elAttr = elAttr.nextSiblingElement();
 			}
 			map.append(dta);
-			element = element.nextSiblingElement(tag_element);
+			element = element.nextSiblingElement(tag_element::Value);
 		}
 		p_file->close();
 		return true;
