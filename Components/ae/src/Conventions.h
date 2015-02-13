@@ -61,10 +61,17 @@ DECLARE_CONVENTION_TYPE(f_condition, Condition);
 //Tags
 DECLARE_STRING_CONSTANT(tag_element, achivement);
 DECLARE_STRING_CONSTANT(tag_lastId, lastId);
+DECLARE_STRING_CONSTANT(tag_name, name);
+DECLARE_STRING_CONSTANT(tag_value, value);
+DECLARE_STRING_CONSTANT(tag_root, root);
 //Coming from external
 DECLARE_CONVENTION_TYPE(f_statement, Statement);
 DECLARE_CONVENTION_TYPE(f_result, Result);
 DECLARE_CONVENTION_TYPE(f_success, Success);
+//Network
+DECLARE_STRING_CONSTANT(n_tables_path, /TablesPath);
+DECLARE_STRING_CONSTANT(n_fields_path, /FieldsPath);
+
 
 typedef std::map<char const*, char const*> conv_map;
 	namespace Private {

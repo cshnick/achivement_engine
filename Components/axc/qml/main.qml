@@ -300,52 +300,21 @@ ApplicationWindow {
                 anchors.top: label_description.bottom
                 font.pointSize: 14
 
-
                 text: "Описание достижения"
             }
-            Label {
-                id: label_condition
-
-                height: 40
-                width: parent.width - 20
-                anchors.right: parent.right
-                anchors.rightMargin: 10
-                verticalAlignment: Qt.AlignVCenter
-                anchors.top: text_description.bottom
-                font.pointSize: 16
-                font.bold: true
-                color: "#E91E63"
-
-                text: "Условие"
-            }
-            TextArea {
+            TAreaWithLabel {
                 id: text_condition
 
-                //For custom highlighting. Will be used from cpp
-                textDocument.objectName: "TDHighlighted"
                 height: 200
-                style: TextAreaStyle {
-                    frame: Rectangle {
-                        radius: 0
-                        implicitWidth: 100
-                        implicitHeight: 24
-                        border.color: "#ddd"
-                        border.width: 1
-                    }
-                }
                 width: parent.width - 20
                 anchors.right: parent.right
                 anchors.rightMargin: 10
-                anchors.top: label_condition.bottom
+                anchors.top: text_description.bottom
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 10
-                font.pointSize: 14
-                font.family: "Courier"
-
-
-                text: "Условие достижения"
+                anchors.bottomMargin: 0
             }
         }
+
 
         states: [
             State {

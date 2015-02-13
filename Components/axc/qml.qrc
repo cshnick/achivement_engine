@@ -4,5 +4,6 @@
         <file>qml/Circle.qml</file>
         <file>qml/CircleButton.qml</file>
         <file>res/achievements.svg</file>
+        <file>qml/TAreaWithLabel.qml</file>
     </qresource>
 </RCC>
