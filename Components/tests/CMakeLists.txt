@@ -12,6 +12,7 @@ include_directories(
 )
 add_definitions (
   ${DEF_COMMON}
+  -DENABLE_TESTS
 )
 
 set (HEADERS

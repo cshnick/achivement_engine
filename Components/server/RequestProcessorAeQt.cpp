@@ -5,17 +5,21 @@
 #include "http_request.h"
 #include "http_headers.h"
 #include "http_content_type.h"
+#include "EngineImpl.h"
 
 #include <iostream>
 #include <sstream>
 #include <mutex>
+#include <memory>
 
 using namespace Network;
 
 class RequestProcessorAeQt;
 class RequestProcessorAeQtPrivate {
 	RequestProcessorAeQtPrivate(RequestProcessorAeQt *p_q) : q(p_q) {
+//		m_engine.reset(new AE::EngineImpl);
 
+		m_engine = new AE::EngineImpl;
 	}
 	void processRequestMain(Network::IHttpRequestPtr req) {
 		std::string Path = req->GetPath();
@@ -35,6 +39,13 @@ class RequestProcessorAeQtPrivate {
 				wr.writeStartElement(AE::tag_element::Value);
 					wr.writeTextElement(AE::tag_name::Value, i->first);
 					wr.writeTextElement(AE::tag_value::Value, i->second);
+				wr.writeEndElement();
+			}
+			std::vector<AE::var_traits> v = m_engine->varMetas();
+			for (auto j = v.begin(); j != v.end(); ++j) {
+				wr.writeStartElement(AE::tag_element::Value);
+					wr.writeTextElement(AE::tag_name::Value, j->name.c_str());
+					wr.writeTextElement(AE::tag_value::Value, j->alias.c_str());
 				wr.writeEndElement();
 			}
 			wr.writeEndElement();
@@ -61,11 +72,16 @@ class RequestProcessorAeQtPrivate {
 //		req->SetResponseFile(Path);
 		req->SetResponseString(responseStr);
 	}
+	~RequestProcessorAeQtPrivate() {
+//		if (m_engine) delete m_engine;
+	}
 
 private:
 	friend class RequestProcessorAeQt;
 	RequestProcessorAeQt *q;
-	std::mutex *m_mutex;
+	std::mutex *m_mutex = nullptr;
+//	std::unique_ptr<AE::EngineImpl> m_engine;
+	AE::EngineImpl *m_engine = nullptr;
 };
 
 RequestProcessorAeQt::RequestProcessorAeQt(std::mutex *p_mtx)

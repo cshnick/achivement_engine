@@ -8,6 +8,12 @@
 
 namespace AE {
 
+struct var_traits {
+	std::string name;
+	std::string alias;
+	std::string type_str;
+};
+
 class CalcVarDelegateBase  {
 public:
 	CalcVarDelegateBase() {}
@@ -36,6 +42,8 @@ public:
 	void end();
 	void addAction(const action_params &p_actions);
 	achievements_params take_ach_params();
+	std::vector<var_traits> varMetas();
+
 	~EngineImpl();
 
 public:

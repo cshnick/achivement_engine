@@ -103,7 +103,7 @@ void misc_test() {
 int main (int argc, char ** argv)
 {
 	DEBUG("Main start\n");
-	misc_test();
+	autoTest();
 	DEBUG("Main finished\n");
 	return 0;
 }

@@ -40,4 +40,4 @@ ADD_CUSTOM_COMMAND(
    COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_SOURCE_DIR}/test_content ${BIN_PATH}
 )
 
-target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${EXT_LIBS})
+target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${EXT_LIBS} ${AeCore})

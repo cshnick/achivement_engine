@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <vector>
+#include <mutex>
 #include "Conventions.h"
 #include "dlfcn.h"
 #include "ExpressionParser.h"
@@ -31,21 +32,6 @@ public:
 		q(p_q),
 		m_session_id(-1)
 	{
-		PRINT_IF_VERBOSE("Initializing database. Setting database name: %s\n", qPrintable(g_dbName::Value));
-		const char lc[] = "UTF-8";
-		DEBUG("Setting locale: %s\n", lc);
-		QTextCodec::setCodecForLocale(QTextCodec::codecForName(lc));
-		QTextCodec::setCodecForCStrings(QTextCodec::codecForName(lc));
-
-		m_db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
-		m_db.setDatabaseName(QString(g_achivements_path::Value) + "/" + g_dbName::Value);
-		if (!m_db.open()) {
-			DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(m_db.lastError().text()));
-		}
-		addDefaultTables();
-		synchroAvhivementsDb();
-		fillAchivementsFromDB();
-		fillCalcDelegatesMap();
 	}
 	DelegateContainer *loadCalcDelegatesContainer() {
 		void *handle;
@@ -72,10 +58,13 @@ public:
 		return loadLibrary();
 	}
 	void fillCalcDelegatesMap() {
-		DelegateContainer *c = loadCalcDelegatesContainer();
-		c->addContext((void*)this);
+		if (m_calc_vars_container) {
+			return;
+		}
+		m_calc_vars_container = loadCalcDelegatesContainer();
+		m_calc_vars_container->addContext((void*)this);
 		PRINT_IF_VERBOSE("Filling calc's map...\n");
-		for (auto iter = c->delegates()->begin(); iter != c->delegates()->end(); ++iter) {
+		for (auto iter = m_calc_vars_container->delegates()->begin(); iter != m_calc_vars_container->delegates()->end(); ++iter) {
 			CalcVarDelegateBase *d = *iter;
 			PRINT_IF_VERBOSE("\t[%s] = %s (%p);\n", d->varName().c_str(), d->varAlias().c_str(), d);
 			m_calcVars[QString::fromStdString(d->varName())] = d;
@@ -292,6 +281,7 @@ public:
 	void refreshAhivementsList() {
 	}
 	void begin() {
+		init();
 		if (!checkDB()) return;
 		STAT_IF_VERBOSE;
 
@@ -454,7 +444,46 @@ public:
 		return apl;
 	}
 
+	std::vector<var_traits> varMetas() {
+		if (!m_calc_vars_container) {
+			std::lock_guard<std::mutex> lock(m_mutex);
+			m_calc_vars_container = loadCalcDelegatesContainer();
+		}
+		std::vector<var_traits> res;
+
+		m_mutex.lock();
+		std::vector<CalcVarDelegateBase*> q_v = *m_calc_vars_container->delegates();
+		m_mutex.unlock();
+		for(auto d = q_v.begin(); d != q_v.end(); ++d) {
+			var_traits vt;
+			vt.name = (*d)->varAlias();
+			vt.alias = (*d)->varName();
+			vt.type_str = (*d)->typeStr();
+			res.push_back(vt);
+		}
+
+		return res;
+	}
+
 private:
+	void init() {
+		PRINT_IF_VERBOSE("Initializing database. Setting database name: %s\n", qPrintable(g_dbName::Value));
+		const char lc[] = "UTF-8";
+		DEBUG("Setting locale: %s\n", lc);
+		QTextCodec::setCodecForLocale(QTextCodec::codecForName(lc));
+		QTextCodec::setCodecForCStrings(QTextCodec::codecForName(lc));
+
+		m_db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
+		m_db.setDatabaseName(QString(g_achivements_path::Value) + "/" + g_dbName::Value);
+		if (!m_db.open()) {
+			DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(m_db.lastError().text()));
+		}
+		addDefaultTables();
+		synchroAvhivementsDb();
+		fillAchivementsFromDB();
+		fillCalcDelegatesMap();
+	}
+
 	action_params toActionParams(const QVariantMap &m) {
 		action_params res;
 		for (auto iter = m.begin(); iter != m.end(); ++iter) {
@@ -649,6 +678,8 @@ private:
 	QList<QVariantMap> m_achivements;
 	QMap<QString, CalcVarDelegateBase*> m_calcVars;
 	QList<QVariantMap> m_instant_achievements;
+	DelegateContainer* m_calc_vars_container = nullptr;
+	std::mutex m_mutex;
 };
 
 EngineImpl::EngineImpl()
@@ -669,6 +700,9 @@ void EngineImpl::addAction(const action_params &p_actions)
 }
 achievements_params EngineImpl::take_ach_params() {
 	return p->take_ach_params();
+}
+std::vector<var_traits> EngineImpl::varMetas() {
+	return p->varMetas();
 }
 EngineImpl::~EngineImpl()
 {
