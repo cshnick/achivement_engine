@@ -26,6 +26,7 @@ public:
     Q_INVOKABLE int getId() const;
     Q_INVOKABLE int count() const;
     Q_INVOKABLE bool fromXml();
+    Q_INVOKABLE bool toXml(QString &p_xml);
     Q_INVOKABLE void addTest();
 
 

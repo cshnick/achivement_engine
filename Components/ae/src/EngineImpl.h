@@ -6,6 +6,8 @@
 #include <vector>
 #include "Engine.h"
 
+class QIODevice;
+
 namespace AE {
 
 struct var_traits {
@@ -42,7 +44,11 @@ public:
 	void end();
 	void addAction(const action_params &p_actions);
 	achievements_params take_ach_params();
+
+	//Non inherited
 	std::vector<var_traits> varMetas();
+	bool saveToXml(QIODevice *stream);
+	bool loadFromXml(QIODevice *stream);
 
 	~EngineImpl();
 

@@ -16,11 +16,10 @@
 #include "ExpressionParser.h"
 #include "unistd.h"
 
-#ifdef ENABLE_TESTS
 static QDateTime g_fakeCurrentTime = QDateTime::currentDateTime();
-#endif //ENABLE_TESTS
 
 #define DELEGATES_PATH getenv("AE_DELEGATES_PATH")
+#define USE_FAKE_TIME getenv("FAKE_TIME")
 
 typedef QVariant (*qv_func_t) (QVariant v1, QVariant v2);
 
@@ -32,6 +31,9 @@ public:
 		q(p_q),
 		m_session_id(-1)
 	{
+		if (DROP_TABLES) {
+			dropTables();
+		}
 	}
 	DelegateContainer *loadCalcDelegatesContainer() {
 		void *handle;
@@ -420,14 +422,14 @@ public:
 	}
 
 	static QDateTime currentTime() {
-#ifdef ENABLE_TESTS
-//		qsrand(g_fakeCurrentTime.toMSecsSinceEpoch());
-		g_fakeCurrentTime = g_fakeCurrentTime.addSecs(qrand() % 20);
-		return g_fakeCurrentTime;
-#else
-		PRINT_IF_VERBOSE("Real current time used...\n");
-		return QDateTime::currentDateTime();
-#endif
+		if (USE_FAKE_TIME) {
+			g_fakeCurrentTime = g_fakeCurrentTime.addSecs(qrand() % 20);
+			PRINT_IF_VERBOSE("Fake current time used...\n");
+			return g_fakeCurrentTime;
+		} else {
+			PRINT_IF_VERBOSE("Real current time used...\n");
+			return QDateTime::currentDateTime();
+		}
 	}
 
 	achievements_params take_ach_params() {
@@ -461,6 +463,110 @@ public:
 		return res;
 	}
 
+	void loadFromXml(QIODevice *stream) {
+		//		QString xmlPath = QString(g_achivements_path::Value) + "/" + QString(g_achivementsFileName::Value);
+		//		QFile ach_xml(xmlPath);
+		//		if (!ach_xml.open(QIODevice::ReadOnly)) {
+		//			DEBUG_ERR("Can't open %s for reading\n", qPrintable(xmlPath));
+		//		}
+		//
+		synchroAvhivementsDb(stream);
+	}
+	void synchroAvhivementsDb(QIODevice *stream) {
+
+		QList<QVariantMap> xml_rows;
+		parseXmlRows(stream, xml_rows);
+
+		QSqlQuery q("", m_db);
+		for (int i = 0, cnt = 0; i < xml_rows.count(); i++, cnt=0) {
+			QVariantMap mit = xml_rows.at(i);
+
+			q.prepare(QString("SELECT %1 FROM %2 WHERE id=?")
+					.arg(f_id::Value)
+					.arg(t_achivements_list::Value));
+			q.bindValue(0, mit.value(f_id::Value).toInt());
+			EXEC_AND_REPORT_COND;
+
+			bool fst = q.first();
+			if (!fst) { //No such a record
+				QStringList kl = mit.keys();
+				QStringList ptrn;
+				for (int j = 0; j < mit.count(); j++) ptrn.append("?");
+				q.prepare(QString("INSERT INTO %1 (%2) VALUES(%3)")
+						.arg(t_achivements_list::Value)
+						.arg(kl.join(","))
+						.arg(ptrn.join(","))
+						);
+				for (auto iter = mit.begin(); iter != mit.end(); iter++) {
+					QVariant val = iter.value();
+					if (iter.key() == f_id::Value) {
+						val = iter.value().toInt();
+					}
+					q.bindValue(cnt++, val);
+				}
+				EXEC_AND_REPORT_COND;
+			} else {
+				QString fields;
+				QStringList kl = mit.keys();
+				kl.append("");
+				fields = kl.join(" = ?, ");
+				fields = fields.remove(fields.lastIndexOf(","), 2); //Revmove trailing ', '
+				q.prepare(QString("UPDATE %1 SET %2 WHERE %3 = ?")
+						.arg(t_achivements_list::Value)
+						.arg(fields)
+						.arg(f_id::Value)
+						);
+				int ind = 0;
+				for (auto iter = mit.begin(); iter != mit.end(); iter++) {
+					QVariant val = iter.value();
+					if (iter.key() == f_id::Value) {
+						ind = iter.value().toInt();
+						val = ind;
+					}
+					q.bindValue(cnt++, val);
+				}
+				q.bindValue(cnt, QVariant::fromValue(ind));
+				EXEC_AND_REPORT_COND;
+			}
+		}
+	}
+
+	bool saveToXml(QIODevice *stream) {
+		if (!checkDB()) return false;
+		QSqlQuery q("", m_db);
+
+		q.prepare(QString("SELECT * FROM %1").arg(t_achivements_list::Value));
+		EXEC_AND_REPORT_COND;
+		if (!q.first()) {
+			SQL_DEBUG("Empty query result\n");
+			return false;
+		}
+		if (!stream->isWritable()) {
+			DEBUG_ERR("Can't write to stream...\n");
+		}
+		if (!stream->isOpen()) {
+			stream->open(QIODevice::WriteOnly);
+		}
+		QXmlStreamWriter writer(stream);
+		writer.setAutoFormatting(true);
+		writer.writeStartDocument();
+		writer.writeStartElement(AE::tag_root::Value);
+		while (q.isValid()) {
+			QSqlRecord rec = q.record();
+			writer.writeStartElement(AE::tag_element::Value);
+			writer.writeTextElement(f_description::Value, rec.value(f_description::Value).toString());
+			writer.writeTextElement(f_condition::Value, rec.value(f_condition::Value).toString());
+			writer.writeTextElement(f_name::Value, rec.value(f_name::Value).toString());
+			writer.writeEndElement();
+			q.next();
+		}
+		writer.writeEndElement();
+		writer.writeEndDocument();
+		stream->close();
+
+		return true;
+	}
+
 private:
 	void init() {
 		PRINT_IF_VERBOSE("Initializing database. Setting database name: %s\n", qPrintable(g_dbName::Value));
@@ -469,16 +575,20 @@ private:
 		QTextCodec::setCodecForLocale(QTextCodec::codecForName(lc));
 		QTextCodec::setCodecForCStrings(QTextCodec::codecForName(lc));
 
-		m_db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
-		m_db.setDatabaseName(QString(g_achivements_path::Value) + "/" + g_dbName::Value);
-		if (!m_db.open()) {
-			DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(m_db.lastError().text()));
+		if (!m_db.isOpen()) {
+			m_db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
+			m_db.setDatabaseName(QString(g_achivements_path::Value) + "/" + g_dbName::Value);
+			if (!m_db.open()) {
+				DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(m_db.lastError().text()));
+			}
+
+			addDefaultTables();
+			//		synchroAvhivementsDb();
+			fillAchivementsFromDB();
+			fillCalcDelegatesMap();
 		}
-		addDefaultTables();
-		synchroAvhivementsDb();
-		fillAchivementsFromDB();
-		fillCalcDelegatesMap();
 	}
+
 
 	action_params toActionParams(const QVariantMap &m) {
 		action_params res;
@@ -506,9 +616,6 @@ private:
 
 	void addDefaultTables() {
 		QSqlQuery q("", m_db);
-		if (DROP_TABLES) {
-			dropTables();
-		}
 		if (!m_db.tables().contains(t_sessions::Value)) {
 			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 DATETIME)")
 					.arg(t_sessions::Value)
@@ -567,77 +674,14 @@ private:
 			EXEC_AND_REPORT_COND;
 		}
 	}
-	void synchroAvhivementsDb() {
-		QString xmlPath = QString(g_achivements_path::Value) + "/" + QString(g_achivementsFileName::Value);
-		QFile ach_xml(xmlPath);
-		if (!ach_xml.open(QIODevice::ReadOnly)) {
-			DEBUG_ERR("Can't open %s for reading\n", qPrintable(xmlPath));
-		}
 
-		QList<QVariantMap> xml_rows;
-		parseXmlRows(&ach_xml, xml_rows);
-
-		QSqlQuery q("", m_db);
-		for (int i = 0, cnt = 0; i < xml_rows.count(); i++, cnt=0) {
-			QVariantMap mit = xml_rows.at(i);
-
-			q.prepare(QString("SELECT %1 FROM %2 WHERE id=?")
-					.arg(f_id::Value)
-					.arg(t_achivements_list::Value));
-			q.bindValue(0, mit.value(f_id::Value).toInt());
-			EXEC_AND_REPORT_COND;
-
-			bool fst = q.first();
-			if (!fst) { //No such a record
-				QStringList kl = mit.keys();
-				QStringList ptrn;
-				for (int j = 0; j < mit.count(); j++) ptrn.append("?");
-				q.prepare(QString("INSERT INTO %1 (%2) VALUES(%3)")
-						.arg(t_achivements_list::Value)
-						.arg(kl.join(","))
-						.arg(ptrn.join(","))
-						);
-				for (auto iter = mit.begin(); iter != mit.end(); iter++) {
-					QVariant val = iter.value();
-					if (iter.key() == f_id::Value) {
-						val = iter.value().toInt();
-					}
-					q.bindValue(cnt++, val);
-				}
-				EXEC_AND_REPORT_COND;
-			} else {
-				QString fields;
-				QStringList kl = mit.keys();
-				kl.append("");
-				fields = kl.join(" = ?, ");
-				fields = fields.remove(fields.lastIndexOf(","), 2); //Revmove trailing ', '
-				q.prepare(QString("UPDATE %1 SET %2 WHERE %3 = ?")
-						.arg(t_achivements_list::Value)
-						.arg(fields)
-						.arg(f_id::Value)
-						);
-				int ind = 0;
-				for (auto iter = mit.begin(); iter != mit.end(); iter++) {
-					QVariant val = iter.value();
-					if (iter.key() == f_id::Value) {
-						ind = iter.value().toInt();
-						val = ind;
-					}
-					q.bindValue(cnt++, val);
-				}
-				q.bindValue(cnt, QVariant::fromValue(ind));
-				EXEC_AND_REPORT_COND;
-			}
-		}
-	}
-
-	bool parseXmlRows(QFile *p_file, QList<QVariantMap> &map) {
+	bool parseXmlRows(QIODevice *p_file, QList<QVariantMap> &map) {
 		QDomDocument doc;
 		QString err_string;
 		int err_line;
 		int err_column;
 		if (!doc.setContent(p_file, false, &err_string, &err_line, &err_column)) {
-			DEBUG_ERR( "Can't set content for %s\n", qPrintable(p_file->fileName()) );
+			DEBUG_ERR( "Can't set content for stream\n" );
 			p_file->close();
 			return false;
 		}
@@ -700,6 +744,13 @@ achievements_params EngineImpl::take_ach_params() {
 std::vector<var_traits> EngineImpl::varMetas() {
 	return p->varMetas();
 }
+bool EngineImpl::saveToXml(QIODevice *stream) {
+	return p->saveToXml(stream);
+}
+bool EngineImpl::loadFromXml(QIODevice *stream) {
+	return p->loadFromXml(QIODevice *stream);
+}
+
 EngineImpl::~EngineImpl()
 {
 	if (p) delete p;

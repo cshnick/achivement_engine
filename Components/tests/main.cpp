@@ -102,6 +102,7 @@ void misc_test() {
 
 int main (int argc, char ** argv)
 {
+	setenv("FAKE_TIME", "1", 0);
 	DEBUG("Main start\n");
 	autoTest();
 	DEBUG("Main finished\n");
