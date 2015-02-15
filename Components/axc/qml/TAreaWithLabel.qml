@@ -20,6 +20,30 @@ Item {
 
         text: "Условие"
     }
+
+    CircleButton {
+        height: 30
+        width: 30
+        anchors.right: parent.right
+        anchors.rightMargin: 5
+        anchors.top: parent.top
+        anchors.topMargin: 5
+        anchors.verticalCenter: undefined
+
+        text: "::"
+        font.bold: true
+        textColor: "#fff"
+        color: "#E91E63"
+
+        onClicked: {
+            if (ta_text_condition.state === "HelperVisible") {
+                ta_text_condition.state = ""
+            } else {
+                ta_text_condition.state = "HelperVisible"
+            }
+        }
+    }
+
     TextArea {
         id: ta_text_condition
 
@@ -47,7 +71,9 @@ Item {
         text: "Условие достижения"
 
         ListView {
-            anchors.right: parent.right
+            id: helper_list
+            x: parent.width
+            y: 0
             width: parent.width / 3
             height: parent.height
 
@@ -61,7 +87,8 @@ Item {
             query: "/root/achivement"
 
             XmlRole { name: "name"; query: "name/string()" }
-            XmlRole { name: "cost"; query: "value/string()" }
+            XmlRole { name: "value"; query: "value/string()" }
+            XmlRole { name: "type_str"; query: "type_str/string()"}
         }
 
         Component {
@@ -77,37 +104,97 @@ Item {
 //                    anchors.centerIn: parent
 //                    spacing: 10
 //                    Text { text: name; font.pixelSize: 14 }
-//                    Text { text: '$' + cost; font.pixelSize: 14 }
+//                    Text { text: '$' + value; font.pixelSize: 14 }
 //                }
+                Rectangle {
+                    anchors.fill: parent
+                    opacity: 0.9
+                    color: "#fff"
+                }
+                Rectangle {
+                    color: "#ddd"
+                    x: 20
+                    y: parent.height -1;
+                    height: 1
+                    width: parent.width - 40
+
+                }
 
                 Circle {
+                    id: type_sircle
+                    function color_for_type(tp) {
+                        if (tp === "sql") {
+                            return "#009688"
+                        } else if (tp === "Numeric") {
+                            return "#E91E63"
+                        } else if (tp === "Achievements") {
+                            return "#9C27B0"
+                        } else if (tp === "Statistics") {
+                            return "#03A9F4"
+                        }
+
+                        return "#03A9F4"
+                    }
+                    function short_text_for_type(tp) {
+                        if (tp === "sql") {
+                            return "Sql"
+                        } else if (tp === "Numeric") {
+                            return "Num"
+                        } else if (tp === "Achievements") {
+                            return "Ach"
+                        } else if (tp === "Statistics") {
+                            return "Stt"
+                        }
+
+                        return tp
+                    }
+
                     anchors.verticalCenter: parent.verticalCenter
-                    x: 10
+                    x: 5
                     width: 30
                     height: 30
-                    color: "#E91E63"
+                    color: color_for_type(type_str)
                     Text {
                         anchors.centerIn: parent
                         color: "#fff"
-                        text: "Sql"
+                        text: parent.short_text_for_type(type_str)
                     }
                 }
 
                 Text {
-                    anchors.centerIn: parent
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: type_sircle.right
+                    anchors.leftMargin: 10
                     text: name
-                    font.pixelSize: 18
+                    font.pixelSize: 16
                 }
 
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
                         console.log("Index clicked" + index)
-                        ta_text_condition.insert(ta_text_condition.length, cost)
+                        ta_text_condition.insert(ta_text_condition.length, value)
                     }
                 }
             }
         }
+
+        states: [
+            State {
+                name: "HelperVisible"
+                PropertyChanges {
+                    target: helper_list
+                    x: ta_text_condition.width - helper_list.width
+                }
+            }
+        ]
+        transitions: [
+            Transition {
+                ParallelAnimation {
+                    NumberAnimation {target: helper_list; properties: "y,x"; duration: top_level.animation_duration; easing.type: Easing.InOutExpo }
+                }
+            }
+        ]
     }
 }
 

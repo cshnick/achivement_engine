@@ -450,10 +450,7 @@ public:
 			m_calc_vars_container = loadCalcDelegatesContainer();
 		}
 		std::vector<var_traits> res;
-
-		m_mutex.lock();
 		std::vector<CalcVarDelegateBase*> q_v = *m_calc_vars_container->delegates();
-		m_mutex.unlock();
 		for(auto d = q_v.begin(); d != q_v.end(); ++d) {
 			var_traits vt;
 			vt.name = (*d)->varAlias();
@@ -461,7 +458,6 @@ public:
 			vt.type_str = (*d)->typeStr();
 			res.push_back(vt);
 		}
-
 		return res;
 	}
 

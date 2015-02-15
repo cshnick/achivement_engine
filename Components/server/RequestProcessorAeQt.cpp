@@ -16,10 +16,8 @@ using namespace Network;
 
 class RequestProcessorAeQt;
 class RequestProcessorAeQtPrivate {
+public:
 	RequestProcessorAeQtPrivate(RequestProcessorAeQt *p_q) : q(p_q) {
-//		m_engine.reset(new AE::EngineImpl);
-
-		m_engine = new AE::EngineImpl;
 	}
 	void processRequestMain(Network::IHttpRequestPtr req) {
 		std::string Path = req->GetPath();
@@ -39,13 +37,17 @@ class RequestProcessorAeQtPrivate {
 				wr.writeStartElement(AE::tag_element::Value);
 					wr.writeTextElement(AE::tag_name::Value, i->first);
 					wr.writeTextElement(AE::tag_value::Value, i->second);
+					wr.writeTextElement(AE::tag_type_str::Value, AE::val_type_sql::Value);
 				wr.writeEndElement();
 			}
-			std::vector<AE::var_traits> v = m_engine->varMetas();
+			m_mutex->lock();
+			std::vector<AE::var_traits> v = AE::EngineImpl().varMetas();
+			m_mutex->unlock();
 			for (auto j = v.begin(); j != v.end(); ++j) {
 				wr.writeStartElement(AE::tag_element::Value);
 					wr.writeTextElement(AE::tag_name::Value, j->name.c_str());
 					wr.writeTextElement(AE::tag_value::Value, j->alias.c_str());
+					wr.writeTextElement(AE::tag_type_str::Value, j->type_str.c_str());
 				wr.writeEndElement();
 			}
 			wr.writeEndElement();
@@ -80,8 +82,6 @@ private:
 	friend class RequestProcessorAeQt;
 	RequestProcessorAeQt *q;
 	std::mutex *m_mutex = nullptr;
-//	std::unique_ptr<AE::EngineImpl> m_engine;
-	AE::EngineImpl *m_engine = nullptr;
 };
 
 RequestProcessorAeQt::RequestProcessorAeQt(std::mutex *p_mtx)

@@ -64,6 +64,8 @@ DECLARE_STRING_CONSTANT(tag_lastId, lastId);
 DECLARE_STRING_CONSTANT(tag_name, name);
 DECLARE_STRING_CONSTANT(tag_value, value);
 DECLARE_STRING_CONSTANT(tag_root, root);
+DECLARE_STRING_CONSTANT(tag_type_str, type_str);
+DECLARE_STRING_CONSTANT(val_type_sql, sql);
 //Coming from external
 DECLARE_CONVENTION_TYPE(f_statement, Statement);
 DECLARE_CONVENTION_TYPE(f_result, Result);
