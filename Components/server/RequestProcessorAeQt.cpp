@@ -11,90 +11,93 @@
 #include <sstream>
 #include <mutex>
 #include <memory>
+#include <map>
+#include <functional>
 
 using namespace Network;
 
 class RequestProcessorAeQt;
-class RequestProcessorAeQtPrivate {
+class RequestProcessorAeQtHelper {
 public:
-	RequestProcessorAeQtPrivate(RequestProcessorAeQt *p_q) : q(p_q) {
+	typedef void (RequestProcessorAeQtHelper::*__req_func_t)(IHttpRequestPtr);
+	typedef std::map<std::string, __req_func_t> callback_map;
+	RequestProcessorAeQtHelper(RequestProcessorAeQt *p_q, std::mutex *p_mutex) : q(p_q), m_mutex(p_mutex) {
+		m_callbacks[AE::n_tables_path::Value] 			= &RequestProcessorAeQtHelper::processMeta;
+		m_callbacks[AE::n_achievement_list_path::Value] = &RequestProcessorAeQtHelper::processAhievementList;
+	}
+	void processMeta(IHttpRequestPtr req) {
+		QString res;
+		QXmlStreamWriter wr(&res);
+		wr.setAutoFormatting(true);
+
+		wr.writeStartDocument();
+		wr.writeStartElement(AE::tag_root::Value);
+		AE::conv_map m;
+		AE::fillConventions(m);
+		for (auto i = m.begin(); i != m.end(); ++i) {
+			wr.writeStartElement(AE::tag_element::Value);
+			wr.writeTextElement(AE::tag_name::Value, i->first);
+			wr.writeTextElement(AE::tag_value::Value, i->second);
+			wr.writeTextElement(AE::tag_type_str::Value, AE::val_type_sql::Value);
+			wr.writeEndElement();
+		}
+		m_mutex->lock();
+		std::vector<AE::var_traits> v = AE::EngineImpl().varMetas();
+		m_mutex->unlock();
+		for (auto j = v.begin(); j != v.end(); ++j) {
+			wr.writeStartElement(AE::tag_element::Value);
+			wr.writeTextElement(AE::tag_name::Value, j->name.c_str());
+			wr.writeTextElement(AE::tag_value::Value, j->alias.c_str());
+			wr.writeTextElement(AE::tag_type_str::Value, j->type_str.c_str());
+			wr.writeEndElement();
+		}
+		wr.writeEndElement();
+		wr.writeEndDocument();
+
+		req->SetResponseString(res.toStdString());
+	}
+	void processAhievementList(IHttpRequestPtr req) {
+		QBuffer buf;
+		buf.open(QIODevice::WriteOnly);
+		AE::EngineImpl().achievementsToXml(&buf);
+//		PRINT_IF_VERBOSE("Response data: %s", buf.data().data());
+//		std::string test_str(buf.data().data());
+//		PRINT_IF_VERBOSE("Response std data: %s", test_str.c_str());
+		req->SetResponseString(buf.data().data());
+	}
+
+	void execForString(const std::string &str_exp, IHttpRequestPtr req) {
+		auto i = m_callbacks.find(str_exp);
+		if (i != m_callbacks.end()) {
+			__req_func_t callable = i->second;
+			(this->*callable)(req);
+		}
 	}
 	void processRequestMain(Network::IHttpRequestPtr req) {
 		std::string Path = req->GetPath();
-		std::string responseStr = "";
+		execForString(Path, req);
 
 		DEBUG("Request path: %s\n", Path.c_str());
-		if (Path == AE::n_tables_path::Value) {
-			QString res;
-			QXmlStreamWriter wr(&res);
-			wr.setAutoFormatting(true);
-
-			wr.writeStartDocument();
-			wr.writeStartElement(AE::tag_root::Value);
-			AE::conv_map m;
-			AE::fillConventions(m);
-			for (auto i = m.begin(); i != m.end(); ++i) {
-				wr.writeStartElement(AE::tag_element::Value);
-					wr.writeTextElement(AE::tag_name::Value, i->first);
-					wr.writeTextElement(AE::tag_value::Value, i->second);
-					wr.writeTextElement(AE::tag_type_str::Value, AE::val_type_sql::Value);
-				wr.writeEndElement();
-			}
-			m_mutex->lock();
-			std::vector<AE::var_traits> v = AE::EngineImpl().varMetas();
-			m_mutex->unlock();
-			for (auto j = v.begin(); j != v.end(); ++j) {
-				wr.writeStartElement(AE::tag_element::Value);
-					wr.writeTextElement(AE::tag_name::Value, j->name.c_str());
-					wr.writeTextElement(AE::tag_value::Value, j->alias.c_str());
-					wr.writeTextElement(AE::tag_type_str::Value, j->type_str.c_str());
-				wr.writeEndElement();
-			}
-			wr.writeEndElement();
-			wr.writeEndDocument();
-
-			responseStr = res.toStdString();
-			DEBUG("Result string: %s\n", responseStr.c_str());
-		}
-
-//		Path = "./test_content" + Path + (Path == "/" ? "index.html" : std::string());
-		{
-			std::stringstream Io;
-			Io << "Path: " << Path << std::endl
-					<< Http::Request::Header::Host::Name << ": "
-					<< req->GetHeaderAttr(Http::Request::Header::Host::Value) << std::endl
-					<< Http::Request::Header::Referer::Name << ": "
-					<< req->GetHeaderAttr(Http::Request::Header::Referer::Value) << std::endl;
-			std::lock_guard<std::mutex> Lock(*m_mutex);
-			std::cout << Io.str() << std::endl;
-		}
-		req->SetResponseAttr(Http::Response::Header::Server::Value, "For private uses only");
-//		req->SetResponseAttr(Http::Response::Header::ContentType::Value,
-//				Http::Content::TypeFromFileName(Path));
-//		req->SetResponseFile(Path);
-		req->SetResponseString(responseStr);
 	}
-	~RequestProcessorAeQtPrivate() {
-//		if (m_engine) delete m_engine;
+	~RequestProcessorAeQtHelper() {
 	}
 
 private:
 	friend class RequestProcessorAeQt;
 	RequestProcessorAeQt *q;
 	std::mutex *m_mutex = nullptr;
+	callback_map m_callbacks;
 };
 
 RequestProcessorAeQt::RequestProcessorAeQt(std::mutex *p_mtx)
-   :p(new RequestProcessorAeQtPrivate(this))
 {
-	p->m_mutex  = p_mtx;
+	m_mutex = p_mtx;
 }
 
 RequestProcessorAeQt::~RequestProcessorAeQt() {
-	delete p;
 }
 
 void RequestProcessorAeQt::operator()(Network::IHttpRequestPtr req) {
-	p->processRequestMain(req);
+	RequestProcessorAeQtHelper(this, m_mutex).processRequestMain(req);
 }
 

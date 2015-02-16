@@ -71,6 +71,16 @@ public:
         m_elements.removeAt(index);
         q->endRemoveRows();
     }
+    void clear() {
+        if (!m_elements.count()) {
+            return;
+        }
+
+        q->beginRemoveRows(QModelIndex(), 0, m_elements.count() - 1);
+        m_elements.clear();
+        q->endRemoveRows();
+    }
+
     QVariant dict(int index) const {
         if (index < 0 || index > m_elements.count()) {
             return QVariantMap();
@@ -106,6 +116,7 @@ public:
         return true;
     }
     bool fromXml() {
+        clear();
         QDomDocument doc;
         QFile file(filePath + "/" + fileName);
         if (!file.open(QIODevice::ReadOnly)) {
@@ -120,6 +131,24 @@ public:
             file.close();
             return false;
         }
+
+        bool res = fromQDomDocument(doc);
+        file.close();
+        return res;
+    }
+    bool fromXml(const QString &text) {
+        clear();
+        QDomDocument doc;
+        QString err_string;
+        int err_line;
+        int err_column;
+        if (!doc.setContent(text, false, &err_string, &err_line, &err_column)) {
+            qDebug() << "Can't set content for" << text;
+            return false;
+        }
+        return fromQDomDocument(doc);
+    }
+    bool fromQDomDocument(const QDomDocument &doc) {
         QDomElement element = doc.firstChildElement().firstChildElement(AE::tag_element::Value);
         while (!element.isNull()) {
             QVariantMap dta;
@@ -146,9 +175,9 @@ public:
         if (!lid.isNull()) {
             m_lastId = qMax(m_lastId, lid.text().toInt());
         }
-        file.close();
         return true;
     }
+
     void addTest() {
         QVariantMap data1;
         data1[AE::f_id::Value] = getId();
@@ -224,6 +253,10 @@ void XMLListModel::remove(int index)
 {
     p->remove(index);
 }
+void XMLListModel::clear()
+{
+    p->clear();
+}
 QVariant XMLListModel::dict(int index) const
 {
     return p->dict(index);
@@ -239,6 +272,10 @@ int XMLListModel::count() const
 bool XMLListModel::fromXml()
 {
     return p->fromXml();
+}
+bool XMLListModel::fromXml(const QString &text)
+{
+    return p->fromXml(text);
 }
 bool XMLListModel::toXml(QString &p_str) {
     return p->toXml(p_str);

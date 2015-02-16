@@ -73,6 +73,7 @@ DECLARE_CONVENTION_TYPE(f_success, Success);
 //Network
 DECLARE_STRING_CONSTANT(n_tables_path, /TablesPath);
 DECLARE_STRING_CONSTANT(n_fields_path, /FieldsPath);
+DECLARE_STRING_CONSTANT(n_achievement_list_path, /AchievementList)
 
 
 typedef std::map<char const*, char const*> conv_map;

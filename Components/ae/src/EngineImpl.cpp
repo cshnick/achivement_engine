@@ -35,6 +35,15 @@ public:
 			dropTables();
 		}
 	}
+	~EngineImplPrivate() {
+		if (m_calc_vars_container) delete m_calc_vars_container;
+		QString connection;
+		connection = m_db.connectionName();
+		m_db.close();
+		m_db = QSqlDatabase();
+		m_db.removeDatabase(connection);
+		STAT_IF_VERBOSE;
+	}
 	DelegateContainer *loadCalcDelegatesContainer() {
 		void *handle;
 		char dpath[512];
@@ -463,7 +472,7 @@ public:
 		return res;
 	}
 
-	void loadFromXml(QIODevice *stream) {
+	bool loadFromXml(QIODevice *stream) {
 		//		QString xmlPath = QString(g_achivements_path::Value) + "/" + QString(g_achivementsFileName::Value);
 		//		QFile ach_xml(xmlPath);
 		//		if (!ach_xml.open(QIODevice::ReadOnly)) {
@@ -471,6 +480,7 @@ public:
 		//		}
 		//
 		synchroAvhivementsDb(stream);
+		return true;
 	}
 	void synchroAvhivementsDb(QIODevice *stream) {
 
@@ -532,7 +542,9 @@ public:
 	}
 
 	bool saveToXml(QIODevice *stream) {
+		init();
 		if (!checkDB()) return false;
+
 		QSqlQuery q("", m_db);
 
 		q.prepare(QString("SELECT * FROM %1").arg(t_achivements_list::Value));
@@ -744,15 +756,16 @@ achievements_params EngineImpl::take_ach_params() {
 std::vector<var_traits> EngineImpl::varMetas() {
 	return p->varMetas();
 }
-bool EngineImpl::saveToXml(QIODevice *stream) {
+bool EngineImpl::achievementsToXml(QIODevice *stream) {
 	return p->saveToXml(stream);
 }
 bool EngineImpl::loadFromXml(QIODevice *stream) {
-	return p->loadFromXml(QIODevice *stream);
+	return p->loadFromXml(stream);
 }
 
 EngineImpl::~EngineImpl()
 {
+	STAT_IF_VERBOSE;
 	if (p) delete p;
 }
 void EngineImpl::dropTables() {

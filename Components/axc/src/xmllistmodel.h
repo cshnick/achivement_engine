@@ -22,10 +22,12 @@ public:
     Q_INVOKABLE void insert(int index, const QVariantMap &p_data);
     Q_INVOKABLE void update(int index, const QVariantMap &p_data);
     Q_INVOKABLE void remove(int index);
+    Q_INVOKABLE void clear();
     Q_INVOKABLE QVariant dict(int index) const;
     Q_INVOKABLE int getId() const;
     Q_INVOKABLE int count() const;
     Q_INVOKABLE bool fromXml();
+    Q_INVOKABLE bool fromXml(const QString &text);
     Q_INVOKABLE bool toXml(QString &p_xml);
     Q_INVOKABLE void addTest();
 

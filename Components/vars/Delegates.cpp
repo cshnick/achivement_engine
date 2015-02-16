@@ -201,7 +201,20 @@ public:
 		ADD_DELEGATE(ActionsCount);
 		ADD_DELEGATE(TrueActionsCount);
 		ADD_DELEGATE(FalseActionsCount);
+	}
+	~DCDB() {
+		DEBUG("Removing CDDB object container\n");
 
+		for (auto i = m_delegates.begin(); i != m_delegates.end(); ++i) {
+			delete (*i);
+			(*i) = nullptr;
+		}
+
+		QString connection;
+		connection = m_db.connectionName();
+		m_db.close();
+		m_db = QSqlDatabase();
+		m_db.removeDatabase(connection);
 	}
 
 private:
@@ -212,6 +225,9 @@ private:
 
 extern "C" DelegateContainer *loadFactory() {
 	return new DCDB;
+}
+extern "C" void closeFactory(DelegateContainer *obj) {
+	delete obj;
 }
 
 } //namespace AE
