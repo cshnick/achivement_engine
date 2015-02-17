@@ -57,14 +57,34 @@ public:
 		req->SetResponseString(res.toStdString());
 	}
 	void processAhievementList(IHttpRequestPtr req) {
-		QBuffer buf;
-		buf.open(QIODevice::WriteOnly);
-		AE::EngineImpl().achievementsToXml(&buf);
-//		PRINT_IF_VERBOSE("Response data: %s", buf.data().data());
-//		std::string test_str(buf.data().data());
-//		PRINT_IF_VERBOSE("Response std data: %s", test_str.c_str());
-		req->SetResponseAttr(Network::Http::Response::Header::ContentType::Value, "text/xml; charset=utf-8");
-		req->SetResponseString(buf.data().data());
+
+		if (req->GetRequestType() == IHttpRequest::Type::GET) {
+			QBuffer buf;
+			buf.open(QIODevice::WriteOnly);
+			AE::EngineImpl().achievementsToXml(&buf);
+			req->SetResponseAttr(Network::Http::Response::Header::ContentType::Value, "text/xml; charset=utf-8");
+			req->SetResponseString(buf.data().data());
+		} else if (req->GetRequestType() == IHttpRequest::Type::POST) {
+			DEBUG("Request post\n");
+			int len  = req->GetContentSize();
+			char buf[len + 1];
+			req->GetContent((void*)buf, len, 1);
+			if (buf) {
+				IHttpRequest::RequestParams p = req->GetParams();
+				std::string c = p.at(AE::n_post_content::Value);
+				DEBUG("Debug string \n%s\n", c.c_str());
+				fflush(stdout);
+				QBuffer b;
+				b.setData(buf, len);
+				b.open(QIODevice::ReadOnly);
+				AE::EngineImpl().synchroAchievements(&b);
+				req->SetResponseString("OK");
+				req->SetResponseCode(200);
+			} else {
+				req->SetResponseCode(204);
+			}
+
+		}
 	}
 
 	void execForString(const std::string &str_exp, IHttpRequestPtr req) {

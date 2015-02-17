@@ -17,7 +17,7 @@ namespace Network
   {
     enum class Type
     {
-      HEAD, GET, PUT, POST
+      HEAD = 0, GET, PUT, POST
     };
     
     typedef std::unordered_map<std::string, std::string> RequestParams;

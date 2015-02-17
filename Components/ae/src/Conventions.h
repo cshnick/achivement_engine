@@ -74,7 +74,7 @@ DECLARE_CONVENTION_TYPE(f_success, Success);
 DECLARE_STRING_CONSTANT(n_tables_path, /TablesPath);
 DECLARE_STRING_CONSTANT(n_fields_path, /FieldsPath);
 DECLARE_STRING_CONSTANT(n_achievement_list_path, /AchievementList)
-
+DECLARE_STRING_CONSTANT(n_post_content, Content)
 
 typedef std::map<char const*, char const*> conv_map;
 	namespace Private {

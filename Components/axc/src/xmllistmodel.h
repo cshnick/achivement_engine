@@ -28,7 +28,7 @@ public:
     Q_INVOKABLE int count() const;
     Q_INVOKABLE bool fromXml();
     Q_INVOKABLE bool fromXml(const QString &text);
-    Q_INVOKABLE bool toXml(QString &p_xml);
+    Q_INVOKABLE QString toXml();
     Q_INVOKABLE void addTest();
 
 

@@ -57,14 +57,12 @@ public:
     }
     void update(int index, const QVariantMap &p_data) {
         if (index < 0 || index > m_elements.count()) {
-            QString str;
-            toXml(str);
+            toXml();
             return;
         }
         QVariantMap &mp = m_elements[index];
         mp = p_data;
-        QString str;
-        toXml(str);
+        toXml();
     }
     void remove(int index) {
         q->beginRemoveRows(QModelIndex(), index, index);
@@ -90,12 +88,13 @@ public:
     int getId() const {
         return ++m_lastId;
     }
-    bool toXml(QString &str) {
+    QString toXml() {
 //        QFile file(filePath + "/" + fileName);
 //        if (!file.open(QIODevice::WriteOnly)) {
 //            qDebug() << "Can't open for writing" << filePath + "/" + fileName;
 //            return false;
 //        }
+        QString str;
 
         QXmlStreamWriter writer(&str);
         writer.setAutoFormatting(true);
@@ -113,7 +112,7 @@ public:
         writer.writeEndElement();
         writer.writeEndDocument();
 
-        return true;
+        return str;
     }
     bool fromXml() {
         clear();
@@ -277,8 +276,8 @@ bool XMLListModel::fromXml(const QString &text)
 {
     return p->fromXml(text);
 }
-bool XMLListModel::toXml(QString &p_str) {
-    return p->toXml(p_str);
+QString XMLListModel::toXml() {
+    return p->toXml();
 }
 void XMLListModel::addTest()
 {

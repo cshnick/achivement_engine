@@ -48,7 +48,7 @@ public:
 	//Non inherited
 	std::vector<var_traits> varMetas();
 	bool achievementsToXml(QIODevice *stream);
-	bool loadFromXml(QIODevice *stream);
+	bool synchroAchievements(QIODevice *stream);
 
 	~EngineImpl();
 

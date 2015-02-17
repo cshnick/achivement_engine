@@ -31,9 +31,10 @@ public:
 		q(p_q),
 		m_session_id(-1)
 	{
-		if (DROP_TABLES) {
-			dropTables();
-		}
+		const char lc[] = "UTF-8";
+		DEBUG("Setting locale: %s\n", lc);
+		QTextCodec::setCodecForLocale(QTextCodec::codecForName(lc));
+		QTextCodec::setCodecForCStrings(QTextCodec::codecForName(lc));
 	}
 	~EngineImplPrivate() {
 		if (m_calc_vars_container) delete m_calc_vars_container;
@@ -117,6 +118,7 @@ public:
 		}
 	}
 	void checkAchivements() {
+		STAT_IF_VERBOSE;
 		for (int i = 0; i < m_achivements.count(); i++) {
 			QVariantMap m = m_achivements[i];
 			QString condition = m.value(f_condition::Value).toString();
@@ -482,8 +484,7 @@ public:
 		synchroAvhivementsDb(stream);
 		return true;
 	}
-	void synchroAvhivementsDb(QIODevice *stream) {
-
+	bool synchroAvhivementsDb(QIODevice *stream) {
 		QList<QVariantMap> xml_rows;
 		parseXmlRows(stream, xml_rows);
 
@@ -539,6 +540,7 @@ public:
 				EXEC_AND_REPORT_COND;
 			}
 		}
+		return true;
 	}
 
 	bool achievementsToXml(QIODevice *stream) {
@@ -549,10 +551,7 @@ public:
 
 		q.prepare(QString("SELECT * FROM %1").arg(t_achivements_list::Value));
 		EXEC_AND_REPORT_COND;
-		if (!q.first()) {
-			SQL_DEBUG("Empty query result\n");
-			return false;
-		}
+		q.first();
 		if (!stream->isWritable()) {
 			DEBUG_ERR("Can't write to stream...\n");
 		}
@@ -583,10 +582,6 @@ public:
 private:
 	void init() {
 		PRINT_IF_VERBOSE("Initializing database. Setting database name: %s\n", qPrintable(g_dbName::Value));
-		const char lc[] = "UTF-8";
-		DEBUG("Setting locale: %s\n", lc);
-		QTextCodec::setCodecForLocale(QTextCodec::codecForName(lc));
-		QTextCodec::setCodecForCStrings(QTextCodec::codecForName(lc));
 
 		if (!m_db.isOpen()) {
 			m_db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
@@ -594,9 +589,13 @@ private:
 			if (!m_db.open()) {
 				DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(m_db.lastError().text()));
 			}
-
+			if (DROP_TABLES) {
+				dropTables();
+			}
 			addDefaultTables();
-			//		synchroAvhivementsDb();
+			QFile f(QString(g_achivements_path::Value) + "/" + g_achivementsFileName::Value);
+			f.open(QIODevice::ReadOnly);
+			synchroAvhivementsDb(&f);
 			fillAchivementsFromDB();
 			fillCalcDelegatesMap();
 		}
@@ -689,11 +688,12 @@ private:
 	}
 
 	bool parseXmlRows(QIODevice *p_file, QList<QVariantMap> &map) {
+		const QByteArray ba = p_file->readAll();
 		QDomDocument doc;
 		QString err_string;
 		int err_line;
 		int err_column;
-		if (!doc.setContent(p_file, false, &err_string, &err_line, &err_column)) {
+		if (!doc.setContent(ba, false, &err_string, &err_line, &err_column)) {
 			DEBUG_ERR( "Can't set content for stream\n" );
 			p_file->close();
 			return false;
@@ -760,8 +760,8 @@ std::vector<var_traits> EngineImpl::varMetas() {
 bool EngineImpl::achievementsToXml(QIODevice *stream) {
 	return p->achievementsToXml(stream);
 }
-bool EngineImpl::loadFromXml(QIODevice *stream) {
-	return p->loadFromXml(stream);
+bool EngineImpl::synchroAchievements(QIODevice *stream) {
+	return p->synchroAvhivementsDb(stream);
 }
 
 EngineImpl::~EngineImpl()

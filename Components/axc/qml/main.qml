@@ -124,8 +124,25 @@ ApplicationWindow {
                         dict["Condition"] = text_condition.text
 
                         var index = lview.currentIndex
-                        xml_model.update(index, dict)
+//                        xml_model.update(index, dict)
+                        var str = xml_model.toXml()
+                        console.log("Res string: " + str)
                         console.log("updating dict" + dict["Name"])
+
+                        var request = new XMLHttpRequest()
+                        request.open('POST', 'http://127.0.0.1:5555/AchievementList')
+                        request.setRequestHeader('Content-Type', 'text/xml;charset=utf-8')
+
+                        request.onreadystatechange = function () {
+                            if (request.readyState === XMLHttpRequest.DONE) {
+                                if (request.status === 200) {
+                                    xml_model.fromXml(request.responseText)
+                                } else {
+                                    console.log("HTTP request failed", request.status)
+                                }
+                            }
+                        }
+                        request.send("Content=" + str)
                     }
                 }
             }
