@@ -63,6 +63,7 @@ public:
 //		PRINT_IF_VERBOSE("Response data: %s", buf.data().data());
 //		std::string test_str(buf.data().data());
 //		PRINT_IF_VERBOSE("Response std data: %s", test_str.c_str());
+		req->SetResponseAttr(Network::Http::Response::Header::ContentType::Value, "text/xml; charset=utf-8");
 		req->SetResponseString(buf.data().data());
 	}
 

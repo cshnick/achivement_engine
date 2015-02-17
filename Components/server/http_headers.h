@@ -63,7 +63,7 @@ namespace Network
         DECLARE_STRING_CONSTANT(ContentLocation, Content-Location)
         DECLARE_STRING_CONSTANT(ContentMD5, Content-MD5)
         DECLARE_STRING_CONSTANT(ContentRange, Content-Range)
-        DECLARE_STRING_CONSTANT(ContentType, Content-Type)
+        DECLARE_STRING_CONSTANT(ContentType, content-type)
         DECLARE_STRING_CONSTANT(Date, Date)
         DECLARE_STRING_CONSTANT(ETag, ETag)
         DECLARE_STRING_CONSTANT(Expires, Expires)

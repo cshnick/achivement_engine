@@ -541,7 +541,7 @@ public:
 		}
 	}
 
-	bool saveToXml(QIODevice *stream) {
+	bool achievementsToXml(QIODevice *stream) {
 		init();
 		if (!checkDB()) return false;
 
@@ -569,6 +569,7 @@ public:
 			writer.writeTextElement(f_description::Value, rec.value(f_description::Value).toString());
 			writer.writeTextElement(f_condition::Value, rec.value(f_condition::Value).toString());
 			writer.writeTextElement(f_name::Value, rec.value(f_name::Value).toString());
+			writer.writeTextElement(f_id::Value, rec.value(f_id::Value).toString());
 			writer.writeEndElement();
 			q.next();
 		}
@@ -757,7 +758,7 @@ std::vector<var_traits> EngineImpl::varMetas() {
 	return p->varMetas();
 }
 bool EngineImpl::achievementsToXml(QIODevice *stream) {
-	return p->saveToXml(stream);
+	return p->achievementsToXml(stream);
 }
 bool EngineImpl::loadFromXml(QIODevice *stream) {
 	return p->loadFromXml(stream);

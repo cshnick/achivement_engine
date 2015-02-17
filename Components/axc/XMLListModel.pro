@@ -7,7 +7,8 @@ INCLUDEPATH += $$SRC_DIR \
 
 SOURCES += $$SRC_DIR/main.cpp \
     $$SRC_DIR/xmllistmodel.cpp \
-    src/highlighter/highlighter.cpp
+    src/highlighter/highlighter.cpp \
+    src/string_encoder.cpp
 
 RESOURCES += qml.qrc
 CONFIG += c++11
@@ -21,6 +22,7 @@ include(deployment.pri)
 
 HEADERS += \
     $$SRC_DIR/xmllistmodel.h \
-    $$SRC_DIR/highlighter/highlighter.h
+    $$SRC_DIR/highlighter/highlighter.h \
+    src/string_encoder.h
 
 INCLUDEPATH += $$AE_SRC

@@ -194,8 +194,21 @@ ApplicationWindow {
 //                    if (!xml_model.fromXml()) {
 //                        xml_model.addTest()
 //                    }
-                    xml_model.fromXml()
+//                    xml_model.fromXml()
+                    var request = new XMLHttpRequest()
+                    request.open('GET', 'http://127.0.0.1:5555/AchievementList')
+                    request.setRequestHeader('content-type', 'text/xml;charset=utf-8')
 
+                    request.onreadystatechange = function () {
+                        if (request.readyState === XMLHttpRequest.DONE) {
+                            if (request.status === 200) {
+                                xml_model.fromXml(request.responseText)
+                            } else {
+                                console.log("HTTP request failed", request.status)
+                            }
+                        }
+                    }
+                    request.send()
                     currentIndex = -1
                 }
             }

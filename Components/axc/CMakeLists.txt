@@ -15,6 +15,7 @@ SET (SRC_LIST
   ${SRC_DIR}/xmllistmodel.cpp
   ${SRC_DIR}/main.cpp
   ${HIGHLIGHTER_DIR}/highlighter.cpp
+  ${SRC_DIR}/string_encoder.cpp
 )
 
 SET (HEADERS
@@ -25,11 +26,13 @@ find_package(Qt5 COMPONENTS Quick Core Network Xml Widgets)
 qt5_add_resources(RESOURCES qml.qrc)
 qt5_wrap_cpp(xmllistmodel_MOC ${SRC_DIR}/xmllistmodel.h)
 qt5_wrap_cpp(highlighter_MOC ${HIGHLIGHTER_DIR}/highlighter.h)
+qt5_wrap_cpp(string_encoder_MOC ${SRC_DIR}/string_encoder.h)
 
 add_executable(${PROJECT_NAME}
 	${SRC_LIST} 
 	${xmllistmodel_MOC}
 	${highlighter_MOC}
+	${string_encoder_MOC}
 	${RESOURCES} 
 	${HEADERS}
 )
