@@ -56,7 +56,7 @@ action_params genAction() {
 void autoTest() {
 	//1000 sessions
 	EngineImpl *e = new EngineImpl();
-	for (int i = 0; i < 2; i++) {
+	for (int i = 0; i < 4; i++) {
 		e->begin();
 		for (int j = 0; j < 5; j++) {
 			e->addAction(genAction());

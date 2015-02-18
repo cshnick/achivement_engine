@@ -124,7 +124,7 @@ ApplicationWindow {
                         dict["Condition"] = text_condition.text
 
                         var index = lview.currentIndex
-//                        xml_model.update(index, dict)
+                        xml_model.update(index, dict)
                         var str = xml_model.toXml()
                         console.log("Res string: " + str)
                         console.log("updating dict" + dict["Name"])
@@ -136,7 +136,7 @@ ApplicationWindow {
                         request.onreadystatechange = function () {
                             if (request.readyState === XMLHttpRequest.DONE) {
                                 if (request.status === 200) {
-                                    xml_model.fromXml(request.responseText)
+                                    console.log("Reply from server: " + request.responseText)
                                 } else {
                                     console.log("HTTP request failed", request.status)
                                 }
@@ -208,10 +208,7 @@ ApplicationWindow {
                 }
 
                 Component.onCompleted: {
-//                    if (!xml_model.fromXml()) {
-//                        xml_model.addTest()
-//                    }
-//                    xml_model.fromXml()
+                    //Request xml data on load
                     var request = new XMLHttpRequest()
                     request.open('GET', 'http://127.0.0.1:5555/AchievementList')
                     request.setRequestHeader('content-type', 'text/xml;charset=utf-8')
@@ -219,6 +216,7 @@ ApplicationWindow {
                     request.onreadystatechange = function () {
                         if (request.readyState === XMLHttpRequest.DONE) {
                             if (request.status === 200) {
+                                console.log("Get Request answer")
                                 xml_model.fromXml(request.responseText)
                             } else {
                                 console.log("HTTP request failed", request.status)

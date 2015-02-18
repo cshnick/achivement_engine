@@ -57,12 +57,10 @@ public:
     }
     void update(int index, const QVariantMap &p_data) {
         if (index < 0 || index > m_elements.count()) {
-            toXml();
             return;
         }
         QVariantMap &mp = m_elements[index];
         mp = p_data;
-        toXml();
     }
     void remove(int index) {
         q->beginRemoveRows(QModelIndex(), index, index);
@@ -142,7 +140,7 @@ public:
         int err_line;
         int err_column;
         if (!doc.setContent(text, false, &err_string, &err_line, &err_column)) {
-            qDebug() << "Can't set content for" << text;
+            qDebug() << "Can't set content for text:" << text;
             return false;
         }
         return fromQDomDocument(doc);

@@ -70,20 +70,16 @@ public:
 			char buf[len + 1];
 			req->GetContent((void*)buf, len, 1);
 			if (buf) {
-				IHttpRequest::RequestParams p = req->GetParams();
-				std::string c = p.at(AE::n_post_content::Value);
-				DEBUG("Debug string \n%s\n", c.c_str());
-				fflush(stdout);
 				QBuffer b;
 				b.setData(buf, len);
 				b.open(QIODevice::ReadOnly);
+				b.seek(8); //Skip 'Content='
 				AE::EngineImpl().synchroAchievements(&b);
 				req->SetResponseString("OK");
 				req->SetResponseCode(200);
 			} else {
 				req->SetResponseCode(204);
 			}
-
 		}
 	}
 

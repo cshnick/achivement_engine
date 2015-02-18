@@ -35,6 +35,10 @@ public:
 		DEBUG("Setting locale: %s\n", lc);
 		QTextCodec::setCodecForLocale(QTextCodec::codecForName(lc));
 		QTextCodec::setCodecForCStrings(QTextCodec::codecForName(lc));
+		if (DROP_TABLES) {
+			refreshDB();
+			dropTables();
+		}
 	}
 	~EngineImplPrivate() {
 		if (m_calc_vars_container) delete m_calc_vars_container;
@@ -70,9 +74,6 @@ public:
 		return loadLibrary();
 	}
 	void fillCalcDelegatesMap() {
-		if (m_calc_vars_container) {
-			return;
-		}
 		m_calc_vars_container = loadCalcDelegatesContainer();
 		m_calc_vars_container->addContext((void*)this);
 		PRINT_IF_VERBOSE("Filling calc's map...\n");
@@ -91,7 +92,7 @@ public:
 		return true;
 	}
 
-	void fillAchivementsFromDB() {
+	void fillAchivementsFromDB(bool reset = false) {
 		 if (!checkDB()) return;
 		 QSqlQuery q("", m_db);
 		 q.prepare(QString("SELECT * FROM %1")
@@ -294,7 +295,7 @@ public:
 	void refreshAhivementsList() {
 	}
 	void begin() {
-		init();
+		initGlobal();
 		if (!checkDB()) return;
 		STAT_IF_VERBOSE;
 
@@ -485,6 +486,10 @@ public:
 		return true;
 	}
 	bool synchroAvhivementsDb(QIODevice *stream) {
+		refreshDB();
+		refreshTables();
+		refreshCalcVarDelegates();
+
 		QList<QVariantMap> xml_rows;
 		parseXmlRows(stream, xml_rows);
 
@@ -540,11 +545,14 @@ public:
 				EXEC_AND_REPORT_COND;
 			}
 		}
+
+		refreshAchievements();
 		return true;
 	}
 
 	bool achievementsToXml(QIODevice *stream) {
-		init();
+		refreshDB();
+		refreshTables();
 		if (!checkDB()) return false;
 
 		QSqlQuery q("", m_db);
@@ -580,7 +588,7 @@ public:
 	}
 
 private:
-	void init() {
+	void refreshDB() {
 		PRINT_IF_VERBOSE("Initializing database. Setting database name: %s\n", qPrintable(g_dbName::Value));
 
 		if (!m_db.isOpen()) {
@@ -589,16 +597,28 @@ private:
 			if (!m_db.open()) {
 				DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(m_db.lastError().text()));
 			}
-			if (DROP_TABLES) {
-				dropTables();
-			}
-			addDefaultTables();
-			QFile f(QString(g_achivements_path::Value) + "/" + g_achivementsFileName::Value);
-			f.open(QIODevice::ReadOnly);
-			synchroAvhivementsDb(&f);
-			fillAchivementsFromDB();
-			fillCalcDelegatesMap();
 		}
+	}
+	void refreshTables() {
+		addDefaultTables();
+	}
+	void refreshAchievements(bool reset = false) {
+		if (m_achivements.count() && !reset) {
+			return;
+		}
+		fillAchivementsFromDB();
+	}
+	void refreshCalcVarDelegates(bool reset = false) {
+		if (m_calc_vars_container) { //TODO implement reset
+			return;
+		}
+		fillCalcDelegatesMap();
+	}
+	void initGlobal() {
+		refreshDB();
+		refreshTables();
+		refreshAchievements();
+		refreshCalcVarDelegates();
 	}
 
 
@@ -616,7 +636,7 @@ private:
 		QString tables = QString("%1,%2,%3,%4")
 					.arg(t_sessions::Value)
 					.arg(t_actions::Value)
-					.arg(t_achivements_list::Value)
+//					.arg(t_achivements_list::Value)
 					.arg(t_achivements_done::Value);
 		QStringList tl = tables.split(',');
 		for (int i = 0; i < tl.size(); i++) {
