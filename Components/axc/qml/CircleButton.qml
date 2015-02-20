@@ -19,6 +19,8 @@ Circle {
         color: "black"
     }
     MouseArea {
+        id: mouse_area
+
         anchors.fill: parent
         onClicked: {
             console.log("Circle button clicked")
@@ -37,5 +39,32 @@ Circle {
     Behavior on height {
         animation: size_animation
     }
+
+    states: [
+        State {
+            name: "Pushed"
+            when: mouse_area.pressed
+            PropertyChanges {target: button; explicit: true; width: width - 5 }
+            PropertyChanges {target: button; explicit: true; height: height - 5 }
+        }
+    ]
+
+    transitions: [
+        Transition {
+            reversible: true
+            to: "Pushed"
+
+            NumberAnimation {
+                target: button
+                properties: "width,height"
+                duration: 50
+                easing.type: Easing.InOutQuad
+            }
+        },
+        Transition {
+            animations: [size_animation,]
+            reversible: true
+        }
+    ]
 
 }

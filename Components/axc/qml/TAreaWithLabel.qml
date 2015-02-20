@@ -4,7 +4,11 @@ import QtQuick.Controls.Styles 1.2
 import QtQuick.XmlListModel 2.0
 
 Item {
+    id: tarea_with_label
+
     property alias text: ta_text_condition.text
+    signal serverReply(string reply)
+
     clip: true
 
     Label {
@@ -79,7 +83,18 @@ Item {
 
             model: conventions_xml_model
             delegate: conventions_delegate
+
+            Rectangle {
+                id: vline
+                y: 10
+                height: parent.height - 20
+                width: 1
+                color: "#ddd"
+                opacity: 0.7
+            }
         }
+
+
 
         XmlListModel {
             id: conventions_xml_model

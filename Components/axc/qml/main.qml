@@ -30,6 +30,7 @@ ApplicationWindow {
             top_level.conditionText = dict["Condition"]
             top_level.idLabel = dict["id"]
         }
+
         Rectangle {
             id: top_panel
             width: parent.width
@@ -37,6 +38,71 @@ ApplicationWindow {
             clip: true
 
             color: "#00BCD4"
+
+
+            SequentialAnimation {
+                id: color_animation
+                ColorAnimation {
+                    properties: "color"
+                    duration: 200
+                    target: top_panel
+                    from: top_panel.color
+                    to: "#4CAF50"
+                }
+                PauseAnimation {
+                    duration: 1000
+                }
+                ColorAnimation {
+                    properties: "color"
+                    duration: 200
+                    target: top_panel
+                    from: "#4CAF50"
+                    to: top_panel.color
+                }
+            }
+
+            Text {
+                id: message_text
+
+                anchors.left: parent.left
+                anchors.leftMargin: 30
+                anchors.verticalCenter: parent.verticalCenter
+                font.pixelSize: 20
+                font.bold: false
+                text: "Test"
+                color: "white"
+                opacity: 0
+                onStateChanged: {
+                    console.log("Message text state change")
+                }
+
+                states: [
+                    State {
+                        name: "VisibleState"
+                        when: color_animation.running
+                        PropertyChanges {
+                            target: message_text
+                            opacity: 1
+                        }
+                    }
+                ]
+                transitions: [
+                    Transition {
+                        reversible: true
+                        NumberAnimation {
+                            target: message_text
+                            property: "opacity"
+                            duration: 200
+                            easing.type: Easing.InOutQuad
+                        }
+                    }
+                ]
+            }
+
+            function reportHttp200(text) {
+                color_animation.start()
+                message_text.text = text
+            }
 
             Row {
                 anchors.fill: parent
@@ -90,8 +156,8 @@ ApplicationWindow {
                 }
                 CircleButton {
                     id: remove_entry
-                    width: lview.currentIndex != -1 ? 40 : 0
-                    height: lview.currentIndex != -1 ? 40 : 0
+                    width: top_level.state === "SHOW_RIGHT" ? 40 : 0
+                    height: top_level.state === "SHOW_RIGHT" ? 40 : 0
 
                     text: 'R'
                     font.pointSize: 18
@@ -137,6 +203,7 @@ ApplicationWindow {
                             if (request.readyState === XMLHttpRequest.DONE) {
                                 if (request.status === 200) {
                                     console.log("Reply from server: " + request.responseText)
+                                    top_panel.reportHttp200("Сохранено...")
                                 } else {
                                     console.log("HTTP request failed", request.status)
                                 }
@@ -147,6 +214,7 @@ ApplicationWindow {
                 }
             }
         }
+
 
         Rectangle {
             id: left_panel
@@ -354,6 +422,7 @@ ApplicationWindow {
         ]
         transitions: [
             Transition {
+                reversible: true
                 ParallelAnimation {
                     NumberAnimation {properties: "visible, opacity,y,x, width, contentX, contentY, height"; duration: top_level.animation_duration; easing.type: Easing.InOutExpo }
                     ColorAnimation {target: top_panel; from: "#00BCD4"; to: "#03A9F4"; duration: top_level.animation_duration}
