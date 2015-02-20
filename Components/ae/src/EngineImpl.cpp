@@ -195,9 +195,8 @@ public:
 			delegate->refresh();
 			result = fromAeVariant(delegate->var());
 		}
-		QString pIdTrimmed = p_id;
-		pIdTrimmed.replace("%", "");
-		PRINT_IF_VERBOSE("vfi for %s: %s\n", qPrintable(pIdTrimmed), printable(result));
+		const char *pid_ch = p_id.toUtf8().data();
+		PRINT_IF_VERBOSE("vfi for %s: %s\n", pid_ch, printable(result));
 
 		return result;
 	}

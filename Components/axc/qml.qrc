@@ -5,5 +5,7 @@
         <file>qml/CircleButton.qml</file>
         <file>res/achievements.svg</file>
         <file>qml/TAreaWithLabel.qml</file>
+        <file>qml/BlinkAnimation.qml</file>
+        <file>qml/ShadowRect.qml</file>
     </qresource>
 </RCC>

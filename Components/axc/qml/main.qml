@@ -31,34 +31,20 @@ ApplicationWindow {
             top_level.idLabel = dict["id"]
         }
 
-        Rectangle {
+        ShadowRect {
             id: top_panel
-            width: parent.width
+            width: parent.width + (2 * shadowRadius)
             height: 60
             clip: true
 
             color: "#00BCD4"
 
-
-            SequentialAnimation {
-                id: color_animation
-                ColorAnimation {
-                    properties: "color"
-                    duration: 200
-                    target: top_panel
-                    from: top_panel.color
-                    to: "#4CAF50"
-                }
-                PauseAnimation {
-                    duration: 1000
-                }
-                ColorAnimation {
-                    properties: "color"
-                    duration: 200
-                    target: top_panel
-                    from: "#4CAF50"
-                    to: top_panel.color
-                }
+            BlinkAnimation {
+                id: ok_animation
+            }
+            BlinkAnimation {
+                id: error_animation
+                color: "#F44336"
             }
 
             Text {
@@ -78,8 +64,16 @@ ApplicationWindow {
 
                 states: [
                     State {
-                        name: "VisibleState"
-                        when: color_animation.running
+                        name: "OkVisible"
+                        when: ok_animation.running
+                        PropertyChanges {
+                            target: message_text
+                            opacity: 1
+                        }
+                    },
+                    State {
+                        name: "ErrorVisible"
+                        when: error_animation.running
                         PropertyChanges {
                             target: message_text
                             opacity: 1
@@ -100,7 +94,11 @@ ApplicationWindow {
             }
 
             function reportHttp200(text) {
-                color_animation.start()
+                ok_animation.start()
+                message_text.text = text
+            }
+            function reportHttpErrort(text) {
+                error_animation.start()
                 message_text.text = text
             }
 
@@ -206,6 +204,7 @@ ApplicationWindow {
                                     top_panel.reportHttp200("Сохранено...")
                                 } else {
                                     console.log("HTTP request failed", request.status)
+                                    top_panel.reportHttpError(request.responseText)
                                 }
                             }
                         }
