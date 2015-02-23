@@ -32,10 +32,13 @@ ApplicationWindow {
         }
 
         ShadowRect {
+            property int offset: shadowRadius
+
             id: top_panel
-            width: parent.width + (2 * shadowRadius)
-            height: 60
+            width: parent.width
+            height: 60 + offset
             clip: true
+            z: 11
 
             color: "#00BCD4"
 
@@ -219,7 +222,7 @@ ApplicationWindow {
             id: left_panel
             color: "white"
             x: 0
-            y: top_panel.height
+            y: top_panel.height - top_panel.offset
             width: parent.width
             height: parent.height - top_panel.height
 
@@ -230,10 +233,10 @@ ApplicationWindow {
                 model: xml_model
 
                 highlightMoveDuration: 75
-                highlight: Rectangle {
-                    color: "#eee"
-                    opacity: 1
-                }
+//                highlight: Rectangle {
+//                    color: "#eee"
+//                    opacity: 1
+//                }
 
                 delegate: Item {
                     width: parent.width
@@ -300,7 +303,7 @@ ApplicationWindow {
             id: right_panel
 
             x: parent.width
-            y: top_panel.height
+            y: top_panel.height - top_panel.offset
             width: parent.width - left_panel.width
             height: parent.height - top_panel.height
             clip: true

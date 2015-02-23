@@ -16,7 +16,9 @@ Item {
 
         Rectangle {
             id: rect
-            width: container.width - (2 * rectShadow.radius)
+            //width: container.width - (2 * rectShadow.radius)
+            //height: container.height - (2 * rectShadow.radius)
+            width: container.width
             height: container.height - (2 * rectShadow.radius)
             color: "orange";
             antialiasing: true;
