@@ -13,8 +13,8 @@ ApplicationWindow {
         anchors.fill: parent
         property int animation_duration: 350
 
-        property alias nameText: text_name.text
-        property alias descriptionText: text_description.text
+        property alias nameText: block_name.text
+        property alias descriptionText: block_description.text
         property alias conditionText: text_condition.text
         property alias idLabel: label_id.text
 
@@ -113,8 +113,8 @@ ApplicationWindow {
 
                 CircleButton {
                     id: move_right_panel
-                    width: 40
-                    height: 40
+                    explicitWidth: 40
+                    explicitHeight: 40
 
                     text: top_level.state == "SHOW_RIGHT" ? "\u2192" : "\u2190"
                     font.pointSize: 24
@@ -122,19 +122,13 @@ ApplicationWindow {
                     textColor: "#03A9F4"
 
                     onClicked: {
-//                        console.log("right panel button")
-//                        if (text == "\u2192") {
-//                            top_level.state = "SHOW_RIGTH"
-//                        } else {
-//                            top_level.state = ""
-//                        }
                         top_level.state = ""
                     }
                 }
                 CircleButton {
                     id: add_new
-                    width: 40
-                    height: 40
+                    explicitWidth: 40
+                    explicitHeight: 40
 
                     text: '+'
                     font.pointSize: 24
@@ -157,9 +151,9 @@ ApplicationWindow {
                 }
                 CircleButton {
                     id: remove_entry
-                    width: top_level.state === "SHOW_RIGHT" ? 40 : 0
-                    height: top_level.state === "SHOW_RIGHT" ? 40 : 0
-
+                    explicitWidth: 40
+                    explicitHeight:  40
+                    opacity: top_level.state === "SHOW_RIGHT" ? 1 : 0
                     text: 'R'
                     font.pointSize: 18
                     color: "white"
@@ -172,11 +166,18 @@ ApplicationWindow {
                         }
                         top_level.updateProperties()
                     }
+
+                    onStateChanged: {
+                        console.log("state changed " + state)
+                        console.log("visible: " + visible)
+                        console.log("opacity: " + opacity)
+                    }
                 }
                 CircleButton {
                     id: save_entry
-                    width: lview.currentIndex != -1 ? 40 : 0
-                    height: lview.currentIndex != -1 ? 40 : 0
+                    explicitWidth: 40
+                    explicitHeight: 40
+                    opacity: lview.currentIndex != -1 ? 1 : 0
 
                     text: 'S'
                     font.pointSize: 18
@@ -186,8 +187,8 @@ ApplicationWindow {
                     onClicked: {
                         var dict = {}
                         dict["id"] = parseInt(top_level.idLabel)
-                        dict["Name"] = text_name.text
-                        dict["Description"] = text_description.text
+                        dict["Name"] = block_name.text
+                        dict["Description"] = block_description.text
                         dict["Condition"] = text_condition.text
 
                         var index = lview.currentIndex
@@ -217,7 +218,6 @@ ApplicationWindow {
             }
         }
 
-
         Rectangle {
             id: left_panel
             color: "white"
@@ -231,6 +231,7 @@ ApplicationWindow {
                 anchors.fill: parent
                 clip: true
                 model: xml_model
+                anchors.topMargin: 10
 
                 highlightMoveDuration: 75
 //                highlight: Rectangle {
@@ -239,15 +240,17 @@ ApplicationWindow {
 //                }
 
                 delegate: Item {
+                    id: delegate
                     width: parent.width
                     height: 50
 
                     Circle {
+                        id: delegate_circle
                         anchors.verticalCenter: parent.verticalCenter
                         x: 10
                         width: 40
                         height: 40
-                        color: "#EFFB41"
+                        color: lview.currentIndex === index ? "#EFFB41" : "#EFFB41"
                         Text {
                             anchors.centerIn: parent
                             color: "#303030"
@@ -255,10 +258,26 @@ ApplicationWindow {
                         }
                     }
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: Name
-                        font.pointSize: 12
+                    Column {
+                        id: delegate_column
+                        anchors.left: delegate_circle.right
+                        anchors.leftMargin: 20
+                        anchors.verticalCenter: parent.verticalCenter
+                        Text {
+                            text: Name
+                            font.pointSize: 12
+                            color: lview.currentIndex === index ? "blue" : "black"
+                            font.underline: lview.currentIndex === index ? true : false
+                            height: 20
+                        }
+                        Text {
+                            text: Description
+                            font.pointSize: 12
+                            color: lview.currentIndex === index ? "blue" : "black"
+                            font.underline: lview.currentIndex === index ? true : false
+                            height: top_level.state !== "SHOW_RIGHT" ? 20 : 0
+                            visible: top_level.state !== "SHOW_RIGHT" ? 1 : 0
+                        }
                     }
 
                     MouseArea {
@@ -308,7 +327,7 @@ ApplicationWindow {
             height: parent.height - top_panel.height
             clip: true
 
-            color: "#eee"
+            color: "#fff"
 
             Label {
                 id: label_id
@@ -327,79 +346,27 @@ ApplicationWindow {
                 visible: false
             }
 
-            Label {
-                id: label_name
-
-                height: 40
+            LabeledTextField {
+                id: block_name
                 width: parent.width / 2
-                anchors.right: parent.right
-                anchors.rightMargin: 10
-                verticalAlignment: Qt.AlignVCenter
-                y: 10
-                font.pointSize: 16
-                font.bold: true
-                color: "#E91E63"
-
-                text: "Имя"
+                anchors.top: parent.top
+                anchors.topMargin: g_margin
+                x: g_margin
+                height: 80
+                t_label.text: "Название"
             }
-            TextField {
-                id: text_name
 
-                height: 40
-                style: TextFieldStyle {
-                    background: Rectangle {
-                        radius: 0
-                        implicitWidth: 100
-                        implicitHeight: 24
-                        border.color: "#ccc"
-                        border.width: 1
-                    }
-                }
-
-                width: parent.width / 2
+            LabeledTextArea {
+                id: block_description
+                anchors.top: block_name.bottom
+                anchors.topMargin: g_margin
                 anchors.right: parent.right
-                anchors.rightMargin: 10
-                anchors.top: label_name.bottom
-                font.pointSize: 16
-
-                text: "Name"
-            }
-            Label {
-                id: label_description
-
-                height: 40
-                width: parent.width - 20
-                anchors.right: parent.right
-                anchors.rightMargin: 10
-                verticalAlignment: Qt.AlignVCenter
-                anchors.top: text_name.bottom
-                font.pointSize: 16
-                font.bold: true
-                color: "#E91E63"
-
-                text: "Описание"
-            }
-            TextArea {
-                id: text_description
-
+                anchors.rightMargin: g_margin
                 height: 200
-                style: TextAreaStyle {
-                    frame: Rectangle {
-                        radius: 0
-                        implicitWidth: 100
-                        implicitHeight: 24
-                        border.color: "#ddd"
-                        border.width: 1
-                    }
-                }
                 width: parent.width - 20
-                anchors.right: parent.right
-                anchors.rightMargin: 10
-                anchors.top: label_description.bottom
-                font.pointSize: 14
-
-                text: "Описание достижения"
+                t_label.text: "Описание"
             }
+
             TAreaWithLabel {
                 id: text_condition
 
@@ -407,9 +374,10 @@ ApplicationWindow {
                 width: parent.width - 20
                 anchors.right: parent.right
                 anchors.rightMargin: 10
-                anchors.top: text_description.bottom
+                anchors.top: block_description.bottom
+                anchors.topMargin: 10
                 anchors.bottom: parent.bottom
-                anchors.bottomMargin: 0
+                anchors.bottomMargin: g_margin
             }
         }
 

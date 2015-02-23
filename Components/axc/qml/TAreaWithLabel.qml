@@ -3,13 +3,16 @@ import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
 import QtQuick.XmlListModel 2.0
 
-Item {
+Rectangle {
     id: tarea_with_label
 
     property alias text: ta_text_condition.text
+    property int g_margin: 10
     signal serverReply(string reply)
 
     clip: true
+    color: "#eee"
+    radius: 5
 
     Label {
         id: label_condition
@@ -18,6 +21,8 @@ Item {
         width: parent.width
         verticalAlignment: Qt.AlignVCenter
         anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.leftMargin: g_margin
         font.pointSize: 16
         font.bold: true
         color: "#E91E63"
@@ -26,8 +31,8 @@ Item {
     }
 
     CircleButton {
-        height: 30
-        width: 30
+        explicitHeight: 30
+        explicitWidth: 30
         anchors.right: parent.right
         anchors.rightMargin: 5
         anchors.top: parent.top
@@ -55,10 +60,12 @@ Item {
         textDocument.objectName: "TDHighlighted"
         clip: true
         anchors.right: parent.right
-        anchors.rightMargin: 0
-        y: label_condition.height
-        width: parent.width
-        height: parent.height - label_condition.height
+        anchors.rightMargin: g_margin
+        anchors.left: parent.left
+        anchors.leftMargin: g_margin
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: g_margin
+        anchors.top: label_condition.bottom
 
         style: TextAreaStyle {
             frame: Rectangle {
@@ -79,7 +86,7 @@ Item {
             x: parent.width
             y: 0
             width: parent.width / 3
-            height: parent.height
+            height: parent.height - 2
 
             model: conventions_xml_model
             delegate: conventions_delegate

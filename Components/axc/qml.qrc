@@ -7,5 +7,7 @@
         <file>qml/TAreaWithLabel.qml</file>
         <file>qml/BlinkAnimation.qml</file>
         <file>qml/ShadowRect.qml</file>
+        <file>qml/LabeledTextArea.qml</file>
+        <file>qml/LabeledTextField.qml</file>
     </qresource>
 </RCC>
