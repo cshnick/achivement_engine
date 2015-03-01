@@ -85,6 +85,9 @@ public:
 	virtual void end() = 0;
 	virtual void addAction(const action_params &p_actions) = 0;
 	virtual achievements_params take_ach_params() = 0;
+	virtual void addProject(const std::string &project) = 0;
+	virtual void addUser(const std::string &name, const std::string &passwd) = 0;
+	virtual bool init(const std::string &project, const std::string &name, const std::string &passwd = std::string()) = 0;
 };
 
 } //namespace AE

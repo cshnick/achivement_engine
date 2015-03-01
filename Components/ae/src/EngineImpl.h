@@ -45,10 +45,16 @@ public:
 	void addAction(const action_params &p_actions);
 	achievements_params take_ach_params();
 
+	void addProject(const std::string &project);
+	void addUser(const std::string &name, const std::string &passwd);
+	bool init(const std::string &project, const std::string &name, const std::string &passwd = std::string());
+
 	//Non inherited
 	std::vector<var_traits> varMetas();
 	bool achievementsToXml(QIODevice *stream);
 	bool synchroAchievements(QIODevice *stream);
+
+
 
 	~EngineImpl();
 

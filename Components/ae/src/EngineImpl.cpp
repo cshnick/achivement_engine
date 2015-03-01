@@ -293,7 +293,17 @@ public:
 	}
 	void refreshAhivementsList() {
 	}
+	bool testCredentials() {
+		if (m_User.empty() || m_Project.empty()) {
+			DEBUG_ERR("Username or project name is empty, process refused...\n");
+		}
+	}
+
 	void begin() {
+		if (!testCredentials()) {
+			return;
+		}
+
 		initGlobal();
 		if (!checkDB()) return;
 		STAT_IF_VERBOSE;
@@ -309,6 +319,10 @@ public:
 		PRINT_IF_VERBOSE("Starting session: %d\n", m_session_id);
 	}
 	void end() {
+		if (!testCredentials()) {
+			return;
+		}
+
 		if (!checkDB()) return;
 		STAT_IF_VERBOSE;
 
@@ -327,6 +341,9 @@ public:
 	}
 	void addAction(const action_params &p_actions) {
 		STAT_IF_VERBOSE;
+		if (!testCredentials()) {
+			return;
+		}
 		addActionToDB(p_actions);
 		checkAchivements();
 	}
@@ -455,6 +472,56 @@ public:
 		}
 		m_instant_achievements.clear();
 		return apl;
+	}
+
+	void addProject(const std::string &project) {
+		refreshDB();
+		refreshTables();
+		QSqlQuery q("", m_db);
+		q.prepare(QString("SELECT * FROM %1 where %2 = ?")
+				.arg(t_projects::Value)
+				.arg(f_name::Value)
+		);
+		q.bindValue(0, QString::fromStdString(project));
+		EXEC_AND_REPORT_COND;
+		if (q.first()) {
+			return;
+		} else {
+			q.prepare(QString("INSERT INTO %1 (%2) VALUES(?)")
+					.arg(t_projects::Value)
+					.arg(f_name::Value)
+			);
+			q.bindValue(0, QString::fromStdString(project));
+			EXEC_AND_REPORT_COND;
+		}
+	}
+	void addUser(const std::string &name, const std::string &passwd) {
+		refreshDB();
+		refreshTables();
+		QSqlQuery q("", m_db);
+		q.prepare(QString("SELECT * FROM %1 where %2 = ?")
+				.arg(t_users::Value)
+				.arg(f_name::Value)
+				);
+		q.bindValue(0, QString::fromStdString(name));
+		EXEC_AND_REPORT_COND;
+		if (q.first()) {
+			return;
+		} else {
+			q.prepare(QString("INSERT INTO %1 (%2,%3) VALUES(?,?)")
+					.arg(t_users::Value)
+					.arg(f_name::Value)
+					.arg(f_passwd::Value)
+			);
+			q.bindValue(0, QString::fromStdString(name));
+			q.bindValue(1, QString::fromStdString(passwd));
+			EXEC_AND_REPORT_COND;
+		}
+	}
+	bool init(const std::string &project, const std::string &name, const std::string &passwd = std::string()) {
+		initGlobal();
+		NO_IMPL_REPORT;
+		return false;
 	}
 
 	std::vector<var_traits> varMetas() {
@@ -631,22 +698,42 @@ private:
 	}
 
 	void dropTables() {
+		refreshDB();
+
 		QSqlQuery q("", m_db);
-		QString tables = QString("%1,%2,%3,%4")
-					.arg(t_sessions::Value)
-					.arg(t_actions::Value)
-//					.arg(t_achivements_list::Value)
-					.arg(t_achivements_done::Value);
-		QStringList tl = tables.split(',');
-		for (int i = 0; i < tl.size(); i++) {
+		QStringList tablesToDrop;
+		tablesToDrop
+				<< t_sessions::Value
+				<< t_actions::Value
+//				<< t_achivements_list::Value
+				<< t_users::Value
+				<< t_projects::Value
+				<< t_achivements_done::Value;
+		for (int i = 0; i < tablesToDrop.size(); i++) {
 			q.prepare(QString("DROP TABLE %1")
-					.arg(tl.at(i)));
+					.arg(tablesToDrop.at(i)));
 			EXEC_AND_REPORT_COND;
 		}
 	}
 
 	void addDefaultTables() {
 		QSqlQuery q("", m_db);
+		if (!m_db.tables().contains(t_users::Value)) {
+			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 STRING, %4 STRING)")
+					.arg(t_users::Value)
+					.arg(f_id::Value)
+					.arg(f_name::Value)
+					.arg(f_passwd::Value)
+					);
+			EXEC_AND_REPORT_COND;
+		}
+		if (!m_db.tables().contains(t_projects::Value)) {
+			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 STRING)")
+					.arg(t_projects::Value)
+					.arg(f_id::Value)
+					.arg(f_name::Value));
+			EXEC_AND_REPORT_COND;
+		}
 		if (!m_db.tables().contains(t_sessions::Value)) {
 			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 DATETIME)")
 					.arg(t_sessions::Value)
@@ -747,6 +834,8 @@ private:
 	QSqlDatabase m_db;
 	QSqlRecord m_record;
 	int m_session_id;
+	std::string m_Project;
+	std::string m_User;
 	QList<QVariantMap> m_achivements;
 	QMap<QString, CalcVarDelegateBase*> m_calcVars;
 	QList<QVariantMap> m_instant_achievements;
@@ -773,6 +862,17 @@ void EngineImpl::addAction(const action_params &p_actions)
 achievements_params EngineImpl::take_ach_params() {
 	return p->take_ach_params();
 }
+
+void EngineImpl::addProject(const std::string &project) {
+	p->addProject(project);
+}
+void EngineImpl::addUser(const std::string &name, const std::string &passwd) {
+	p->addUser(name, passwd);
+}
+bool EngineImpl::init(const std::string &project, const std::string &name, const std::string &passwd) {
+	return p->init(project, name, passwd);
+}
+
 std::vector<var_traits> EngineImpl::varMetas() {
 	return p->varMetas();
 }

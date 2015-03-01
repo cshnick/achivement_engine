@@ -42,6 +42,8 @@ DECLARE_STRING_CONSTANT(g_achivements_path, /home/ilia/.local/share/action_engin
 DECLARE_STRING_CONSTANT(g_dbName, ae.db)
 DECLARE_STRING_CONSTANT(g_achivementsFileName, achivements.xml)
 //Tables
+DECLARE_CONVENTION_TYPE(t_users, Users);
+DECLARE_CONVENTION_TYPE(t_projects, Projects);
 DECLARE_CONVENTION_TYPE(t_sessions, Sessions);
 DECLARE_CONVENTION_TYPE(t_actions, Actions);
 DECLARE_CONVENTION_TYPE(t_achivements_list, AchivementsList);
@@ -55,6 +57,7 @@ DECLARE_CONVENTION_TYPE(f_time, Time);
 DECLARE_CONVENTION_TYPE(f_actTime, ActionTime);
 DECLARE_CONVENTION_TYPE(f_session, Session);
 DECLARE_CONVENTION_TYPE(f_name, Name);
+DECLARE_CONVENTION_TYPE(f_passwd, Password);
 DECLARE_CONVENTION_TYPE(f_session_id, SessionId);
 DECLARE_CONVENTION_TYPE(f_description, Description);
 DECLARE_CONVENTION_TYPE(f_condition, Condition);

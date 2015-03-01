@@ -11,6 +11,8 @@
 #define DEBUG_ERR(...) dbg_fprintf(stderr, "ERR: ", __VA_ARGS__)
 #define DEBUG(...) dbg_fprintf(stdout, "DBG: ", __VA_ARGS__)
 
+#define NO_IMPL_REPORT DEBUG("%s: %d NOT IMPLEMENTED\n", __PRETTY_FUNCTION__, __LINE__)
+
 #define EXEC_AND_REPORT_COND_RETURN \
 		if (!q.exec()) { \
 			SQL_ERR( "last error: %s, executed query: %s\n", qPrintable(q.lastError().text()), qPrintable(q.executedQuery()) ); \
