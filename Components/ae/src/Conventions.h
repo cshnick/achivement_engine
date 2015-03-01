@@ -57,6 +57,8 @@ DECLARE_CONVENTION_TYPE(f_time, Time);
 DECLARE_CONVENTION_TYPE(f_actTime, ActionTime);
 DECLARE_CONVENTION_TYPE(f_session, Session);
 DECLARE_CONVENTION_TYPE(f_name, Name);
+DECLARE_CONVENTION_TYPE(f_user, User);
+DECLARE_CONVENTION_TYPE(f_project, Project);
 DECLARE_CONVENTION_TYPE(f_passwd, Password);
 DECLARE_CONVENTION_TYPE(f_session_id, SessionId);
 DECLARE_CONVENTION_TYPE(f_description, Description);

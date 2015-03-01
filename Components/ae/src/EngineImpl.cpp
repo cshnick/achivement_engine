@@ -705,7 +705,7 @@ private:
 		tablesToDrop
 				<< t_sessions::Value
 				<< t_actions::Value
-//				<< t_achivements_list::Value
+				<< t_achivements_list::Value
 				<< t_users::Value
 				<< t_projects::Value
 				<< t_achivements_done::Value;
@@ -735,22 +735,34 @@ private:
 			EXEC_AND_REPORT_COND;
 		}
 		if (!m_db.tables().contains(t_sessions::Value)) {
-			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 DATETIME)")
+			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 DATETIME, %5 INTEGER, %7 INTEGER"
+					",FOREIGN KEY(%5) REFERENCES %6(%2)"
+					",FOREIGN KEY(%7) REFERENCES %8(%2)"
+					")")
 					.arg(t_sessions::Value)
 					.arg(f_id::Value)
 					.arg(f_start::Value)
-					.arg(f_finish::Value));
+					.arg(f_finish::Value)
+					.arg(f_user::Value)
+					.arg(t_users::Value)
+					.arg(f_project::Value)
+					.arg(t_projects::Value)
+					);
 			EXEC_AND_REPORT_COND;
 		}
 		//Actions table
 		if (!m_db.tables().contains(t_actions::Value)) {
 			q.prepare(QString("CREATE TABLE %1 ("
 					"%2 INTEGER PRIMARY KEY, "
-					"%3 STRING, "
-					"%4 INTEGER, "
-					"%6 DATETIME, "
-					"%7 INTEGER, "
+					"%3 STRING,"
+					"%4 INTEGER,"
+					"%6 DATETIME,"
+					"%7 INTEGER,"
+					"%8 INTEGER,"
+					"%10 INTEGER,"
 					"FOREIGN KEY(%4) REFERENCES %5(%2)"
+					",FOREIGN KEY(%8) REFERENCES %9(%2)"
+					",FOREIGN KEY(%10) REFERENCES %11(%2)"
 					")")
 					.arg(t_actions::Value)
 					.arg(f_id::Value)
@@ -759,17 +771,28 @@ private:
 					.arg(t_sessions::Value)
 					.arg(f_time::Value)
 					.arg(f_actTime::Value)
+					.arg(f_user::Value)
+					.arg(t_users::Value)
+					.arg(f_project::Value)
+					.arg(t_projects::Value)
 					);
 			EXEC_AND_REPORT_COND;
 		}
 		if (!m_db.tables().contains(t_achivements_list::Value)) {
-			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 STRING, %5 STRING, %6 STRING)")
+			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 STRING, %5 STRING, %6 STRING, %7 INTEGER, %9 INTEGER"
+					",FOREIGN KEY(%7) REFERENCES %8(%2)"
+					",FOREIGN KEY(%9) REFERENCES %10(%2)"
+					")")
 					.arg(t_achivements_list::Value)
 					.arg(f_id::Value)
 					.arg(f_time::Value)
 					.arg(f_name::Value)
 					.arg(f_description::Value)
 					.arg(f_condition::Value)
+					.arg(f_user::Value)
+					.arg(t_users::Value)
+					.arg(f_project::Value)
+					.arg(t_projects::Value)
 					);
 			EXEC_AND_REPORT_COND;
 		}

@@ -18,6 +18,10 @@ ApplicationWindow {
         property alias conditionText: text_condition.text
         property alias idLabel: label_id.text
 
+        property string user: 'Игорек'
+        property string project: 'Таблица умножения'
+        property string req_delimiter: '*&*'
+
         function updateProperties() {
             var index = lview.currentIndex
             if (index < 0) {
@@ -48,6 +52,31 @@ ApplicationWindow {
             BlinkAnimation {
                 id: error_animation
                 color: "#F44336"
+            }
+
+            Column {
+                id: column_user_project
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: 30
+                visible: !ok_animation.running && !error_animation.running
+                width: parent.width / 2
+                spacing: 3
+
+                property int font_sz: 16
+                property string font_color: "white"
+
+                Text {
+                    text: top_level.user
+                    color: column_user_project.font_color
+                    font.pixelSize: column_user_project.font_sz + 2
+                    font.bold: true
+                }
+                Text {
+                    text: top_level.project
+                    color: column_user_project.font_color
+                    font.pixelSize: column_user_project.font_sz
+                }
             }
 
             Text {
@@ -212,7 +241,9 @@ ApplicationWindow {
                                 }
                             }
                         }
-                        request.send("Content=" + str)
+                        request.send("Content=" + str
+                                     + top_level.req_delimiter + "user=" + top_level.user
+                                     + top_level.req_delimiter + "project=" + top_level.project)
                     }
                 }
             }

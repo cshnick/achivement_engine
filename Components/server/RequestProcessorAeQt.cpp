@@ -68,13 +68,19 @@ public:
 			DEBUG("Request post\n");
 			int len  = req->GetContentSize();
 			char buf[len + 1];
+			memset(buf, '\0', len + 1);
 			req->GetContent((void*)buf, len, 1);
 			if (buf) {
+				QString str = QString::fromUtf8(buf, len);
+				DEBUG("Buffer :%s\n", buf);
+				QStringList pars = str.split("*&*");
+				fflush(stdout);
+
 				QBuffer b;
 				b.setData(buf, len);
 				b.open(QIODevice::ReadOnly);
 				b.seek(8); //Skip 'Content='
-				AE::EngineImpl().synchroAchievements(&b);
+//				AE::EngineImpl().synchroAchievements(&b);
 				req->SetResponseString("OK");
 				req->SetResponseCode(200);
 			} else {
