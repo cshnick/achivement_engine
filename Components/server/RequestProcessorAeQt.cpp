@@ -72,21 +72,33 @@ public:
 			req->GetContent((void*)buf, len, 1);
 			if (buf) {
 				QString str = QString::fromUtf8(buf, len);
-				DEBUG("Buffer :%s\n", buf);
-				QStringList pars = str.split("*&*");
-				fflush(stdout);
+				QMap<QString, QString> m = parseParams(str);
+				std::string user = m.value(AE::tag_user::Value).toStdString();
+				std::string proj = m.value(AE::tag_project::Value).toStdString();
 
+				QString content(m.value(AE::tag_content::Value));
 				QBuffer b;
-				b.setData(buf, len);
+				b.setData(content.toUtf8().data(), content.toUtf8().length());
 				b.open(QIODevice::ReadOnly);
-				b.seek(8); //Skip 'Content='
-//				AE::EngineImpl().synchroAchievements(&b);
+
+
+				AE::EngineImpl().synchroAchievements(&b, user, proj);
 				req->SetResponseString("OK");
 				req->SetResponseCode(200);
 			} else {
 				req->SetResponseCode(204);
 			}
 		}
+	}
+
+	QMap<QString, QString> parseParams(const QString &str) {
+		QMap<QString, QString> res;
+		QStringList l = str.split("&***");
+		Q_FOREACH(QString n_p, l) {
+			QStringList p = n_p.split("=***");
+			res[p.first()] = p.last();
+		}
+		return res;
 	}
 
 	void execForString(const std::string &str_exp, IHttpRequestPtr req) {

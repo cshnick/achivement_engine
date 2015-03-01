@@ -20,7 +20,8 @@ ApplicationWindow {
 
         property string user: 'Игорек'
         property string project: 'Таблица умножения'
-        property string req_delimiter: '*&*'
+        property string req_delimiter: '&***'
+        property string par_delimiter: '=***'
 
         function updateProperties() {
             var index = lview.currentIndex
@@ -241,9 +242,9 @@ ApplicationWindow {
                                 }
                             }
                         }
-                        request.send("Content=" + str
-                                     + top_level.req_delimiter + "user=" + top_level.user
-                                     + top_level.req_delimiter + "project=" + top_level.project)
+                        request.send("content" + top_level.par_delimiter + str
+                                     + top_level.req_delimiter + "user" + top_level.par_delimiter + top_level.user
+                                     + top_level.req_delimiter + "project" + top_level.par_delimiter + top_level.project)
                     }
                 }
             }

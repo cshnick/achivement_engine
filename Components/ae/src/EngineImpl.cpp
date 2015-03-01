@@ -548,10 +548,10 @@ public:
 		//			DEBUG_ERR("Can't open %s for reading\n", qPrintable(xmlPath));
 		//		}
 		//
-		synchroAvhivementsDb(stream);
+		synchroAvhivementsDb(stream, "", "");
 		return true;
 	}
-	bool synchroAvhivementsDb(QIODevice *stream) {
+	bool synchroAvhivementsDb(QIODevice *stream, const std::string &user, const std::string &proj) {
 		refreshDB();
 		refreshTables();
 		refreshCalcVarDelegates();
@@ -572,8 +572,10 @@ public:
 			bool fst = q.first();
 			if (!fst) { //No such a record
 				QStringList kl = mit.keys();
+				kl.append(f_user::Value);
+				kl.append(f_project::Value);
 				QStringList ptrn;
-				for (int j = 0; j < mit.count(); j++) ptrn.append("?");
+				for (int j = 0; j < mit.count() + 2; j++) ptrn.append("?");
 				q.prepare(QString("INSERT INTO %1 (%2) VALUES(%3)")
 						.arg(t_achivements_list::Value)
 						.arg(kl.join(","))
@@ -586,6 +588,8 @@ public:
 					}
 					q.bindValue(cnt++, val);
 				}
+				q.bindValue(cnt++, QString::fromStdString(user));
+				q.bindValue(cnt++, QString::fromStdString(proj));
 				EXEC_AND_REPORT_COND;
 			} else {
 				QString fields;
@@ -902,8 +906,8 @@ std::vector<var_traits> EngineImpl::varMetas() {
 bool EngineImpl::achievementsToXml(QIODevice *stream) {
 	return p->achievementsToXml(stream);
 }
-bool EngineImpl::synchroAchievements(QIODevice *stream) {
-	return p->synchroAvhivementsDb(stream);
+bool EngineImpl::synchroAchievements(QIODevice *stream, const std::string &user, const std::string &proj) {
+	return p->synchroAvhivementsDb(stream, user, proj);
 }
 
 EngineImpl::~EngineImpl()
