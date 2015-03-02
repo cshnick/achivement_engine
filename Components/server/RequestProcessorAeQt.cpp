@@ -23,7 +23,8 @@ public:
 	typedef std::map<std::string, __req_func_t> callback_map;
 	RequestProcessorAeQtHelper(RequestProcessorAeQt *p_q, std::mutex *p_mutex) : q(p_q), m_mutex(p_mutex) {
 		m_callbacks[AE::n_tables_path::Value] 			= &RequestProcessorAeQtHelper::processMeta;
-		m_callbacks[AE::n_achievement_list_path::Value] = &RequestProcessorAeQtHelper::processAhievementList;
+		m_callbacks[AE::n_achievement_list_path_get::Value] = &RequestProcessorAeQtHelper::processAhievementListGet;
+		m_callbacks[AE::n_achievement_list_path_send::Value] = &RequestProcessorAeQtHelper::processAhievementListSend;
 	}
 	void processMeta(IHttpRequestPtr req) {
 		QString res;
@@ -56,15 +57,28 @@ public:
 
 		req->SetResponseString(res.toStdString());
 	}
-	void processAhievementList(IHttpRequestPtr req) {
-
-		if (req->GetRequestType() == IHttpRequest::Type::GET) {
-			QBuffer buf;
-			buf.open(QIODevice::WriteOnly);
-			AE::EngineImpl().achievementsToXml(&buf);
-			req->SetResponseAttr(Network::Http::Response::Header::ContentType::Value, "text/xml; charset=utf-8");
-			req->SetResponseString(buf.data().data());
-		} else if (req->GetRequestType() == IHttpRequest::Type::POST) {
+	void processAhievementListGet(IHttpRequestPtr req) {
+		if (req->GetRequestType() == IHttpRequest::Type::POST) {
+			DEBUG("Request post\n");
+			int len  = req->GetContentSize();
+			char req_params[len + 1];
+			memset(req_params, '\0', len + 1);
+			req->GetContent((void*)req_params, len, 1);
+			if (req_params) {
+				QString str = QString::fromUtf8(req_params, len);
+				QMap<QString, QString> m = parseParams(str);
+				std::string user = m.value(AE::tag_user::Value).toStdString();
+				std::string proj = m.value(AE::tag_project::Value).toStdString();
+				QBuffer buf;
+				buf.open(QIODevice::WriteOnly);
+				AE::EngineImpl().achievementsToXml(&buf, user, proj);
+				req->SetResponseAttr(Network::Http::Response::Header::ContentType::Value, "text/xml; charset=utf-8");
+				req->SetResponseString(buf.data().data());
+			}
+		}
+	}
+	void processAhievementListSend(IHttpRequestPtr req) {
+		if (req->GetRequestType() == IHttpRequest::Type::POST) {
 			DEBUG("Request post\n");
 			int len  = req->GetContentSize();
 			char buf[len + 1];

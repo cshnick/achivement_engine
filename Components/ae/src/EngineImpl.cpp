@@ -551,6 +551,53 @@ public:
 		synchroAvhivementsDb(stream, "", "");
 		return true;
 	}
+	int idUser(const std::string &name) {
+		QSqlQuery q("", m_db);
+		q.prepare(QString("SELECT %1 FROM %2 WHERE %3 = ?")
+				.arg(f_id::Value)
+				.arg(t_users::Value)
+				.arg(f_name::Value)
+				);
+		q.bindValue(0, QString::fromStdString(name));
+		EXEC_AND_REPORT_COND;
+		if (q.first()) {
+			return q.value(0).toInt();
+		} else if (!name.empty()) {
+			q.prepare(QString("INSERT INTO %1 (%2) VALUES (?)")
+					.arg(t_users::Value)
+					.arg(f_name::Value)
+					);
+			q.bindValue(0, QString::fromStdString(name));
+			EXEC_AND_REPORT_COND;
+			return q.lastInsertId().toInt();
+		}
+
+		return -1;
+	}
+	int idProject(const std::string &name) {
+		QSqlQuery q("", m_db);
+		q.prepare(QString("SELECT %1 FROM %2 WHERE %3 = ?")
+				.arg(f_id::Value)
+				.arg(t_projects::Value)
+				.arg(f_name::Value)
+		);
+		q.bindValue(0, QString::fromStdString(name));
+		EXEC_AND_REPORT_COND;
+		if (q.first()) {
+			return q.value(0).toInt();
+		} else if (!name.empty()) {
+			q.prepare(QString("INSERT INTO %1 (%2) VALUES (?)")
+					.arg(t_projects::Value)
+					.arg(f_name::Value)
+			);
+			q.bindValue(0, QString::fromStdString(name));
+			EXEC_AND_REPORT_COND;
+			return q.lastInsertId().toInt();
+		}
+
+		return -1;
+	}
+
 	bool synchroAvhivementsDb(QIODevice *stream, const std::string &user, const std::string &proj) {
 		refreshDB();
 		refreshTables();
@@ -563,10 +610,15 @@ public:
 		for (int i = 0, cnt = 0; i < xml_rows.count(); i++, cnt=0) {
 			QVariantMap mit = xml_rows.at(i);
 
-			q.prepare(QString("SELECT %1 FROM %2 WHERE id=?")
+			q.prepare(QString("SELECT %1 FROM %2 WHERE %1=? AND %3=? AND %4=?")
 					.arg(f_id::Value)
-					.arg(t_achivements_list::Value));
+					.arg(t_achivements_list::Value)
+					.arg(f_user::Value)
+					.arg(f_project::Value)
+					);
 			q.bindValue(0, mit.value(f_id::Value).toInt());
+			q.bindValue(1, idUser(user));
+			q.bindValue(2, idProject(proj));
 			EXEC_AND_REPORT_COND;
 
 			bool fst = q.first();
@@ -588,12 +640,14 @@ public:
 					}
 					q.bindValue(cnt++, val);
 				}
-				q.bindValue(cnt++, QString::fromStdString(user));
-				q.bindValue(cnt++, QString::fromStdString(proj));
+				q.bindValue(cnt++, idUser(user));
+				q.bindValue(cnt++, idProject(proj));
 				EXEC_AND_REPORT_COND;
 			} else {
 				QString fields;
 				QStringList kl = mit.keys();
+				kl.append(f_user::Value);
+				kl.append(f_project::Value);
 				kl.append("");
 				fields = kl.join(" = ?, ");
 				fields = fields.remove(fields.lastIndexOf(","), 2); //Revmove trailing ', '
@@ -611,6 +665,8 @@ public:
 					}
 					q.bindValue(cnt++, val);
 				}
+				q.bindValue(cnt++, idUser(user));
+				q.bindValue(cnt++, idProject(proj));
 				q.bindValue(cnt, QVariant::fromValue(ind));
 				EXEC_AND_REPORT_COND;
 			}
@@ -620,14 +676,20 @@ public:
 		return true;
 	}
 
-	bool achievementsToXml(QIODevice *stream) {
+	bool achievementsToXml(QIODevice *stream, const std::string &user, const std::string &proj) {
 		refreshDB();
 		refreshTables();
 		if (!checkDB()) return false;
 
 		QSqlQuery q("", m_db);
 
-		q.prepare(QString("SELECT * FROM %1").arg(t_achivements_list::Value));
+		q.prepare(QString("SELECT * FROM %1 WHERE %2=? AND %3=?")
+				.arg(t_achivements_list::Value)
+				.arg(f_user::Value)
+				.arg(f_project::Value)
+				);
+		q.bindValue(0, idUser(user));
+		q.bindValue(1, idProject(proj));
 		EXEC_AND_REPORT_COND;
 		q.first();
 		if (!stream->isWritable()) {
@@ -709,7 +771,7 @@ private:
 		tablesToDrop
 				<< t_sessions::Value
 				<< t_actions::Value
-				<< t_achivements_list::Value
+//				<< t_achivements_list::Value
 				<< t_users::Value
 				<< t_projects::Value
 				<< t_achivements_done::Value;
@@ -903,8 +965,8 @@ bool EngineImpl::init(const std::string &project, const std::string &name, const
 std::vector<var_traits> EngineImpl::varMetas() {
 	return p->varMetas();
 }
-bool EngineImpl::achievementsToXml(QIODevice *stream) {
-	return p->achievementsToXml(stream);
+bool EngineImpl::achievementsToXml(QIODevice *stream, const std::string &user, const std::string &proj) {
+	return p->achievementsToXml(stream, user, proj);
 }
 bool EngineImpl::synchroAchievements(QIODevice *stream, const std::string &user, const std::string &proj) {
 	return p->synchroAvhivementsDb(stream, user, proj);

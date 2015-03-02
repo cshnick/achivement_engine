@@ -37,7 +37,7 @@ namespace Private  {
 	INIT_STATIC_COUNTER(Counter_ae, 200)
 	DECLARE_TYPE_REGISTRY(Registry_ae)
 } //namespace Private
-
+//global
 DECLARE_STRING_CONSTANT(g_achivements_path, /home/ilia/.local/share/action_engine)
 DECLARE_STRING_CONSTANT(g_dbName, ae.db)
 DECLARE_STRING_CONSTANT(g_achivementsFileName, achivements.xml)
@@ -74,7 +74,7 @@ DECLARE_STRING_CONSTANT(tag_content, content);
 DECLARE_STRING_CONSTANT(tag_project, project);
 DECLARE_STRING_CONSTANT(tag_user, user);
 DECLARE_STRING_CONSTANT(val_type_sql, sql);
-
+//helpers
 
 //Coming from external
 DECLARE_CONVENTION_TYPE(f_statement, Statement);
@@ -83,7 +83,8 @@ DECLARE_CONVENTION_TYPE(f_success, Success);
 //Network
 DECLARE_STRING_CONSTANT(n_tables_path, /TablesPath);
 DECLARE_STRING_CONSTANT(n_fields_path, /FieldsPath);
-DECLARE_STRING_CONSTANT(n_achievement_list_path, /AchievementList)
+DECLARE_STRING_CONSTANT(n_achievement_list_path_get, /AchievementListGet)
+DECLARE_STRING_CONSTANT(n_achievement_list_path_send, /AchievementListSend)
 DECLARE_STRING_CONSTANT(n_post_content, Content)
 
 typedef std::map<char const*, char const*> conv_map;

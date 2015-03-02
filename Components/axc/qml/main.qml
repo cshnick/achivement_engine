@@ -228,7 +228,7 @@ ApplicationWindow {
                         console.log("updating dict" + dict["Name"])
 
                         var request = new XMLHttpRequest()
-                        request.open('POST', 'http://127.0.0.1:5555/AchievementList')
+                        request.open('POST', 'http://127.0.0.1:5555/AchievementListSend')
                         request.setRequestHeader('Content-Type', 'text/xml;charset=utf-8')
 
                         request.onreadystatechange = function () {
@@ -331,7 +331,7 @@ ApplicationWindow {
                 Component.onCompleted: {
                     //Request xml data on load
                     var request = new XMLHttpRequest()
-                    request.open('GET', 'http://127.0.0.1:5555/AchievementList')
+                    request.open('POST', 'http://127.0.0.1:5555/AchievementListGet')
                     request.setRequestHeader('content-type', 'text/xml;charset=utf-8')
 
                     request.onreadystatechange = function () {
@@ -344,7 +344,10 @@ ApplicationWindow {
                             }
                         }
                     }
-                    request.send()
+                    request.send("user" + top_level.par_delimiter + top_level.user
+                                 + top_level.req_delimiter +
+                                 "project" + top_level.par_delimiter + top_level.project
+                                )
                     currentIndex = -1
                 }
             }
