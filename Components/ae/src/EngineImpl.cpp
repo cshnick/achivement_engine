@@ -75,7 +75,7 @@ public:
 	}
 	void fillCalcDelegatesMap() {
 		m_calc_vars_container = loadCalcDelegatesContainer();
-		m_calc_vars_container->addContext((void*)this);
+		m_calc_vars_container->addCredentials(idUser(m_User), idProject(m_Project));
 		PRINT_IF_VERBOSE("Filling calc's map...\n");
 		for (auto iter = m_calc_vars_container->delegates()->begin(); iter != m_calc_vars_container->delegates()->end(); ++iter) {
 			CalcVarDelegateBase *d = *iter;
@@ -109,7 +109,6 @@ public:
 			 q.next();
 		 }
 	}
-
 	void refreshCalcVars() {
 		PRINT_IF_VERBOSE("Refreshing calc vars...\n");
 		for (auto iter = m_calcVars.begin(); iter != m_calcVars.end(); ++iter) {
@@ -276,8 +275,11 @@ public:
 				f_name::Value <<
 				f_time::Value <<
 				f_ach_id::Value <<
-				f_session_id::Value;
-		QString vl = "?,?,?,?,?,?";
+				f_session_id::Value <<
+				f_user::Value <<
+				f_project::Value;
+
+		QString vl = "?,?,?,?,?,?,?,?";
 		q.prepare(QString("INSERT INTO %1 (%2) VALUES (%3)")
 				.arg(t_achivements_done::Value)
 				.arg(kl.join(","))
@@ -289,6 +291,8 @@ public:
 		q.bindValue(3, currentTime());
 		q.bindValue(4, m.value(f_id::Value));
 		q.bindValue(5, m_session_id);
+		q.bindValue(6, idUser(m_User));
+		q.bindValue(7, idProject(m_Project));
 		EXEC_AND_REPORT_COND;
 	}
 	void refreshAhivementsList() {
@@ -310,10 +314,15 @@ public:
 
 		QSqlQuery q("", m_db);
 
-		q.prepare(QString("INSERT INTO %1 (%2) VALUES (?)")
+		q.prepare(QString("INSERT INTO %1 (%2,%3,%4) VALUES (?,?,?)")
 				.arg(t_sessions::Value)
-				.arg(f_start::Value));
+				.arg(f_start::Value)
+				.arg(f_user::Value)
+				.arg(f_project::Value)
+				);
 		q.bindValue(0, currentTime());
+		q.bindValue(1, idUser(m_User));
+		q.bindValue(2, idProject(m_Project));
 		EXEC_AND_REPORT_COND;
 		m_session_id = q.lastInsertId().toInt();
 		PRINT_IF_VERBOSE("Starting session: %d\n", m_session_id);
@@ -388,9 +397,13 @@ public:
 			kp.append(QString(",%1").arg(f_session_id::Value));
 			kp.append(QString(",%1").arg(f_time::Value));
 			kp.append(QString(",%1").arg(f_actTime::Value));
+			kp.append(QString(",%1").arg(f_user::Value));
+			kp.append(QString(",%1").arg(f_project::Value));
 			vp.append(",?"); //session id
 			vp.append(",?"); //action time
 			vp.append(",?"); //action time elapsed
+			vp.append(",?"); //user
+			vp.append(",?"); //project
 			q.prepare(QString("INSERT INTO %1 (%2) VALUES (%3)")
 					.arg(t_actions::Value)
 					.arg(kp)
@@ -402,6 +415,8 @@ public:
 			q.bindValue(k++, m_session_id);
 			q.bindValue(k++, currentTime());
 			q.bindValue(k++, et);
+			q.bindValue(k++, idUser(m_User));
+			q.bindValue(k++, idProject(m_Project));
 			EXEC_AND_REPORT_COND;
 
 			SQL_DEBUG("Rec is not empty\n");
@@ -417,12 +432,16 @@ public:
 		QSqlQuery q("", m_db);
 		//check previous time
 		int result = -1;
-		q.prepare(QString("SELECT MAX(%1) FROM %2 WHERE %3 = ?")
+		q.prepare(QString("SELECT MAX(%1) FROM %2 WHERE %3=? AND %4=? AND %5=?")
 				.arg(f_time::Value)
 				.arg(t_actions::Value)
 				.arg(f_session_id::Value)
+				.arg(f_user::Value)
+				.arg(f_project::Value)
 		);
 		q.bindValue(0, m_session_id);
+		q.bindValue(1, idUser(m_User));
+		q.bindValue(2, idProject(m_Project));
 		EXEC_AND_REPORT_COND;
 		q.first();
 		QDateTime dt = q.value(0).toDateTime();
@@ -430,12 +449,16 @@ public:
 			SQL_DEBUG("DateTime value: %s, current time: %s\n", qPrintable(dt.toString()), qPrintable(ct.toString()));
 			result = dt.secsTo(ct);
 		} else { //Take time from session start time
-			q.prepare(QString("SELECT %1 FROM %2 WHERE %3 = ?")
+			q.prepare(QString("SELECT %1 FROM %2 WHERE %3=? AND %4=? AND %5=?")
 					.arg(f_start::Value)
 					.arg(t_sessions::Value)
 					.arg(f_id::Value)
+					.arg(f_user::Value)
+					.arg(f_project::Value)
 					);
 			q.bindValue(0, m_session_id);
+			q.bindValue(1, idUser(m_User));
+			q.bindValue(2, idProject(m_Project));
 			EXEC_AND_REPORT_COND;
 			q.first();
 			QDateTime st = q.value(0).toDateTime();
@@ -528,6 +551,7 @@ public:
 		if (!m_calc_vars_container) {
 			std::lock_guard<std::mutex> lock(m_mutex);
 			m_calc_vars_container = loadCalcDelegatesContainer();
+			m_calc_vars_container->addCredentials(idUser(m_User), idProject(m_Project));
 		}
 		std::vector<var_traits> res;
 		std::vector<CalcVarDelegateBase*> q_v = *m_calc_vars_container->delegates();
@@ -865,8 +889,10 @@ private:
 		if (!m_db.tables().contains(t_achivements_done::Value)) {
 			q.prepare(QString("CREATE TABLE %1 "
 					"(%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 STRING,"
-					" %5 STRING, %6 STRING, %7 INTEGER, %8 INTEGER,"
-					"FOREIGN KEY(%7) REFERENCES %9(%2)"
+					" %5 STRING, %6 STRING, %7 INTEGER, %8 INTEGER, %10 INTEGER, %12 INTEGER"
+					",FOREIGN KEY(%7) REFERENCES %9(%2)"
+					",FOREIGN KEY(%10) REFERENCES %11(%2)"
+					",FOREIGN KEY(%12) REFERENCES %13(%2)"
 					")")
 					.arg(t_achivements_done::Value)
 					.arg(f_id::Value)
@@ -877,6 +903,10 @@ private:
 					.arg(f_ach_id::Value)
 					.arg(f_session_id::Value)
 					.arg(t_achivements_list::Value)
+					.arg(f_user::Value)
+					.arg(t_users::Value)
+					.arg(f_project::Value)
+					.arg(t_projects::Value)
 			);
 			EXEC_AND_REPORT_COND;
 		}

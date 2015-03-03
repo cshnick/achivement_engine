@@ -174,14 +174,14 @@ END_DECLARE_DELEGATE(FalseActionCount)
 
 class DCDB: public DelegateContainer {
 public:
-	void addContext(void *context) {
-		m_context = (int*) context;
+	void addCredentials(int id_user, int id_project) {
+		m_user = id_user;
+		m_project = id_project;
 	}
 	std::vector<CalcVarDelegateBase*> *delegates() {
 		return &m_delegates;
 	}
-	DCDB() :
-			m_context(0) {
+	DCDB() {
 		DEBUG("Creating DCDB object\n");
 		m_db = QSqlDatabase::addDatabase("QSQLITE",
 				"DelegateContainer_action_db");
@@ -218,7 +218,8 @@ public:
 	}
 
 private:
-	int *m_context;
+	int m_user;
+	int m_project;
 	std::vector<CalcVarDelegateBase*> m_delegates;
 	QSqlDatabase m_db;
 };
