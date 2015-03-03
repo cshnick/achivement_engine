@@ -9,5 +9,6 @@
         <file>qml/ShadowRect.qml</file>
         <file>qml/LabeledTextArea.qml</file>
         <file>qml/LabeledTextField.qml</file>
+        <file>js/helper.js</file>
     </qresource>
 </RCC>

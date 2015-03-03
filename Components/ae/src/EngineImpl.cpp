@@ -771,7 +771,7 @@ private:
 		tablesToDrop
 				<< t_sessions::Value
 				<< t_actions::Value
-//				<< t_achivements_list::Value
+				<< t_achivements_list::Value
 				<< t_users::Value
 				<< t_projects::Value
 				<< t_achivements_done::Value;

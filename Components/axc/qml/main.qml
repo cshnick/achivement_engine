@@ -1,6 +1,7 @@
 import QtQuick 2.3
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.2
+import "../js/helper.js" as Jsh
 
 ApplicationWindow {
     visible: true
@@ -18,7 +19,7 @@ ApplicationWindow {
         property alias conditionText: text_condition.text
         property alias idLabel: label_id.text
 
-        property string user: 'Игорек'
+        property string user: user_view.model.get(0).name
         property string project: 'Таблица умножения'
         property string req_delimiter: '&***'
         property string par_delimiter: '=***'
@@ -63,16 +64,52 @@ ApplicationWindow {
                 visible: !ok_animation.running && !error_animation.running
                 width: parent.width / 2
                 spacing: 3
+                clip: true
 
                 property int font_sz: 16
                 property string font_color: "white"
 
-                Text {
-                    text: top_level.user
-                    color: column_user_project.font_color
-                    font.pixelSize: column_user_project.font_sz + 2
-                    font.bold: true
+
+                ListView {
+                    id: user_view
+                    width: parent.width / 2
+                    height: 18
+                    clip: true
+
+                    orientation: ListView.Horizontal
+                    snapMode: ListView.SnapOneItem; flickDeceleration: 2000
+                    preferredHighlightBegin: 0; preferredHighlightEnd: 0
+                    highlightRangeMode: ListView.StrictlyEnforceRange
+
+                    delegate: Text {
+                        width: user_view.width
+                        text: name
+                        color: column_user_project.font_color
+                        font.pixelSize: column_user_project.font_sz + 2
+                        font.bold: true
+                    }
+
+                    model: ListModel {
+                        ListElement {
+                            name: "Игорек"
+                        }
+                        ListElement {
+                            name: "Илья"
+                        }
+                    }
+
+                    onCurrentIndexChanged: {
+                        console.log("user view index changed to " + currentIndex)
+                        var user = model.get(currentIndex).name
+                        top_level.user = user
+                        Jsh.loadAchievements(user, top_level.project)
+                    }
+
+                    Component.onCompleted: {
+
+                    }
                 }
+
                 Text {
                     text: top_level.project
                     color: column_user_project.font_color
@@ -152,7 +189,8 @@ ApplicationWindow {
                     textColor: "#03A9F4"
 
                     onClicked: {
-                        top_level.state = ""
+//                        top_level.state = ""
+                        console.log("top level user" + top_level.user)
                     }
                 }
                 CircleButton {
@@ -329,25 +367,7 @@ ApplicationWindow {
                 }
 
                 Component.onCompleted: {
-                    //Request xml data on load
-                    var request = new XMLHttpRequest()
-                    request.open('POST', 'http://127.0.0.1:5555/AchievementListGet')
-                    request.setRequestHeader('content-type', 'text/xml;charset=utf-8')
-
-                    request.onreadystatechange = function () {
-                        if (request.readyState === XMLHttpRequest.DONE) {
-                            if (request.status === 200) {
-                                console.log("Get Request answer")
-                                xml_model.fromXml(request.responseText)
-                            } else {
-                                console.log("HTTP request failed", request.status)
-                            }
-                        }
-                    }
-                    request.send("user" + top_level.par_delimiter + top_level.user
-                                 + top_level.req_delimiter +
-                                 "project" + top_level.par_delimiter + top_level.project
-                                )
+//                    jsh.loadAchievements(top_level.user, top_level.project)
                     currentIndex = -1
                 }
             }
