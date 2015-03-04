@@ -24,14 +24,13 @@ public:
 	virtual std::string varAlias() const = 0;
 	virtual void refresh(const variant &p = variant()) = 0;
 	virtual variant var() const = 0;
-	virtual void addContext(void **v) = 0;
 	virtual ~CalcVarDelegateBase() {}
 };
 
 class DelegateContainer {
 public:
 	DelegateContainer() {}
-	virtual void addCredentials(int id_user, int id_project) = 0;
+	virtual void init(int id_user, int id_project) = 0;
 	virtual std::vector<CalcVarDelegateBase*> *delegates() = 0;
 	virtual ~DelegateContainer() {}
 };

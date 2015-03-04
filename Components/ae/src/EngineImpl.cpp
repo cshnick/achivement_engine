@@ -75,7 +75,7 @@ public:
 	}
 	void fillCalcDelegatesMap() {
 		m_calc_vars_container = loadCalcDelegatesContainer();
-		m_calc_vars_container->addCredentials(idUser(m_User), idProject(m_Project));
+		m_calc_vars_container->init(idUser(m_User), idProject(m_Project));
 		PRINT_IF_VERBOSE("Filling calc's map...\n");
 		for (auto iter = m_calc_vars_container->delegates()->begin(); iter != m_calc_vars_container->delegates()->end(); ++iter) {
 			CalcVarDelegateBase *d = *iter;
@@ -551,7 +551,7 @@ public:
 		if (!m_calc_vars_container) {
 			std::lock_guard<std::mutex> lock(m_mutex);
 			m_calc_vars_container = loadCalcDelegatesContainer();
-			m_calc_vars_container->addCredentials(idUser(m_User), idProject(m_Project));
+			m_calc_vars_container->init(idUser(m_User), idProject(m_Project));
 		}
 		std::vector<var_traits> res;
 		std::vector<CalcVarDelegateBase*> q_v = *m_calc_vars_container->delegates();
@@ -795,7 +795,7 @@ private:
 		tablesToDrop
 				<< t_sessions::Value
 				<< t_actions::Value
-				<< t_achivements_list::Value
+//				<< t_achivements_list::Value
 				<< t_users::Value
 				<< t_projects::Value
 				<< t_achivements_done::Value;

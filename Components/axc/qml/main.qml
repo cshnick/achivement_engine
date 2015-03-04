@@ -103,6 +103,7 @@ ApplicationWindow {
                         var user = model.get(currentIndex).name
                         top_level.user = user
                         Jsh.loadAchievements(user, top_level.project)
+                        top_level.state = ""
                     }
 
                     Component.onCompleted: {
