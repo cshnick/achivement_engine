@@ -1,8 +1,7 @@
-project(AeCore)
 cmake_minimum_required(VERSION 2.8.11)
 
-find_package(Qt4 COMPONENTS QtCore QtXml QtSql REQUIRED)
-include (${QT_USE_FILE})
+project(AeCore)
+set(CMAKE_PREFIX_PATH ${QT_5_DIR})
 
 set(PYTHON_AE_WRAPPER_NAME PyAeWrapper)
 set(PY_MODULE_NAME PyAeCore)
@@ -28,7 +27,7 @@ set (SOURCES
 set (PYTHON_SRC
   src/EngineImpl_wrap.cxx
 )
-
+find_package(Qt5 COMPONENTS Quick Core Network Xml Widgets)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CXX_COMMON}")
 set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} ${C_COMMON}")
@@ -71,8 +70,10 @@ ADD_CUSTOM_COMMAND(
    COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/lib${PROJECT_NAME}.so ${BIN_PATH}
 )
 
-target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${EXT_LIBS})
+target_link_libraries(${PROJECT_NAME} ${EXT_LIBS})
 if (PYTHON_WRAPPER)
 	target_link_libraries(${PYTHON_AE_WRAPPER_NAME} ${EXT_LIBS} ${PROJECT_NAME})
 endif (PYTHON_WRAPPER)
+
+qt5_use_modules(${PROJECT_NAME} Sql Quick Core Network Xml Widgets)
 

@@ -10,6 +10,7 @@ SET(main_http_test main_http_test)
 include_directories(  
   .
   ${AE_SRC}
+  ${SQL_WRAPPER_SRC}
 )
 add_definitions (
   ${DEF_COMMON}
@@ -53,5 +54,5 @@ ADD_CUSTOM_COMMAND(
 )
 
 target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${EXT_LIBS} ${AeCore})
-target_link_libraries(${db_test} ${QT_LIBRARIES} ${EXT_LIBS} ${AeCore})
+target_link_libraries(${db_test} ${QT_LIBRARIES} ${EXT_LIBS} ${AeCore} ${sqlWrapper})
 target_link_libraries(${main_http_test} ${QT_LIBRARIES} ${EXT_LIBS} ${AeCore})
