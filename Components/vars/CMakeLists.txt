@@ -1,8 +1,7 @@
-project(var_calcs)
 cmake_minimum_required(VERSION 2.8.11)
 
-find_package(Qt4 COMPONENTS QtCore QtXml QtSql REQUIRED)
-include (${QT_USE_FILE})
+project(var_calcs)
+set(CMAKE_PREFIX_PATH ${QT_5_DIR})
 
 include_directories(  
   .
@@ -28,8 +27,8 @@ set (EXT_LIBS
 add_custom_target(cp_to_install
   COMMAND(/usr/bin/echo "tratata")
 )
-
 add_dependencies(cp_to_install ${PROJECT_NAME})
+find_package(Qt5 COMPONENTS Quick Core Network Xml Widgets Sql)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
 
@@ -48,4 +47,5 @@ ADD_CUSTOM_COMMAND(
    COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/lib${PROJECT_NAME}.so ${BIN_PATH}/Calcs
 )
 
-target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${EXT_LIBS})
+target_link_libraries(${PROJECT_NAME} ${EXT_LIBS})
+qt5_use_modules(${PROJECT_NAME} Quick Core Network Xml Widgets Sql)

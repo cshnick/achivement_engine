@@ -1,8 +1,7 @@
-project(tinny_http_server)
 cmake_minimum_required(VERSION 2.8.11)
 
-find_package(Qt4 COMPONENTS QtCore QtXml QtSql REQUIRED)
-include (${QT_USE_FILE})
+project(tinny_http_server)
+set(CMAKE_PREFIX_PATH ${QT_5_DIR})
 
 include_directories(  
   .
@@ -29,6 +28,7 @@ set (EXT_LIBS
   event
 )
 
+find_package(Qt5 COMPONENTS Quick Core Network Xml Widgets Sql)
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 #copy to binary directory
@@ -40,4 +40,5 @@ ADD_CUSTOM_COMMAND(
    COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_SOURCE_DIR}/test_content ${BIN_PATH}
 )
 
-target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${EXT_LIBS} ${AeCore})
+target_link_libraries(${PROJECT_NAME} ${EXT_LIBS} ${AeCore})
+qt5_use_modules(${PROJECT_NAME} Sql Quick Core Network Xml Widgets)

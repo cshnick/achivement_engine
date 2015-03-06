@@ -44,6 +44,13 @@ public:
 	Select &from(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5);
 	Select &from(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5, const QString &p_f6);
 
+	Select &where(const QString &p_f1);
+	Select &where(const QString &p_f1, const QString &p_f2);
+	Select &where(const QString &p_f1, const QString &p_f2, const QString &p_f3);
+	Select &where(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4);
+	Select &where(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5);
+	Select &where(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5, const QString &p_f6);
+
 	int type() {return (int)SQL_TYPES::Select;}
 	int variantType() {return QVariant::fromValue(*this).type();}
 	QString variantName() {return QVariant::fromValue(*this).typeName();}

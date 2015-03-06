@@ -34,7 +34,7 @@ public:
 		const char lc[] = "UTF-8";
 		DEBUG("Setting locale: %s\n", lc);
 		QTextCodec::setCodecForLocale(QTextCodec::codecForName(lc));
-		QTextCodec::setCodecForCStrings(QTextCodec::codecForName(lc));
+//		QTextCodec::setCodecForCStrings(QTextCodec::codecForName(lc));
 		if (DROP_TABLES) {
 			refreshDB();
 			dropTables();

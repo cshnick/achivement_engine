@@ -1,5 +1,11 @@
 #include "SQL.h"
 #include "Conventions.h"
+#include <QtCore>
+
+__attribute__((constructor))
+static void initialize_types() {
+	QMetaType::registerConverter(&Wrap_Sql::Select::expression);
+}
 
 namespace Wrap_Sql {
 
@@ -97,6 +103,36 @@ Select& Select::from(const QString &p_f1, const QString &p_f2, const QString &p_
 	return *this;
 }
 Select& Select::from(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5, const QString &p_f6){
+	from(p_f1, p_f2, p_f3, p_f4, p_f5);
+	m_tables.append(p_f6);
+	return *this;
+}
+
+Select& Select::where(const QString &p_f1) {
+	m_tables.append(p_f1);
+	return *this;
+}
+Select& Select::where(const QString &p_f1, const QString &p_f2) {
+	from(p_f1);
+	m_tables.append(p_f2);
+	return *this;
+}
+Select& Select::where(const QString &p_f1, const QString &p_f2, const QString &p_f3){
+	from(p_f1, p_f2);
+	m_tables.append(p_f3);
+	return *this;
+}
+Select& Select::where(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4){
+	from(p_f1, p_f2, p_f3);
+	m_tables.append(p_f4);
+	return *this;
+}
+Select& Select::where(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5){
+	from(p_f1, p_f2, p_f3, p_f4);
+	m_tables.append(p_f5);
+	return *this;
+}
+Select& Select::where(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5, const QString &p_f6){
 	from(p_f1, p_f2, p_f3, p_f4, p_f5);
 	m_tables.append(p_f6);
 	return *this;

@@ -70,7 +70,7 @@ void smallTest() {
 	const char lc[] = "UTF-8";
 	DEBUG("Setting locale: %s\n", lc);
 	QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
-	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
+//	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 
 //	action_params params_map;
 //	params_map["string_val"] = variant(getRandomWord());
