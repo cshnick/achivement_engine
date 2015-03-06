@@ -10,14 +10,24 @@ static void initialize_types() {
 namespace Wrap_Sql {
 
 namespace Private {
-QString joinConditionMap(const QVariantMap &p_map) {
-	if (p_map.isEmpty()) {
+QString joinConditions(const QList<Condition> &p_conditions) {
+	if (p_conditions.isEmpty()) {
 		return QString();
 	}
 
 	QStringList zip_l;
-	for (auto n = p_map.begin(); n != p_map.end(); ++n) {
-		zip_l.append(n.key() + "=" + n.value().toString());
+	for (auto n = p_conditions.begin(); n != p_conditions.end(); ++n) {
+		QString decorated = (*n).val.toString();
+		switch(static_cast<int>((*n).val.type())) {
+		case QVariant::String:
+		case QVariant::DateTime:
+			decorated = "'" + decorated + "'";
+			break;
+		case QVariant::UserType:
+			decorated = "(" + decorated + ")";
+			break;
+		}
+		zip_l.append((*n).key + (*n).strOp + decorated);
 	}
 
 	return zip_l.join(" AND ");
@@ -40,7 +50,7 @@ QString Select::expression() const{
 	}
 	exp.append(st);
 	//Append conditions
-	QString cm = Private::joinConditionMap(m_conditions); //conditions map
+	QString cm = Private::joinConditions(m_conditions); //conditions map
 	if (!cm.isEmpty()) {
 		exp.append(" WHERE ");
 		exp.append(cm);
@@ -108,33 +118,33 @@ Select& Select::from(const QString &p_f1, const QString &p_f2, const QString &p_
 	return *this;
 }
 
-Select& Select::where(const QString &p_f1) {
-	m_tables.append(p_f1);
+Select& Select::where(const Condition &p_f1) {
+	m_conditions.append(p_f1);
 	return *this;
 }
-Select& Select::where(const QString &p_f1, const QString &p_f2) {
-	from(p_f1);
-	m_tables.append(p_f2);
+Select& Select::where(const Condition &p_f1, const Condition &p_f2) {
+	where(p_f1);
+	m_conditions.append(p_f2);
 	return *this;
 }
-Select& Select::where(const QString &p_f1, const QString &p_f2, const QString &p_f3){
-	from(p_f1, p_f2);
-	m_tables.append(p_f3);
+Select& Select::where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3){
+	where(p_f1, p_f2);
+	m_conditions.append(p_f3);
 	return *this;
 }
-Select& Select::where(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4){
-	from(p_f1, p_f2, p_f3);
-	m_tables.append(p_f4);
+Select& Select::where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4){
+	where(p_f1, p_f2, p_f3);
+	m_conditions.append(p_f4);
 	return *this;
 }
-Select& Select::where(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5){
-	from(p_f1, p_f2, p_f3, p_f4);
-	m_tables.append(p_f5);
+Select& Select::where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4, const Condition &p_f5){
+	where(p_f1, p_f2, p_f3, p_f4);
+	m_conditions.append(p_f5);
 	return *this;
 }
-Select& Select::where(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5, const QString &p_f6){
-	from(p_f1, p_f2, p_f3, p_f4, p_f5);
-	m_tables.append(p_f6);
+Select& Select::where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4, const Condition &p_f5, const Condition &p_f6){
+	where(p_f1, p_f2, p_f3, p_f4, p_f5);
+	m_conditions.append(p_f6);
 	return *this;
 }
 

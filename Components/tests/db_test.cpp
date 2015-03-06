@@ -38,7 +38,10 @@ void smallTest()
 using namespace Wrap_Sql;
 
 void SqlClassesTest() {
-	auto s = Select(f_id::Value, f_name::Value).from(t_actions::Value, t_users::Value, t_projects::Value);
+	auto s = Select(f_id::Value, f_name::Value)
+			.from(t_actions::Value, t_users::Value, t_projects::Value)
+			.where(Condition(AE::f_user::Value,"=","Игорек")
+				  ,Condition(AE::f_project::Value,"=","Таблица умножения"));
 	QVariant v = QVariant::fromValue(s);
 	DEBUG("Type of v: %d; own type: %d\n", v.type(), s.variantType());
 	DEBUG("Select Variant to string: %s\n", v.toString().toUtf8().data());

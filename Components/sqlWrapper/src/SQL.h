@@ -6,9 +6,6 @@
 
 
 namespace Wrap_Sql {
-namespace Private {
-QString joinConditionMap(const QVariantMap &p_map);
-} //namespace Private
 
 enum class SQL_TYPES {
 	Undefined = 0
@@ -16,6 +13,22 @@ enum class SQL_TYPES {
 			,Insert = 2
 			,Create = 4
 };
+enum Operators {
+	equal = 0
+	, in = 1
+};
+QString strForOp(Operators op) {
+	switch (static_cast<int>(op)) {
+	case in:
+		return "IN";
+		break;
+	case equal:
+	default:
+		return "=";
+		break;
+	}
+	return QString();
+}
 
 class SqlBase {
 public:
@@ -26,6 +39,25 @@ public:
 protected:
 	QSqlQuery q;
 };
+
+class Condition {
+public:
+	Condition();
+	Condition(const QString &key, Operators op, const QVariant &value)
+		: key(key), op(op), val(value) {}
+	Condition(const QString &key, const QString &str_op, const QVariant &value)
+			: key(key), strOp(str_op), val(value) {}
+
+public:
+	QString key;
+	Operators op = equal;
+	QString strOp = "=";
+	QVariant val;
+};
+
+namespace Private {
+QString joinConditions(const QList<Condition> &p_conditions);
+} //namespace Private
 
 class Select: public SqlBase {
 public:
@@ -44,15 +76,15 @@ public:
 	Select &from(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5);
 	Select &from(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5, const QString &p_f6);
 
-	Select &where(const QString &p_f1);
-	Select &where(const QString &p_f1, const QString &p_f2);
-	Select &where(const QString &p_f1, const QString &p_f2, const QString &p_f3);
-	Select &where(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4);
-	Select &where(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5);
-	Select &where(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5, const QString &p_f6);
+	Select &where(const Condition &p_f1);
+	Select &where(const Condition &p_f1, const Condition &p_f2);
+	Select &where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3);
+	Select &where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4);
+	Select &where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4, const Condition &p_f5);
+	Select &where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4, const Condition &p_f5, const Condition &p_f6);
 
 	int type() {return (int)SQL_TYPES::Select;}
-	int variantType() {return QVariant::fromValue(*this).type();}
+	int variantType() const {return QVariant::fromValue(*this).type();}
 	QString variantName() {return QVariant::fromValue(*this).typeName();}
 	QString expression() const;
 	QString toString() const {return expression();}
@@ -62,7 +94,7 @@ public:
 private:
 	QStringList m_fields;
 	QStringList m_tables;
-	QVariantMap m_conditions;
+	QList<Condition> m_conditions;
 };
 
 } // namespace Wrap_Sql
