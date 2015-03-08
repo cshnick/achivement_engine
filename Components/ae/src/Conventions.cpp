@@ -31,6 +31,7 @@ const char *printable(const QVariant &v) {
 	case QVariant::Bool:
 		result = QString("QVariant(Bool, %1)").arg(v.toBool()).toUtf8().constData();
 		break;
+	case QVariant::LongLong:
 	case QVariant::Int:
 		result = QString("QVariant(Int, %1)").arg(v.toInt()).toUtf8().constData();
 		break;

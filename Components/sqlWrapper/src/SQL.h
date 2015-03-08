@@ -55,6 +55,18 @@ public:
 	QVariant val;
 };
 
+class Func {
+public:
+	Func();
+	Func(const QString &name, const QString &field) : m_func(name), m_field(field) {}
+	operator QString() {
+		return m_func + "(" + m_field + ")";
+	}
+private:
+    QString m_func;
+    QString m_field;
+};
+
 namespace Private {
 QString joinConditions(const QList<Condition> &p_conditions);
 } //namespace Private
@@ -83,12 +95,21 @@ public:
 	Select &where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4, const Condition &p_f5);
 	Select &where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4, const Condition &p_f5, const Condition &p_f6);
 
+	void addCondition(const Condition &c) {
+		m_conditions.append(c);
+	}
+	void addConditions(const QList<Condition> &lc) {
+		m_conditions.append(lc);
+	}
+
 	int type() {return (int)SQL_TYPES::Select;}
 	int variantType() const {return QVariant::fromValue(*this).type();}
+
 	QString variantName() {return QVariant::fromValue(*this).typeName();}
 	QString expression() const;
 	QString toString() const {return expression();}
 	bool exec();
+	QSqlQuery exec(QSqlQuery &q);
 	~Select();
 
 private:

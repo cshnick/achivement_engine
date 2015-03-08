@@ -6,6 +6,7 @@ set(CMAKE_PREFIX_PATH ${QT_5_DIR})
 include_directories(  
   .
   ${AE_SRC}
+  ${SQL_WRAPPER_SRC}
 )
 add_definitions (
   ${DEF_COMMON}
@@ -47,5 +48,5 @@ ADD_CUSTOM_COMMAND(
    COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/lib${PROJECT_NAME}.so ${BIN_PATH}/Calcs
 )
 
-target_link_libraries(${PROJECT_NAME} ${EXT_LIBS})
+target_link_libraries(${PROJECT_NAME} ${EXT_LIBS} ${sqlWrapper})
 qt5_use_modules(${PROJECT_NAME} Quick Core Network Xml Widgets Sql)

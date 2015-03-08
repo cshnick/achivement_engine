@@ -5,6 +5,12 @@
 #include <QtSql>
 #include <vector>
 
+#include <SQL.h>
+
+using Wrap_Sql::Select;
+using Wrap_Sql::Func;
+using Wrap_Sql::Condition;
+
 #define ADD_DELEGATE(name) m_delegates.push_back(new name(&m_db, m_user, m_project))
 #define BEGIN_DECLARE_DELEGATE(name, vName, vAlias, vType) \
 		class name: public CalcVarDelegateBase { \
@@ -25,6 +31,17 @@
 }; \
 
 namespace AE {
+
+namespace Private {
+	template<int User, int Project>
+	QList<Condition> commonConditions() {
+		QList<Condition> res;
+		res.append(Condition(AE::f_user::Value,"=",User));
+		res.append(Condition(AE::f_project::Value,"=",Project));
+
+		return res;
+	}
+} //namespace Private
 
 //SessionTime
 BEGIN_DECLARE_DELEGATE(SessionTimeDelegate, "$st", "SessionTime", "Numeric")
@@ -51,6 +68,11 @@ BEGIN_DECLARE_DELEGATE(ActionTimeDelegate, "$at", "ActionTime", "Numeric")
 	;
 	void refresh(const variant &) {
 		QSqlQuery q("", *m_db);
+		auto s = Select(Func("MAX",f_time::Value), f_actTime::Value)
+				.from(t_actions::Value);
+		QList<Condition> l = Private::commonConditions<m_user,m_project>();
+//		s.addConditions(Private::commonConditions<m_user,m_project>());
+
 		q.prepare(
 				QString("SELECT MAX(%1),%2 FROM %3").arg(f_time::Value).arg(
 						f_actTime::Value).arg(t_actions::Value));

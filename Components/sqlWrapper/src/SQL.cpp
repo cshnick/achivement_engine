@@ -58,8 +58,20 @@ QString Select::expression() const{
 
 	return exp;
 }
-bool Select:: exec() {
-	return false;
+bool Select::exec() {return false;}
+QSqlQuery Select::exec(QSqlQuery &q) {
+	q.prepare(expression());
+	bool result = false;
+    QTime ct = QTime::currentTime();
+    result = q.exec();
+    int msec_query = ct.msecsTo(QTime::currentTime());
+    if (result) {
+    	SQL_DEBUG("Executed: %s;\t query length: %d\n", q.executedQuery().toUtf8().data(), msec_query);
+    } else {
+    	SQL_ERR("Exec error: %s, query: %s;\t query length: %d\n", q.lastError().text().toUtf8().data(), q.executedQuery().toUtf8().data(), msec_query);
+    }
+
+    return q;
 }
 Select::Select() {
 

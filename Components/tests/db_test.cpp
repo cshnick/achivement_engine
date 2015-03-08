@@ -38,13 +38,28 @@ void smallTest()
 using namespace Wrap_Sql;
 
 void SqlClassesTest() {
+	const char lc[] = "UTF-8";
+	DEBUG("Setting locale: %s\n", lc);
+	QTextCodec::setCodecForLocale(QTextCodec::codecForName(lc));
+	QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
+	db.setDatabaseName(QString(g_achivements_path::Value) + "/" + g_dbName::Value);
+	if (!db.open()) {
+		DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(db.lastError().text()));
+	}
 	auto s = Select(f_id::Value, f_name::Value)
-			.from(t_actions::Value, t_users::Value, t_projects::Value)
-			.where(Condition(AE::f_user::Value,"=","Игорек")
-				  ,Condition(AE::f_project::Value,"=","Таблица умножения"));
-	QVariant v = QVariant::fromValue(s);
-	DEBUG("Type of v: %d; own type: %d\n", v.type(), s.variantType());
-	DEBUG("Select Variant to string: %s\n", v.toString().toUtf8().data());
+			.from(t_achivements_list::Value)
+			.where(Condition(AE::f_id::Value,"=",2)
+			);
+	QSqlQuery q("", db);
+	s.exec(q);
+	bool first = q.first();
+	bool valid = q.isValid();
+
+	DEBUG("Result 0: %s\n", printable(q.value(0)));
+	DEBUG("Result 1: %s\n", printable(q.value(1)));
+//	QVariant v = QVariant::fromValue(s);
+//	DEBUG("Type of v: %d; own type: %d\n", v.type(), s.variantType());
+//	DEBUG("Select Variant to string: %s\n", v.toString().toUtf8().data());
 }
 
 int main (int argc, char ** argv)
