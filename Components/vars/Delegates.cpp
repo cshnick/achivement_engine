@@ -33,15 +33,15 @@ using Wrap_Sql::Condition;
 namespace AE {
 
 namespace Private {
-	template<int User, int Project>
-	QList<Condition> commonConditions() {
+	QList<Condition> commonConditions(int p_user, int p_project) {
 		QList<Condition> res;
-		res.append(Condition(AE::f_user::Value,"=",User));
-		res.append(Condition(AE::f_project::Value,"=",Project));
+		res.append(Condition(AE::f_user::Value,"=",p_user));
+		res.append(Condition(AE::f_project::Value,"=",p_project));
 
 		return res;
 	}
 } //namespace Private
+#define APPEND_COMMON_CONDITIONS s.addConditions(Private::commonConditions(m_user,m_project))
 
 //SessionTime
 BEGIN_DECLARE_DELEGATE(SessionTimeDelegate, "$st", "SessionTime", "Numeric")
@@ -70,14 +70,9 @@ BEGIN_DECLARE_DELEGATE(ActionTimeDelegate, "$at", "ActionTime", "Numeric")
 		QSqlQuery q("", *m_db);
 		auto s = Select(Func("MAX",f_time::Value), f_actTime::Value)
 				.from(t_actions::Value);
-		QList<Condition> l = Private::commonConditions<m_user,m_project>();
-//		s.addConditions(Private::commonConditions<m_user,m_project>());
+		APPEND_COMMON_CONDITIONS;
+        s.exec(q);
 
-		q.prepare(
-				QString("SELECT MAX(%1),%2 FROM %3").arg(f_time::Value).arg(
-						f_actTime::Value).arg(t_actions::Value));
-		EXEC_AND_REPORT_COND
-		;
 		if (q.first()) {
 			QVariant var = q.value(1);
 			m_var = fromQVariant(var);
@@ -200,7 +195,7 @@ END_DECLARE_DELEGATE(FalseActionCount)
 
 class DCDB: public DelegateContainer {
 public:
-	void init(int id_user, int id_project) {
+	void init(int id_project, int id_user) {
 		m_user = id_user;
 		m_project = id_project;
 

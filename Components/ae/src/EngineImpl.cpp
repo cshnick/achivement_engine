@@ -15,6 +15,7 @@
 #include "dlfcn.h"
 #include "ExpressionParser.h"
 #include "unistd.h"
+#include "SQL.h"
 
 static QDateTime g_fakeCurrentTime = QDateTime::currentDateTime();
 
@@ -23,6 +24,9 @@ static QDateTime g_fakeCurrentTime = QDateTime::currentDateTime();
 
 typedef QVariant (*qv_func_t) (QVariant v1, QVariant v2);
 
+using Wrap_Sql::Select;
+using Wrap_Sql::Func;
+using Wrap_Sql::Condition;
 namespace AE {
 
 class EngineImplPrivate {
@@ -75,7 +79,7 @@ public:
 	}
 	void fillCalcDelegatesMap() {
 		m_calc_vars_container = loadCalcDelegatesContainer();
-		m_calc_vars_container->init(idUser(m_User), idProject(m_Project));
+		m_calc_vars_container->init(m_Project, m_User);
 		PRINT_IF_VERBOSE("Filling calc's map...\n");
 		for (auto iter = m_calc_vars_container->delegates()->begin(); iter != m_calc_vars_container->delegates()->end(); ++iter) {
 			CalcVarDelegateBase *d = *iter;
@@ -95,9 +99,14 @@ public:
 	void fillAchivementsFromDB(bool reset = false) {
 		 if (!checkDB()) return;
 		 QSqlQuery q("", m_db);
-		 q.prepare(QString("SELECT * FROM %1")
-				 .arg(t_achivements_list::Value));
-		 EXEC_AND_REPORT_COND;
+		 auto s = Select().from(t_achivements_list::Value);
+		 s.addConditions(QList<Condition>()
+				 << Condition(f_user::Value,"=",m_User)
+				 << Condition(f_project::Value,"=",m_Project));
+
+		 DEBUG("Select query expression: %s\n", s.expression().toUtf8().data());
+
+		 s.exec(q);
 		 q.next();
 		 while (q.isValid()) {
 			 QSqlRecord r = q.record();
@@ -291,24 +300,24 @@ public:
 		q.bindValue(3, currentTime());
 		q.bindValue(4, m.value(f_id::Value));
 		q.bindValue(5, m_session_id);
-		q.bindValue(6, idUser(m_User));
-		q.bindValue(7, idProject(m_Project));
+		q.bindValue(6, m_User);
+		q.bindValue(7, m_Project);
 		EXEC_AND_REPORT_COND;
 	}
 	void refreshAhivementsList() {
 	}
 	bool testCredentials() {
-		if (m_User.empty() || m_Project.empty()) {
+		if (m_User == -1 || m_Project == -1) {
 			DEBUG_ERR("Username or project name is empty, process refused...\n");
 		}
 	}
 
 	void begin() {
 		if (!testCredentials()) {
+			throw AECommonErrorException("Username or project name is empty, process refused...");
 			return;
 		}
 
-		initGlobal();
 		if (!checkDB()) return;
 		STAT_IF_VERBOSE;
 
@@ -321,8 +330,8 @@ public:
 				.arg(f_project::Value)
 				);
 		q.bindValue(0, currentTime());
-		q.bindValue(1, idUser(m_User));
-		q.bindValue(2, idProject(m_Project));
+		q.bindValue(1, m_User);
+		q.bindValue(2, m_Project);
 		EXEC_AND_REPORT_COND;
 		m_session_id = q.lastInsertId().toInt();
 		PRINT_IF_VERBOSE("Starting session: %d\n", m_session_id);
@@ -351,6 +360,7 @@ public:
 	void addAction(const action_params &p_actions) {
 		STAT_IF_VERBOSE;
 		if (!testCredentials()) {
+			throw AECommonErrorException("Username or project name is empty, process refused...");
 			return;
 		}
 		addActionToDB(p_actions);
@@ -415,8 +425,8 @@ public:
 			q.bindValue(k++, m_session_id);
 			q.bindValue(k++, currentTime());
 			q.bindValue(k++, et);
-			q.bindValue(k++, idUser(m_User));
-			q.bindValue(k++, idProject(m_Project));
+			q.bindValue(k++, m_User);
+			q.bindValue(k++, m_Project);
 			EXEC_AND_REPORT_COND;
 
 			SQL_DEBUG("Rec is not empty\n");
@@ -440,8 +450,8 @@ public:
 				.arg(f_project::Value)
 		);
 		q.bindValue(0, m_session_id);
-		q.bindValue(1, idUser(m_User));
-		q.bindValue(2, idProject(m_Project));
+		q.bindValue(1, m_User);
+		q.bindValue(2, m_Project);
 		EXEC_AND_REPORT_COND;
 		q.first();
 		QDateTime dt = q.value(0).toDateTime();
@@ -457,8 +467,8 @@ public:
 					.arg(f_project::Value)
 					);
 			q.bindValue(0, m_session_id);
-			q.bindValue(1, idUser(m_User));
-			q.bindValue(2, idProject(m_Project));
+			q.bindValue(1, m_User);
+			q.bindValue(2, m_Project);
 			EXEC_AND_REPORT_COND;
 			q.first();
 			QDateTime st = q.value(0).toDateTime();
@@ -542,16 +552,19 @@ public:
 		}
 	}
 	bool init(const std::string &project, const std::string &name, const std::string &passwd = std::string()) {
-		initGlobal();
-		NO_IMPL_REPORT;
-		return false;
+		refreshDB();
+		int p = idProject(project);
+		int n = idUser(name);
+		initGlobal(p, n);
+
+		return true;
 	}
 
 	std::vector<var_traits> varMetas() {
 		if (!m_calc_vars_container) {
 			std::lock_guard<std::mutex> lock(m_mutex);
 			m_calc_vars_container = loadCalcDelegatesContainer();
-			m_calc_vars_container->init(idUser(m_User), idProject(m_Project));
+			m_calc_vars_container->init(m_Project, m_User);
 		}
 		std::vector<var_traits> res;
 		std::vector<CalcVarDelegateBase*> q_v = *m_calc_vars_container->delegates();
@@ -577,13 +590,8 @@ public:
 	}
 	int idUser(const std::string &name) {
 		QSqlQuery q("", m_db);
-		q.prepare(QString("SELECT %1 FROM %2 WHERE %3 = ?")
-				.arg(f_id::Value)
-				.arg(t_users::Value)
-				.arg(f_name::Value)
-				);
-		q.bindValue(0, QString::fromStdString(name));
-		EXEC_AND_REPORT_COND;
+		auto s = Select(f_id::Value).from(t_users::Value).where(Condition(f_name::Value,"=",name.c_str()));
+		s.exec(q);
 		if (q.first()) {
 			return q.value(0).toInt();
 		} else if (!name.empty()) {
@@ -600,13 +608,8 @@ public:
 	}
 	int idProject(const std::string &name) {
 		QSqlQuery q("", m_db);
-		q.prepare(QString("SELECT %1 FROM %2 WHERE %3 = ?")
-				.arg(f_id::Value)
-				.arg(t_projects::Value)
-				.arg(f_name::Value)
-		);
-		q.bindValue(0, QString::fromStdString(name));
-		EXEC_AND_REPORT_COND;
+		auto s = Select(f_id::Value).from(t_projects::Value).where(Condition(f_name::Value,"=",name.c_str()));
+		s.exec(q);
 		if (q.first()) {
 			return q.value(0).toInt();
 		} else if (!name.empty()) {
@@ -745,9 +748,8 @@ public:
 
 private:
 	void refreshDB() {
-		PRINT_IF_VERBOSE("Initializing database. Setting database name: %s\n", qPrintable(g_dbName::Value));
-
 		if (!m_db.isOpen()) {
+			PRINT_IF_VERBOSE("Initializing database. Setting database name: %s\n", qPrintable(g_dbName::Value));
 			m_db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
 			m_db.setDatabaseName(QString(g_achivements_path::Value) + "/" + g_dbName::Value);
 			if (!m_db.open()) {
@@ -770,7 +772,9 @@ private:
 		}
 		fillCalcDelegatesMap();
 	}
-	void initGlobal() {
+	void initGlobal(int project, int name, const std::string &passwd = std::string()) {
+		m_User = name;
+		m_Project = project;
 		refreshDB();
 		refreshTables();
 		refreshAchievements();
@@ -953,8 +957,8 @@ private:
 	QSqlDatabase m_db;
 	QSqlRecord m_record;
 	int m_session_id;
-	std::string m_Project;
-	std::string m_User;
+	int m_Project;
+	int m_User;
 	QList<QVariantMap> m_achivements;
 	QMap<QString, CalcVarDelegateBase*> m_calcVars;
 	QList<QVariantMap> m_instant_achievements;

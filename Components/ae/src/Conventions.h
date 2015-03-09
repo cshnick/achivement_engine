@@ -5,6 +5,7 @@
 #include "type_registry.h"
 #include "static_counter.h"
 #include "debug_and_sql.h"
+#include "exceptions.h"
 #ifndef SWIG
 #include <QtCore>
 #endif //SWIG
@@ -32,6 +33,7 @@ const char *printable(const QVariant &v);
 QVariant fromAeVariant(const AE::variant &ae_val);
 variant fromQVariant(const QVariant &q_val);
 #endif //SWIG
+DECLARE_RUNTIME_EXCEPTION(AECommonError)
 
 namespace Private  {
 	INIT_STATIC_COUNTER(Counter_ae, 200)

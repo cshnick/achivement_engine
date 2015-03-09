@@ -11,6 +11,7 @@ include_directories(
   src
   /usr/include/python
   src/ExpressionParser
+  ${SQL_WRAPPER_SRC}
 )
 add_definitions (
   ${DEF_COMMON}
@@ -70,7 +71,7 @@ ADD_CUSTOM_COMMAND(
    COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/lib${PROJECT_NAME}.so ${BIN_PATH}
 )
 
-target_link_libraries(${PROJECT_NAME} ${EXT_LIBS})
+target_link_libraries(${PROJECT_NAME} ${EXT_LIBS} ${sqlWrapper})
 if (PYTHON_WRAPPER)
 	target_link_libraries(${PYTHON_AE_WRAPPER_NAME} ${EXT_LIBS} ${PROJECT_NAME})
 endif (PYTHON_WRAPPER)

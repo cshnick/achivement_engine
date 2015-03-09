@@ -107,7 +107,6 @@ ApplicationWindow {
                     }
 
                     Component.onCompleted: {
-
                     }
                 }
 

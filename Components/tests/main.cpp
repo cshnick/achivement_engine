@@ -56,9 +56,12 @@ action_params genAction() {
 void autoTest() {
 	//1000 sessions
 	EngineImpl *e = new EngineImpl();
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 2; i++) {
+		QTextCodec *c = QTextCodec::codecForName("Windows-1251");
+
+		e->init(c->toUnicode("Таблица умножения").toStdString(), c->toUnicode("Илья").toStdString());
 		e->begin();
-		for (int j = 0; j < 5; j++) {
+		for (int j = 0; j < 2; j++) {
 			e->addAction(genAction());
 		}
 		e->end();
