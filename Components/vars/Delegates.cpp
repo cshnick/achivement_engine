@@ -46,6 +46,9 @@ namespace Private {
 //SessionTime
 BEGIN_DECLARE_DELEGATE(SessionTimeDelegate, "$st", "SessionTime", "Numeric")
 	;
+	std::string varDescription() const {
+		return "Session time: time in msecs from start of the current session up to current time.";
+	}
 	void refresh(const variant &) {
 		QSqlQuery q("", *m_db);
 		q.prepare(
@@ -66,6 +69,9 @@ BEGIN_DECLARE_DELEGATE(SessionTimeDelegate, "$st", "SessionTime", "Numeric")
 END_DECLARE_DELEGATE(SessionTimeDelegate)
 BEGIN_DECLARE_DELEGATE(ActionTimeDelegate, "$at", "ActionTime", "Numeric")
 	;
+	std::string varDescription() const {
+		return "Action time: time in msecs showing how long does the acton lasts.";
+	}
 	void refresh(const variant &) {
 		QSqlQuery q("", *m_db);
 		auto s = Select(Func("MAX",f_time::Value), f_actTime::Value)
@@ -81,6 +87,9 @@ BEGIN_DECLARE_DELEGATE(ActionTimeDelegate, "$at", "ActionTime", "Numeric")
 END_DECLARE_DELEGATE(ActionTimeDelegate)
 BEGIN_DECLARE_DELEGATE(ActionRightDelegate, "$aright", "ActionRight", "Numeric")
 	;
+	std::string varDescription() const {
+		return "Action right: Succeeded or not the latest action.";
+	}
 	void refresh(const variant &) {
 		QSqlQuery q("", *m_db);
 		q.prepare(
@@ -95,8 +104,29 @@ BEGIN_DECLARE_DELEGATE(ActionRightDelegate, "$aright", "ActionRight", "Numeric")
 		}
 	}
 END_DECLARE_DELEGATE(ActionRightDelegate)
+BEGIN_DECLARE_DELEGATE(LatestRightActionsCount, "$lARightCount", "LatestRightActionsCount", "Numeric")
+	;
+	std::string varDescription() const {
+		return "Latest right actions count: count of latest actions which are succeeded and running.";
+	}
+	void refresh(const variant &) {
+		QSqlQuery q("", *m_db);
+		auto s = Select(f_success::Value).from(t_actions::Value);
+		APPEND_COMMON_CONDITIONS;
+		q.last();
+		int cnt = 0;
+		while(q.isValid()) {
+			bool success = q.value(0).toInt();
+			if (success) cnt++; else break;
+		}
+		m_var = fromQVariant(cnt);
+	}
+END_DECLARE_DELEGATE(ActionRightDelegate)
 BEGIN_DECLARE_DELEGATE(AhivementsCount, "$", "AchivementsCount", "Achievements")
 	;
+	std::string varDescription() const {
+		return "Achievements count: specify the id of the ahievement to get how many times has it been aproved.";
+	}
 	void refresh(const variant &p_id) {
 		QSqlQuery q("", *m_db);
 		int id = p_id.toInt();
@@ -118,6 +148,9 @@ BEGIN_DECLARE_DELEGATE(AhivementsCount, "$", "AchivementsCount", "Achievements")
 END_DECLARE_DELEGATE(AhivementsCount)
 BEGIN_DECLARE_DELEGATE(AllTimeSpent, "$spTime", "SpentTime", "Statistics")
 	;
+    std::string varDescription() const {
+		return "Spent time: All time spent by current user for current project.";
+	}
 	void refresh(const variant &) {
 		QSqlQuery q("", *m_db);
 		q.prepare(
@@ -136,6 +169,9 @@ BEGIN_DECLARE_DELEGATE(AllTimeSpent, "$spTime", "SpentTime", "Statistics")
 END_DECLARE_DELEGATE(AllTimeSpent)
 BEGIN_DECLARE_DELEGATE(ActionsCount, "$aCount", "ActionsCount", "Statistics")
 	;
+	std::string varDescription() const {
+		return "Actions count: Num of actions for current user and current project.";
+	}
 	void refresh(const variant &) {
 		QSqlQuery q("", *m_db);
 		q.prepare(
@@ -154,6 +190,9 @@ BEGIN_DECLARE_DELEGATE(ActionsCount, "$aCount", "ActionsCount", "Statistics")
 END_DECLARE_DELEGATE(ActionsCount)
 BEGIN_DECLARE_DELEGATE(TrueActionsCount, "$taCount", "TrueActionsCount", "Statistics")
 	;
+	std::string varDescription() const {
+		return "True actions count: Number of succeeded actions for current user and current project.";
+	}
 	void refresh(const variant &) {
 		QSqlQuery q("", *m_db);
 		q.prepare(
@@ -175,6 +214,9 @@ BEGIN_DECLARE_DELEGATE(TrueActionsCount, "$taCount", "TrueActionsCount", "Statis
 END_DECLARE_DELEGATE(TrueActionsCount)
 BEGIN_DECLARE_DELEGATE(FalseActionsCount, "$faCount", "FalseActionsCount", "Statistics")
 	;
+	std::string varDescription() const {
+		return "False actions count: Number of not succeeded actions for current user and current project.";
+	}
 	void refresh(const variant &) {
 		QSqlQuery q("", *m_db);
 		q.prepare(
