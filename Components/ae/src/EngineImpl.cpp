@@ -749,8 +749,12 @@ public:
 private:
 	void refreshDB() {
 		if (!m_db.isOpen()) {
-			PRINT_IF_VERBOSE("Initializing database. Setting database name: %s\n", qPrintable(g_dbName::Value));
-			m_db = QSqlDatabase::addDatabase("QSQLITE", "action_db");
+			char const db_driver[] = "QSQLITE";
+			PRINT_IF_VERBOSE("Initializing %s database. Database name: %s\n", db_driver, qPrintable(g_dbName::Value));
+			int atomic = atomic_cnt();
+			QString connectionName = QString("action_db_%1").arg(atomic);
+			PRINT_IF_VERBOSE("Connection name: %s\n", connectionName.toUtf8().data());
+			m_db = QSqlDatabase::addDatabase("QSQLITE", QString("action_db_%1").arg(atomic));
 			m_db.setDatabaseName(QString(g_achivements_path::Value) + "/" + g_dbName::Value);
 			if (!m_db.open()) {
 				DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(m_db.lastError().text()));
@@ -948,6 +952,12 @@ private:
 		}
 		p_file->close();
 		return true;
+	}
+
+	static int atomic_cnt() {
+		volatile static int cnt = 0;
+		__sync_fetch_and_add(&cnt, 1);
+		return cnt;
 	}
 
 private:
