@@ -14,6 +14,7 @@ struct var_traits {
 	std::string name;
 	std::string alias;
 	std::string type_str;
+	std::string description;
 };
 
 class CalcVarDelegateBase  {

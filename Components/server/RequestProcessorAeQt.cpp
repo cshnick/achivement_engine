@@ -50,6 +50,7 @@ public:
 			wr.writeTextElement(AE::tag_name::Value, j->name.c_str());
 			wr.writeTextElement(AE::tag_value::Value, j->alias.c_str());
 			wr.writeTextElement(AE::tag_type_str::Value, j->type_str.c_str());
+			wr.writeTextElement(AE::tag_description::Value, j->description.c_str());
 			wr.writeEndElement();
 		}
 		wr.writeEndElement();

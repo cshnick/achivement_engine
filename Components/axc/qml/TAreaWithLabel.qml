@@ -111,23 +111,18 @@ Rectangle {
             XmlRole { name: "name"; query: "name/string()" }
             XmlRole { name: "value"; query: "value/string()" }
             XmlRole { name: "type_str"; query: "type_str/string()"}
+            XmlRole { name: "Description"; query: "Description/string()"}
         }
 
         Component {
             id: conventions_delegate
 
             Rectangle {
+                id: delegate_rect
                 height: 50
                 width: parent.width
                 color: "Transparent"
-//                border.color: "#ddd"
 
-//                Column {
-//                    anchors.centerIn: parent
-//                    spacing: 10
-//                    Text { text: name; font.pixelSize: 14 }
-//                    Text { text: '$' + value; font.pixelSize: 14 }
-//                }
                 Rectangle {
                     anchors.fill: parent
                     opacity: 0.9
@@ -184,6 +179,7 @@ Rectangle {
                 }
 
                 Text {
+                    id: name_text
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: type_sircle.right
                     anchors.leftMargin: 10
@@ -191,13 +187,61 @@ Rectangle {
                     font.pixelSize: 16
                 }
 
+                TextArea {
+                    clip: true
+                    id: description_ta
+                    y: parent.height
+                    width: 0
+                    height: 0
+                    text: Description
+                    wrapMode: TextEdit.WordWrap
+
+                    style: TextAreaStyle {
+                        textColor: "#333"
+                        selectionColor: "steelblue"
+                        selectedTextColor: "#eee"
+                        backgroundColor: "#fff"
+                        frame: Rectangle {
+                            radius: 0
+                            border.color: "#ddd"
+                            border.width: 0
+                        }
+
+                    }
+                    verticalScrollBarPolicy: Qt.ScrollBarAlwaysOff
+                }
+
                 MouseArea {
+                    id: private_ma
                     anchors.fill: parent
+                    hoverEnabled: true
                     onClicked: {
                         console.log("Index clicked" + index)
                         ta_text_condition.insert(ta_text_condition.length, value)
+//                        delegate_rect.state = "Details"
                     }
                 }
+                states: [
+                    State {
+                        when: Description && private_ma.containsMouse
+                        name: "Details"
+                        PropertyChanges {target: description_ta; width: parent.width; height: parent.height - 23; y: type_sircle.height + 5}
+                        PropertyChanges {target: type_sircle; width: 20; height: 20; anchors.topMargin: 4; anchors.leftMargin: 4}
+//                        PropertyChanges {target: name_text; anchors.topMargin: 4;}
+                        AnchorChanges {target: type_sircle; anchors.verticalCenter: undefined; anchors.top: parent.top; anchors.left: parent.left}
+                        AnchorChanges{target: name_text; anchors.verticalCenter: type_sircle.verticalCenter; anchors.left: type_sircle.right}
+                        PropertyChanges{target: delegate_rect; height: 70}
+                    }
+                ]
+                transitions: [
+                    Transition {
+                        ParallelAnimation {
+                            NumberAnimation {target: helper_list; properties: "y,x"; duration: top_level.animation_duration; easing.type: Easing.InOutExpo }
+                            AnchorAnimation {targets: [type_sircle,name_text]; duration: top_level.animation_duration; easing.type: Easing.InOutExpo}
+                            NumberAnimation {targets: [description_ta, delegate_rect]; properties: "width,height,y"; duration: top_level.animation_duration; easing.type: Easing.InOutExpo}
+                        }
+                    }
+                ]
             }
         }
 

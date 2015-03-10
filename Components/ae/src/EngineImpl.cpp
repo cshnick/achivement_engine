@@ -573,6 +573,7 @@ public:
 			vt.name = (*d)->varAlias();
 			vt.alias = (*d)->varName();
 			vt.type_str = (*d)->typeStr();
+			vt.description = (*d)->varDescription();
 			res.push_back(vt);
 		}
 		return res;

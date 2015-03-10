@@ -113,11 +113,13 @@ BEGIN_DECLARE_DELEGATE(LatestRightActionsCount, "$lARightCount", "LatestRightAct
 		QSqlQuery q("", *m_db);
 		auto s = Select(f_success::Value).from(t_actions::Value);
 		APPEND_COMMON_CONDITIONS;
+		s.exec(q);
 		q.last();
 		int cnt = 0;
 		while(q.isValid()) {
 			bool success = q.value(0).toInt();
 			if (success) cnt++; else break;
+			q.previous();
 		}
 		m_var = fromQVariant(cnt);
 	}
@@ -244,6 +246,7 @@ public:
 		ADD_DELEGATE(SessionTimeDelegate);
 		ADD_DELEGATE(ActionTimeDelegate);
 		ADD_DELEGATE(ActionRightDelegate);
+		ADD_DELEGATE(LatestRightActionsCount);
 		ADD_DELEGATE(AhivementsCount);
 		ADD_DELEGATE(AllTimeSpent);
 		ADD_DELEGATE(ActionsCount);

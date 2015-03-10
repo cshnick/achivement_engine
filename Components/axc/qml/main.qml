@@ -254,7 +254,7 @@ ApplicationWindow {
 
                     onClicked: {
                         var dict = {}
-                        dict["id"] = parseInt(top_level.idLabel)
+//                        dict["id"] = parseInt(top_level.idLabel)
                         dict["Name"] = block_name.text
                         dict["Description"] = block_description.text
                         dict["Condition"] = text_condition.text

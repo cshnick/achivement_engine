@@ -72,6 +72,7 @@ DECLARE_STRING_CONSTANT(tag_name, name);
 DECLARE_STRING_CONSTANT(tag_value, value);
 DECLARE_STRING_CONSTANT(tag_root, root);
 DECLARE_STRING_CONSTANT(tag_type_str, type_str);
+DECLARE_STRING_CONSTANT(tag_description, Description)
 DECLARE_STRING_CONSTANT(tag_content, content);
 DECLARE_STRING_CONSTANT(tag_project, project);
 DECLARE_STRING_CONSTANT(tag_user, user);
