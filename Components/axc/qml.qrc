@@ -10,5 +10,6 @@
         <file>qml/LabeledTextArea.qml</file>
         <file>qml/LabeledTextField.qml</file>
         <file>js/helper.js</file>
+        <file>qml/TopPanel.qml</file>
     </qresource>
 </RCC>

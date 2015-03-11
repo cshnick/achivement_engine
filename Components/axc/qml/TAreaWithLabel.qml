@@ -129,6 +129,7 @@ Rectangle {
                     color: "#fff"
                 }
                 Rectangle {
+                    id: bottom_line
                     color: "#ddd"
                     x: 20
                     y: parent.height -1;
@@ -195,6 +196,7 @@ Rectangle {
                     height: 0
                     text: Description
                     wrapMode: TextEdit.WordWrap
+                    visible: true
 
                     style: TextAreaStyle {
                         textColor: "#333"
@@ -226,11 +228,11 @@ Rectangle {
                         when: Description && private_ma.containsMouse
                         name: "Details"
                         PropertyChanges {target: description_ta; width: parent.width; height: parent.height - 23; y: type_sircle.height + 5}
-                        PropertyChanges {target: type_sircle; width: 20; height: 20; anchors.topMargin: 4; anchors.leftMargin: 4}
-//                        PropertyChanges {target: name_text; anchors.topMargin: 4;}
+//                        PropertyChanges {target: type_sircle; width: 20; height: 20; anchors.topMargin: 4; anchors.leftMargin: 4}
+                        PropertyChanges {target: name_text; anchors.topMargin: 4;}
                         AnchorChanges {target: type_sircle; anchors.verticalCenter: undefined; anchors.top: parent.top; anchors.left: parent.left}
                         AnchorChanges{target: name_text; anchors.verticalCenter: type_sircle.verticalCenter; anchors.left: type_sircle.right}
-                        PropertyChanges{target: delegate_rect; height: 70}
+                        PropertyChanges{target: delegate_rect; height: 80}
                     }
                 ]
                 transitions: [
@@ -238,6 +240,7 @@ Rectangle {
                         ParallelAnimation {
                             NumberAnimation {target: helper_list; properties: "y,x"; duration: top_level.animation_duration; easing.type: Easing.InOutExpo }
                             AnchorAnimation {targets: [type_sircle,name_text]; duration: top_level.animation_duration; easing.type: Easing.InOutExpo}
+                            NumberAnimation {targets: [type_sircle]; duration: top_level.animation_duration; easing.type: Easing.InOutExpo}
                             NumberAnimation {targets: [description_ta, delegate_rect]; properties: "width,height,y"; duration: top_level.animation_duration; easing.type: Easing.InOutExpo}
                         }
                     }

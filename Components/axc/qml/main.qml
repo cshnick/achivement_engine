@@ -34,267 +34,80 @@ ApplicationWindow {
             top_level.nameText = dict["Name"]
             top_level.descriptionText = dict["Description"]
             top_level.conditionText = dict["Condition"]
-            top_level.idLabel = dict["id"]
+            top_level.idLabel = dict["id"] ? dict["id"] : ""
         }
 
-        ShadowRect {
-            property int offset: shadowRadius
-
+        TopPanel {
             id: top_panel
             width: parent.width
-            height: 60 + offset
+            header.height: 60
+            achievements.height: 400
+            height: achievements.height + header.height + offset
+            y: -achievements.height
             clip: true
             z: 11
-
             color: "#00BCD4"
 
-            BlinkAnimation {
-                id: ok_animation
-            }
-            BlinkAnimation {
-                id: error_animation
-                color: "#F44336"
-            }
+            onSaveRequested: {
+                var dict = {}
+                if (top_level.idLabel != "") {
+                    dict["id"] = parseInt(top_level.idLabel)
+                }
+                dict["Name"] = block_name.text
+                dict["Description"] = block_description.text
+                dict["Condition"] = text_condition.text
 
-            Column {
-                id: column_user_project
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left
-                anchors.leftMargin: 30
-                visible: !ok_animation.running && !error_animation.running
-                width: parent.width / 2
-                spacing: 3
-                clip: true
+                var index = lview.currentIndex
+                xml_model.update(index, dict)
+                var str = xml_model.toXml()
+                console.log("Res string: " + str)
+                console.log("updating dict" + dict["Name"])
 
-                property int font_sz: 16
-                property string font_color: "white"
+                var request = new XMLHttpRequest()
+                request.open('POST', 'http://127.0.0.1:5555/AchievementListSend')
+                request.setRequestHeader('Content-Type', 'text/xml;charset=utf-8')
 
+                request.onreadystatechange = function () {
+                    if (request.readyState === XMLHttpRequest.DONE) {
+                        if (request.status === 200) {
+                            console.log("Reply from server: " + request.responseText)
 
-                ListView {
-                    id: user_view
-                    width: parent.width / 2
-                    height: 18
-                    clip: true
-
-                    orientation: ListView.Horizontal
-                    snapMode: ListView.SnapOneItem; flickDeceleration: 2000
-                    preferredHighlightBegin: 0; preferredHighlightEnd: 0
-                    highlightRangeMode: ListView.StrictlyEnforceRange
-
-                    delegate: Text {
-                        width: user_view.width
-                        text: name
-                        color: column_user_project.font_color
-                        font.pixelSize: column_user_project.font_sz + 2
-                        font.bold: true
-                    }
-
-                    model: ListModel {
-                        ListElement {
-                            name: "Игорек"
-                        }
-                        ListElement {
-                            name: "Илья"
+                            top_panel.header.reportHttp200("Сохранено...")
+                            xml_model.fromXml(request.responseText)
+                        } else {
+                            console.log("HTTP request failed", request.status)
+                            top_panel.header.reportHttpError(request.responseText)
                         }
                     }
-
-                    onCurrentIndexChanged: {
-                        console.log("user view index changed to " + currentIndex)
-                        var user = model.get(currentIndex).name
-                        top_level.user = user
-                        Jsh.loadAchievements(user, top_level.project)
-                        top_level.state = ""
-                    }
-
-                    Component.onCompleted: {
-                    }
                 }
-
-                Text {
-                    text: top_level.project
-                    color: column_user_project.font_color
-                    font.pixelSize: column_user_project.font_sz
-                }
+                request.send("content" + top_level.par_delimiter + str
+                             + top_level.req_delimiter + "user" + top_level.par_delimiter + top_level.user
+                             + top_level.req_delimiter + "project" + top_level.par_delimiter + top_level.project)
+            }
+            onMoveRightRequested: {
+                top_panel.state = top_panel.state === "SHOW_STATISTICS" ? "" : "SHOW_STATISTICS"
             }
 
-            Text {
-                id: message_text
-
-                anchors.left: parent.left
-                anchors.leftMargin: 30
-                anchors.verticalCenter: parent.verticalCenter
-                font.pixelSize: 20
-                font.bold: false
-                text: "Test"
-                color: "white"
-                opacity: 0
-                onStateChanged: {
-                    console.log("Message text state change")
+            states: [
+                State {
+                    name: "SHOW_STATISTICS"
+                    PropertyChanges { target: top_panel; y: 0 - offset}
                 }
-
-                states: [
-                    State {
-                        name: "OkVisible"
-                        when: ok_animation.running
-                        PropertyChanges {
-                            target: message_text
-                            opacity: 1
-                        }
-                    },
-                    State {
-                        name: "ErrorVisible"
-                        when: error_animation.running
-                        PropertyChanges {
-                            target: message_text
-                            opacity: 1
-                        }
-                    }
-                ]
-                transitions: [
-                    Transition {
-                        reversible: true
-                        NumberAnimation {
-                            target: message_text
-                            property: "opacity"
-                            duration: 200
-                            easing.type: Easing.InOutQuad
-                        }
-                    }
-                ]
-            }
-
-            function reportHttp200(text) {
-                ok_animation.start()
-                message_text.text = text
-            }
-            function reportHttpErrort(text) {
-                error_animation.start()
-                message_text.text = text
-            }
-
-            Row {
-                anchors.fill: parent
-                anchors.rightMargin: 10
-                spacing: 10
-                layoutDirection: Qt.RightToLeft
-
-                CircleButton {
-                    id: move_right_panel
-                    explicitWidth: 40
-                    explicitHeight: 40
-
-                    text: top_level.state == "SHOW_RIGHT" ? "\u2192" : "\u2190"
-                    font.pointSize: 24
-                    color: "white"
-                    textColor: "#03A9F4"
-
-                    onClicked: {
-//                        top_level.state = ""
-                        console.log("top level user" + top_level.user)
-                    }
+            ]
+            transitions: [
+                Transition {
+                    NumberAnimation {targets: [top_panel]; properties: "x, y"; duration: top_level.animation_duration; easing.type: Easing.InOutExpo}
                 }
-                CircleButton {
-                    id: add_new
-                    explicitWidth: 40
-                    explicitHeight: 40
-
-                    text: '+'
-                    font.pointSize: 24
-                    color: "white"
-                    textColor: "#03A9F4"
-
-                    onClicked: {
-                        var dict = {}
-                        dict["id"] = xml_model.getId()
-                        dict["Name"] = "Имя"
-                        dict["Description"] = "Описание достижения"
-                        dict["Condition"] = "Условие достижения"
-
-                        xml_model.append(dict)
-                        lview.currentIndex = xml_model.count() - 1
-                        top_level.updateProperties()
-                        console.log("dict" + dict["Name"])
-                        top_level.state = "SHOW_RIGHT"
-                    }
-                }
-                CircleButton {
-                    id: remove_entry
-                    explicitWidth: 40
-                    explicitHeight:  40
-                    opacity: top_level.state === "SHOW_RIGHT" ? 1 : 0
-                    text: 'R'
-                    font.pointSize: 18
-                    color: "white"
-                    textColor: "#03A9F4"
-
-                    onClicked: {
-                        xml_model.remove(lview.currentIndex)
-                        if (xml_model.count() >= lview.currentIndex) {
-                            lview.currentIndex = xml_model.count() - 1
-                        }
-                        top_level.updateProperties()
-                    }
-
-                    onStateChanged: {
-                        console.log("state changed " + state)
-                        console.log("visible: " + visible)
-                        console.log("opacity: " + opacity)
-                    }
-                }
-                CircleButton {
-                    id: save_entry
-                    explicitWidth: 40
-                    explicitHeight: 40
-                    opacity: lview.currentIndex != -1 ? 1 : 0
-
-                    text: 'S'
-                    font.pointSize: 18
-                    color: "white"
-                    textColor: "#03A9F4"
-
-                    onClicked: {
-                        var dict = {}
-//                        dict["id"] = parseInt(top_level.idLabel)
-                        dict["Name"] = block_name.text
-                        dict["Description"] = block_description.text
-                        dict["Condition"] = text_condition.text
-
-                        var index = lview.currentIndex
-                        xml_model.update(index, dict)
-                        var str = xml_model.toXml()
-                        console.log("Res string: " + str)
-                        console.log("updating dict" + dict["Name"])
-
-                        var request = new XMLHttpRequest()
-                        request.open('POST', 'http://127.0.0.1:5555/AchievementListSend')
-                        request.setRequestHeader('Content-Type', 'text/xml;charset=utf-8')
-
-                        request.onreadystatechange = function () {
-                            if (request.readyState === XMLHttpRequest.DONE) {
-                                if (request.status === 200) {
-                                    console.log("Reply from server: " + request.responseText)
-                                    top_panel.reportHttp200("Сохранено...")
-                                } else {
-                                    console.log("HTTP request failed", request.status)
-                                    top_panel.reportHttpError(request.responseText)
-                                }
-                            }
-                        }
-                        request.send("content" + top_level.par_delimiter + str
-                                     + top_level.req_delimiter + "user" + top_level.par_delimiter + top_level.user
-                                     + top_level.req_delimiter + "project" + top_level.par_delimiter + top_level.project)
-                    }
-                }
-            }
+            ]
         }
 
         Rectangle {
             id: left_panel
             color: "white"
             x: 0
-            y: top_panel.height - top_panel.offset
+            y: top_panel.header.height
             width: parent.width
-            height: parent.height - top_panel.height
+            height: parent.height - top_panel.header.height
 
             ListView {
                 id: lview
@@ -304,11 +117,6 @@ ApplicationWindow {
                 anchors.topMargin: 10
 
                 highlightMoveDuration: 75
-//                highlight: Rectangle {
-//                    color: "#eee"
-//                    opacity: 1
-//                }
-
                 delegate: Item {
                     id: delegate
                     width: parent.width
@@ -324,7 +132,7 @@ ApplicationWindow {
                         Text {
                             anchors.centerIn: parent
                             color: "#303030"
-                            text: id.toString()
+                            text: id ? id.toString() : ""
                         }
                     }
 
@@ -377,9 +185,9 @@ ApplicationWindow {
             id: right_panel
 
             x: parent.width
-            y: top_panel.height - top_panel.offset
+            y: top_panel.header.height
             width: parent.width - left_panel.width
-            height: parent.height - top_panel.height
+            height: parent.height - top_panel.header.height
             clip: true
 
             color: "#fff"

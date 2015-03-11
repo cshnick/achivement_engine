@@ -98,7 +98,11 @@ public:
 
 
 				AE::EngineImpl().synchroAchievements(&b, user, proj);
-				req->SetResponseString("OK");
+				QBuffer buf_response;
+				buf_response.open(QIODevice::WriteOnly);
+				AE::EngineImpl().achievementsToXml(&buf_response, user, proj);
+				req->SetResponseAttr(Network::Http::Response::Header::ContentType::Value, "text/xml; charset=utf-8");
+				req->SetResponseString(buf_response.data().data());
 				req->SetResponseCode(200);
 			} else {
 				req->SetResponseCode(204);

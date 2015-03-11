@@ -60,7 +60,9 @@ public:
             return;
         }
         QVariantMap &mp = m_elements[index];
-        mp = p_data;
+        for (auto iter = p_data.begin(); iter != p_data.end(); ++iter) {
+            mp.insert(iter.key(), iter.value());
+        }
     }
     void remove(int index) {
         q->beginRemoveRows(QModelIndex(), index, index);
