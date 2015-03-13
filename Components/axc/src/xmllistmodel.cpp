@@ -56,7 +56,7 @@ public:
         q->endInsertRows();
     }
     void update(int index, const QVariantMap &p_data) {
-        if (index < 0 || index > m_elements.count()) {
+        if (index < 0 || index >= m_elements.count()) {
             return;
         }
         QVariantMap &mp = m_elements[index];
@@ -64,10 +64,13 @@ public:
             mp.insert(iter.key(), iter.value());
         }
     }
-    void remove(int index) {
+    QVariantMap remove(int index) {
         q->beginRemoveRows(QModelIndex(), index, index);
+        QVariantMap dct = m_elements.at(index);
         m_elements.removeAt(index);
         q->endRemoveRows();
+
+        return dct;
     }
     void clear() {
         if (!m_elements.count()) {
@@ -80,7 +83,7 @@ public:
     }
 
     QVariant dict(int index) const {
-        if (index < 0 || index > m_elements.count()) {
+        if (index < 0 || index >= m_elements.count()) {
             return QVariantMap();
         }
         return m_elements.at(index);
@@ -152,6 +155,7 @@ public:
         while (!element.isNull()) {
             QVariantMap dta;
             QDomElement elAttr = element.firstChildElement();
+            bool skip = false; //If Visible = 0 don't append to result table
             while (!elAttr.isNull()) {
                 //type conversion
 
@@ -160,13 +164,17 @@ public:
                     int inttext = elAttr.text().toInt();
                     value = inttext;
                     m_lastId = qMax(inttext, m_lastId);
+                // Skip invisible elements
+                } else if (elAttr.tagName() == AE::f_visible::Value && !elAttr.text().toInt()) {
+                    skip = true;
+                    break;
                 } else {
                     value = elAttr.text();
                 }
                 dta[elAttr.tagName()] = value;
                 elAttr = elAttr.nextSiblingElement();
             }
-            append(dta);
+            if (!skip) append(dta);
             element = element.nextSiblingElement(AE::tag_element::Value);
         }
         //Store last id to preserve unuque indecies
@@ -248,9 +256,9 @@ void XMLListModel::update(int index, const QVariantMap &p_data)
     p->update(index, p_data);
     Q_EMIT dataChanged(this->index(index, 0), this->index(index, 0));
 }
-void XMLListModel::remove(int index)
+QVariantMap XMLListModel::remove(int index)
 {
-    p->remove(index);
+    return p->remove(index);
 }
 void XMLListModel::clear()
 {

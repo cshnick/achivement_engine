@@ -84,6 +84,8 @@ public:
 			int len  = req->GetContentSize();
 			char buf[len + 1];
 			memset(buf, '\0', len + 1);
+			STAT_IF_VERBOSE;
+			DEBUG("SERVER REPLY: Buffer: %s\n", buf);
 			req->GetContent((void*)buf, len, 1);
 			if (buf) {
 				QString str = QString::fromUtf8(buf, len);
@@ -96,8 +98,7 @@ public:
 				b.setData(content.toUtf8().data(), content.toUtf8().length());
 				b.open(QIODevice::ReadOnly);
 
-
-				AE::EngineImpl().synchroAchievements(&b, user, proj);
+//				AE::EngineImpl().synchroAchievements(&b, user, proj);
 				QBuffer buf_response;
 				buf_response.open(QIODevice::WriteOnly);
 				AE::EngineImpl().achievementsToXml(&buf_response, user, proj);

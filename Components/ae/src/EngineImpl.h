@@ -53,7 +53,8 @@ public:
 	//Non inherited
 	std::vector<var_traits> varMetas();
 	bool achievementsToXml(QIODevice *stream, const std::string &user, const std::string &proj);
-	bool synchroAchievements(QIODevice *stream, const std::string &user, const std::string &proj);
+	bool updateAchievementsFromXml(QIODevice *stream, const std::string &user, const std::string &proj);
+	bool hideAchievements(const std::vector<int> &ids,const std::string &user, const std::string &proj);
 
 
 

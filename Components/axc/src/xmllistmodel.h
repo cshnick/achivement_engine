@@ -21,7 +21,7 @@ public:
     Q_INVOKABLE void append(const QVariantMap &p_data);
     Q_INVOKABLE void insert(int index, const QVariantMap &p_data);
     Q_INVOKABLE void update(int index, const QVariantMap &p_data);
-    Q_INVOKABLE void remove(int index);
+    Q_INVOKABLE QVariantMap remove(int index);
     Q_INVOKABLE void clear();
     Q_INVOKABLE QVariant dict(int index) const;
     Q_INVOKABLE int getId() const;

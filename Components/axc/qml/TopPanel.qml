@@ -7,6 +7,7 @@ ShadowRect {
     property alias achievements: achievements
     signal saveRequested()
     signal moveRightRequested()
+    signal removeRequested()
     color: "#00BCD4"
     id: top_panel
 
@@ -213,11 +214,7 @@ ShadowRect {
                 textColor: "#03A9F4"
 
                 onClicked: {
-                    xml_model.remove(lview.currentIndex)
-                    if (xml_model.count() >= lview.currentIndex) {
-                        lview.currentIndex = xml_model.count() - 1
-                    }
-                    top_level.updateProperties()
+                    removeRequested()
                 }
             }
             CircleButton {

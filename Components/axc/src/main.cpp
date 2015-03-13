@@ -7,6 +7,16 @@
 #include <QtQuick>
 #include "highlighter.h"
 #include "string_encoder.h"
+#include "Conventions.h"
+#include <memory>
+
+void passConventionsTo(QQmlContext *context) {
+    AE::conv_map m;
+    AE::fillConventions(m);
+    for (auto iter = m.begin(); iter != m.end(); iter++) {
+        context->setContextProperty((*iter).first, QVariant::fromValue(QString((*iter).second)));
+    }
+}
 
 int main(int argc, char *argv[])
 {
@@ -19,6 +29,9 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("xml_model", model);
     engine.rootContext()->setContextProperty("encoder", enc);
+    //Add conventions to js context
+    passConventionsTo(engine.rootContext());
+
     engine.load(QUrl(QStringLiteral("qrc:/qml/main.qml")));
 
     QList<QObject*> rol = engine.rootObjects();

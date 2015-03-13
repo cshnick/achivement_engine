@@ -23,6 +23,9 @@ ApplicationWindow {
         property string project: 'Таблица умножения'
         property string req_delimiter: '&***'
         property string par_delimiter: '=***'
+        property int lview_index: -1
+
+        property var deletedElements: [];
 
         function updateProperties() {
             var index = lview.currentIndex
@@ -31,10 +34,11 @@ ApplicationWindow {
                 return
             }
             var dict = xml_model.dict(lview.currentIndex)
-            top_level.nameText = dict["Name"]
-            top_level.descriptionText = dict["Description"]
-            top_level.conditionText = dict["Condition"]
-            top_level.idLabel = dict["id"] ? dict["id"] : ""
+            top_level.nameText = dict[f_name]
+            top_level.descriptionText = dict[f_description]
+            top_level.conditionText = dict[f_condition]
+            top_level.idLabel = dict[f_id] ? dict[f_id] : ""
+
         }
 
         TopPanel {
@@ -48,41 +52,18 @@ ApplicationWindow {
             z: 11
             color: "#00BCD4"
 
+            onRemoveRequested: {
+                var dct = xml_model.remove(lview.currentIndex)
+                if (xml_model.count() >= lview.currentIndex) {
+                    lview.currentIndex = xml_model.count() - 1
+                }
+                console.log("Reporting dictionary result: " + dct["id"])
+                Jsh.registerRemoved(dct)
+                top_level.updateProperties()
+            }
+
             onSaveRequested: {
-                var dict = {}
-                if (top_level.idLabel != "") {
-                    dict["id"] = parseInt(top_level.idLabel)
-                }
-                dict["Name"] = block_name.text
-                dict["Description"] = block_description.text
-                dict["Condition"] = text_condition.text
-
-                var index = lview.currentIndex
-                xml_model.update(index, dict)
-                var str = xml_model.toXml()
-                console.log("Res string: " + str)
-                console.log("updating dict" + dict["Name"])
-
-                var request = new XMLHttpRequest()
-                request.open('POST', 'http://127.0.0.1:5555/AchievementListSend')
-                request.setRequestHeader('Content-Type', 'text/xml;charset=utf-8')
-
-                request.onreadystatechange = function () {
-                    if (request.readyState === XMLHttpRequest.DONE) {
-                        if (request.status === 200) {
-                            console.log("Reply from server: " + request.responseText)
-
-                            top_panel.header.reportHttp200("Сохранено...")
-                            xml_model.fromXml(request.responseText)
-                        } else {
-                            console.log("HTTP request failed", request.status)
-                            top_panel.header.reportHttpError(request.responseText)
-                        }
-                    }
-                }
-                request.send("content" + top_level.par_delimiter + str
-                             + top_level.req_delimiter + "user" + top_level.par_delimiter + top_level.user
-                             + top_level.req_delimiter + "project" + top_level.par_delimiter + top_level.project)
+               Jsh.save_achievemets()
             }
             onMoveRightRequested: {
                 top_panel.state = top_panel.state === "SHOW_STATISTICS" ? "" : "SHOW_STATISTICS"
@@ -177,6 +158,11 @@ ApplicationWindow {
                 Component.onCompleted: {
 //                    jsh.loadAchievements(top_level.user, top_level.project)
                     currentIndex = -1
+                }
+                onCurrentIndexChanged: {
+                    Jsh.updateModel(top_level.lview_index)
+                    console.log("Current index changed to: " + currentIndex)
+                    top_level.lview_index = currentIndex
                 }
             }
         }

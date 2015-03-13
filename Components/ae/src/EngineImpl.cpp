@@ -586,7 +586,7 @@ public:
 		//			DEBUG_ERR("Can't open %s for reading\n", qPrintable(xmlPath));
 		//		}
 		//
-		synchroAvhivementsDb(stream, "", "");
+		updateAchievementsFromXml(stream, "", "");
 		return true;
 	}
 	int idUser(const std::string &name) {
@@ -626,7 +626,7 @@ public:
 		return -1;
 	}
 
-	bool synchroAvhivementsDb(QIODevice *stream, const std::string &user, const std::string &proj) {
+	bool updateAchievementsFromXml(QIODevice *stream, const std::string &user, const std::string &proj) {
 		refreshDB();
 		refreshTables();
 		refreshCalcVarDelegates();
@@ -737,12 +737,40 @@ public:
 			writer.writeTextElement(f_condition::Value, rec.value(f_condition::Value).toString());
 			writer.writeTextElement(f_name::Value, rec.value(f_name::Value).toString());
 			writer.writeTextElement(f_id::Value, rec.value(f_id::Value).toString());
+			writer.writeTextElement(f_visible::Value, rec.value(f_visible::Value).toString());
 			writer.writeEndElement();
 			q.next();
 		}
 		writer.writeEndElement();
 		writer.writeEndDocument();
 		stream->close();
+
+		return true;
+	}
+	bool hideAchievements(const std::vector<int> &ids,const std::string &user, const std::string &proj) {
+		refreshDB();
+		refreshTables();
+		if (!checkDB()) return false;
+
+	    for (auto iter = ids.begin(); iter != ids.end(); iter++) {
+	    	int id = *iter;
+	    	auto s = Select().from(t_achivements_list::Value).where(Condition(f_id::Value,"=",id));
+	    	s.addConditions(condUserProj(idUser(user), idProject(proj)));
+	    	QSqlQuery q("", m_db);
+	    	s.exec(q);
+	        if (q.first() && q.isValid()) {
+	        	QSqlQuery q1("", m_db);
+	        	q1.exec(QString("UPDATE %1 SET %2=%3 WHERE %4=%5 AND %6=%7")
+	        			.arg(t_achivements_list::Value)
+						.arg(f_visible::Value)
+						.arg(0)
+						.arg(f_id::Value)
+						.arg(idUser(user))
+						.arg(idProject(proj))
+						.arg(f_visible::Value)
+						);
+	        }
+	    }
 
 		return true;
 	}
@@ -878,7 +906,7 @@ private:
 			EXEC_AND_REPORT_COND;
 		}
 		if (!m_db.tables().contains(t_achivements_list::Value)) {
-			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 STRING, %5 STRING, %6 STRING, %7 INTEGER, %9 INTEGER"
+			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 STRING, %5 STRING, %6 STRING, %11 INTEGER, %7 INTEGER, %9 INTEGER"
 					",FOREIGN KEY(%7) REFERENCES %8(%2)"
 					",FOREIGN KEY(%9) REFERENCES %10(%2)"
 					")")
@@ -892,6 +920,7 @@ private:
 					.arg(t_users::Value)
 					.arg(f_project::Value)
 					.arg(t_projects::Value)
+					.arg(f_visible::Value)
 					);
 			EXEC_AND_REPORT_COND;
 		}
@@ -955,6 +984,13 @@ private:
 		return true;
 	}
 
+	QList<Condition> condUserProj(int user, int project) {
+		return QList<Condition>()
+				<< Condition(f_user::Value,"=",user)
+				<< Condition(f_project::Value,"=",project)
+				;
+	}
+
 	static int atomic_cnt() {
 		volatile static int cnt = 0;
 		__sync_fetch_and_add(&cnt, 1);
@@ -1013,8 +1049,11 @@ std::vector<var_traits> EngineImpl::varMetas() {
 bool EngineImpl::achievementsToXml(QIODevice *stream, const std::string &user, const std::string &proj) {
 	return p->achievementsToXml(stream, user, proj);
 }
-bool EngineImpl::synchroAchievements(QIODevice *stream, const std::string &user, const std::string &proj) {
-	return p->synchroAvhivementsDb(stream, user, proj);
+bool EngineImpl::updateAchievementsFromXml(QIODevice *stream, const std::string &user, const std::string &proj) {
+	return p->updateAchievementsFromXml(stream, user, proj);
+}
+bool EngineImpl::hideAchievements(const std::vector<int> &ids,const std::string &user, const std::string &proj) {
+	return p->hideAchievements(ids, user, proj);
 }
 
 EngineImpl::~EngineImpl()
