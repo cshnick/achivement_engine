@@ -14,7 +14,8 @@ add_definitions (
 set (HEADERS
 )
 set (SOURCES
-  ./src/SQL.cpp
+  ./src/Select.cpp
+  ./src/Update.cpp
   ${AE_SRC}/Conventions.cpp
 )
 

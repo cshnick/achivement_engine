@@ -12,23 +12,12 @@ enum class SQL_TYPES {
 			,Select = 1
 			,Insert = 2
 			,Create = 4
+			,Update = 8
 };
 enum Operators {
 	equal = 0
 	, in = 1
 };
-QString strForOp(Operators op) {
-	switch (static_cast<int>(op)) {
-	case in:
-		return "IN";
-		break;
-	case equal:
-	default:
-		return "=";
-		break;
-	}
-	return QString();
-}
 
 class SqlBase {
 public:
@@ -46,7 +35,41 @@ public:
 	Condition(const QString &key, Operators op, const QVariant &value)
 		: key(key), op(op), val(value) {}
 	Condition(const QString &key, const QString &str_op, const QVariant &value)
-			: key(key), strOp(str_op), val(value) {}
+	: key(key), strOp(str_op), val(value) {}
+	static QString strForOp(Operators op) {
+		switch (static_cast<int>(op)) {
+		case in:
+			return "IN";
+			break;
+		case equal:
+		default:
+			return "=";
+			break;
+		}
+		return QString();
+	}
+	static QString joinConditions(const QList<Condition> &p_conditions) {
+		if (p_conditions.isEmpty()) {
+			return QString();
+		}
+
+		QStringList zip_l;
+		for (auto n = p_conditions.begin(); n != p_conditions.end(); ++n) {
+			QString decorated = (*n).val.toString();
+			switch(static_cast<int>((*n).val.type())) {
+			case QVariant::String:
+			case QVariant::DateTime:
+				decorated = "'" + decorated + "'";
+				break;
+			case QVariant::UserType:
+				decorated = "(" + decorated + ")";
+				break;
+			}
+			zip_l.append((*n).key + (*n).strOp + decorated);
+		}
+
+		return zip_l.join(" AND ");
+	}
 
 public:
 	QString key;
@@ -66,10 +89,6 @@ private:
     QString m_func;
     QString m_field;
 };
-
-namespace Private {
-QString joinConditions(const QList<Condition> &p_conditions);
-} //namespace Private
 
 class Select: public SqlBase {
 public:
@@ -134,6 +153,49 @@ private:
 	QList<Condition> m_conditions;
 };
 
+class Update: public SqlBase {
+public:
+	int type() {return (int)SQL_TYPES::Update;}
+	QString expression() const;
+	bool exec();
+	QSqlQuery exec(QSqlQuery &q);
+
+	Update(const QString &p_table) : m_table(p_table) {}
+
+	Update &set(const Condition &p_f1);
+	Update &set(const Condition &p_f1, const Condition &p_f2);
+	Update &set(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3);
+	Update &set(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4);
+	Update &set(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4, const Condition &p_f5);
+	Update &set(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4, const Condition &p_f5, const Condition &p_f6);
+
+	Update &where(const Condition &p_f1);
+	Update &where(const Condition &p_f1, const Condition &p_f2);
+	Update &where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3);
+	Update &where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4);
+	Update &where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4, const Condition &p_f5);
+	Update &where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4, const Condition &p_f5, const Condition &p_f6);
+
+	void addSetCondition(const Condition &c) {
+		m_setConditions.append(c);
+	}
+	void addSetConditions(const QList<Condition> &lc) {
+		m_setConditions.append(lc);
+	}
+	void addWhereCondition(const Condition &c) {
+		m_whereConditions.append(c);
+	}
+	void addWhereConditions(const QList<Condition> &lc) {
+		m_whereConditions.append(lc);
+	}
+
+private:
+	QStringList m_fields;
+	QString m_table;
+	QList<Condition> m_setConditions;
+	QList<Condition> m_whereConditions;
+
+};
 } // namespace Wrap_Sql
 Q_DECLARE_METATYPE(Wrap_Sql::Select)
 

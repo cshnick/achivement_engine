@@ -10,28 +10,6 @@ static void initialize_types() {
 namespace Wrap_Sql {
 
 namespace Private {
-QString joinConditions(const QList<Condition> &p_conditions) {
-	if (p_conditions.isEmpty()) {
-		return QString();
-	}
-
-	QStringList zip_l;
-	for (auto n = p_conditions.begin(); n != p_conditions.end(); ++n) {
-		QString decorated = (*n).val.toString();
-		switch(static_cast<int>((*n).val.type())) {
-		case QVariant::String:
-		case QVariant::DateTime:
-			decorated = "'" + decorated + "'";
-			break;
-		case QVariant::UserType:
-			decorated = "(" + decorated + ")";
-			break;
-		}
-		zip_l.append((*n).key + (*n).strOp + decorated);
-	}
-
-	return zip_l.join(" AND ");
-}
 } //namespace Private
 
 QString Select::expression() const{
@@ -50,7 +28,7 @@ QString Select::expression() const{
 	}
 	exp.append(st);
 	//Append conditions
-	QString cm = Private::joinConditions(m_conditions); //conditions map
+	QString cm = Condition::joinConditions(m_conditions); //conditions map
 	if (!cm.isEmpty()) {
 		exp.append(" WHERE ");
 		exp.append(cm);

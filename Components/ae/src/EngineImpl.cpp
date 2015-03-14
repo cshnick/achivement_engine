@@ -27,6 +27,7 @@ typedef QVariant (*qv_func_t) (QVariant v1, QVariant v2);
 using Wrap_Sql::Select;
 using Wrap_Sql::Func;
 using Wrap_Sql::Condition;
+using Wrap_Sql::Update;
 namespace AE {
 
 class EngineImplPrivate {
@@ -752,26 +753,22 @@ public:
 		refreshTables();
 		if (!checkDB()) return false;
 
+		int userId = idUser(user);
+		int projId = idProject(proj);
+
 	    for (auto iter = ids.begin(); iter != ids.end(); iter++) {
 	    	int id = *iter;
 	    	auto s = Select().from(t_achivements_list::Value).where(Condition(f_id::Value,"=",id));
-	    	s.addConditions(condUserProj(idUser(user), idProject(proj)));
+	    	s.addConditions(condUserProj(userId, projId));
 	    	QSqlQuery q("", m_db);
 	    	s.exec(q);
 	    	q.first();
 	        if (q.isValid()) {
-	        	QSqlQuery q1("", m_db);
-	        	q1.exec(QString("UPDATE %1 SET %2=%3 WHERE %4=%5 AND %6=%7 AND %8=%9")
-	        			.arg(t_achivements_list::Value)
-						.arg(f_visible::Value)
-						.arg(0)
-						.arg(f_id::Value)
-						.arg(id)
-						.arg(f_user::Value)
-						.arg(idUser(user))
-						.arg(f_project::Value)
-						.arg(idProject(proj))
-	        	);
+	        	auto u = Update(t_achivements_list::Value)
+	        			.set(Condition(f_visible::Value,"=",0))
+						.where(Condition(f_id::Value,"=",id));
+	        	u.addWhereConditions(condUserProj(userId, projId));
+	        	u.exec(q);
 	        }
 	    }
 

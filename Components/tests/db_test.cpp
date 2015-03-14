@@ -57,6 +57,18 @@ void SqlClassesTest() {
 
 	DEBUG("Result 0: %s\n", printable(q.value(0)));
 	DEBUG("Result 1: %s\n", printable(q.value(1)));
+
+	auto u = Update(t_achivements_list::Value)
+			.set(Condition(f_visible::Value,"=",0))
+			.where(Condition(f_id::Value,"=",1));
+	QList<Condition> defaultConditions;
+	defaultConditions.append(Condition(f_user::Value,"=",1));
+	defaultConditions.append(Condition(f_project::Value,"=",1));
+	u.addWhereConditions(defaultConditions);
+
+	DEBUG("u expression: %s\n", u.expression().toUtf8().data());
+	u.exec(q);
+	DEBUG("last error: %s\n", q.lastError().text().toUtf8().data());
 //	QVariant v = QVariant::fromValue(s);
 //	DEBUG("Type of v: %d; own type: %d\n", v.type(), s.variantType());
 //	DEBUG("Select Variant to string: %s\n", v.toString().toUtf8().data());
