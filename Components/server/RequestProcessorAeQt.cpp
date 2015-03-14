@@ -98,6 +98,10 @@ public:
 				b.setData(content.toUtf8().data(), content.toUtf8().length());
 				b.open(QIODevice::ReadOnly);
 
+				std::vector<int> achivements;
+				achivements.push_back(1);
+				achivements.push_back(2);
+				AE::EngineImpl().hideAchievements(achivements, user, proj);
 //				AE::EngineImpl().synchroAchievements(&b, user, proj);
 				QBuffer buf_response;
 				buf_response.open(QIODevice::WriteOnly);

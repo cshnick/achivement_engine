@@ -758,17 +758,20 @@ public:
 	    	s.addConditions(condUserProj(idUser(user), idProject(proj)));
 	    	QSqlQuery q("", m_db);
 	    	s.exec(q);
-	        if (q.first() && q.isValid()) {
+	    	q.first();
+	        if (q.isValid()) {
 	        	QSqlQuery q1("", m_db);
-	        	q1.exec(QString("UPDATE %1 SET %2=%3 WHERE %4=%5 AND %6=%7")
+	        	q1.exec(QString("UPDATE %1 SET %2=%3 WHERE %4=%5 AND %6=%7 AND %8=%9")
 	        			.arg(t_achivements_list::Value)
 						.arg(f_visible::Value)
 						.arg(0)
 						.arg(f_id::Value)
+						.arg(id)
+						.arg(f_user::Value)
 						.arg(idUser(user))
+						.arg(f_project::Value)
 						.arg(idProject(proj))
-						.arg(f_visible::Value)
-						);
+	        	);
 	        }
 	    }
 

@@ -95,6 +95,20 @@ public:
 	Select &where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4, const Condition &p_f5);
 	Select &where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4, const Condition &p_f5, const Condition &p_f6);
 
+	Select &orderBy(const QString &p_f1);
+	Select &orderBy(const QString &p_f1, const QString &p_f2);
+	Select &orderBy(const QString &p_f1, const QString &p_f2, const QString &p_f3);
+	Select &orderBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4);
+	Select &orderBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5);
+	Select &orderBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5, const QString &p_f6);
+
+	Select &groupBy(const QString &p_f1);
+	Select &groupBy(const QString &p_f1, const QString &p_f2);
+	Select &groupBy(const QString &p_f1, const QString &p_f2, const QString &p_f3);
+	Select &groupBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4);
+	Select &groupBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5);
+	Select &groupBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5, const QString &p_f6);
+
 	void addCondition(const Condition &c) {
 		m_conditions.append(c);
 	}
@@ -115,6 +129,8 @@ public:
 private:
 	QStringList m_fields;
 	QStringList m_tables;
+	QStringList m_orders;
+	QStringList m_groups;
 	QList<Condition> m_conditions;
 };
 

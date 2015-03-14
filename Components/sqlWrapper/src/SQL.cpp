@@ -55,6 +55,16 @@ QString Select::expression() const{
 		exp.append(" WHERE ");
 		exp.append(cm);
 	}
+	QString om = m_orders.join(","); //orders map
+	if (!om.isEmpty()) {
+		exp.append(" ORDER BY ");
+		exp.append(om);
+	}
+	QString gm = m_groups.join(","); // groups map
+	if (!gm.isEmpty()) {
+		exp.append(" GROUP BY ");
+		exp.append(gm);
+	}
 
 	return exp;
 }
@@ -157,6 +167,66 @@ Select& Select::where(const Condition &p_f1, const Condition &p_f2, const Condit
 Select& Select::where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4, const Condition &p_f5, const Condition &p_f6){
 	where(p_f1, p_f2, p_f3, p_f4, p_f5);
 	m_conditions.append(p_f6);
+	return *this;
+}
+
+Select& Select::orderBy(const QString &p_f1) {
+	m_orders.append(p_f1);
+	return *this;
+}
+Select& Select::orderBy(const QString &p_f1, const QString &p_f2) {
+	orderBy(p_f1);
+	m_orders.append(p_f2);
+	return *this;
+}
+Select& Select::orderBy(const QString &p_f1, const QString &p_f2, const QString &p_f3){
+	orderBy(p_f1, p_f2);
+	m_orders.append(p_f3);
+	return *this;
+}
+Select& Select::orderBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4){
+	orderBy(p_f1, p_f2, p_f3);
+	m_orders.append(p_f4);
+	return *this;
+}
+Select& Select::orderBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5){
+	orderBy(p_f1, p_f2, p_f3, p_f4);
+	m_orders.append(p_f5);
+	return *this;
+}
+Select& Select::orderBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5, const QString &p_f6){
+	orderBy(p_f1, p_f2, p_f3, p_f4, p_f5);
+	m_orders.append(p_f6);
+	return *this;
+}
+
+Select& Select::groupBy(const QString &p_f1) {
+	m_groups.append(p_f1);
+	return *this;
+}
+Select& Select::groupBy(const QString &p_f1, const QString &p_f2) {
+	groupBy(p_f1);
+	m_groups.append(p_f2);
+	return *this;
+}
+Select& Select::groupBy(const QString &p_f1, const QString &p_f2, const QString &p_f3){
+	groupBy(p_f1, p_f2);
+	m_groups.append(p_f3);
+	return *this;
+}
+Select& Select::groupBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4){
+	groupBy(p_f1, p_f2, p_f3);
+	m_groups.append(p_f4);
+	return *this;
+}
+Select& Select::groupBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5){
+	groupBy(p_f1, p_f2, p_f3, p_f4);
+	m_groups.append(p_f5);
+	return *this;
+}
+Select& Select::groupBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5, const QString &p_f6){
+	groupBy(p_f1, p_f2, p_f3, p_f4, p_f5);
+	m_groups.append(p_f6);
 	return *this;
 }
 
