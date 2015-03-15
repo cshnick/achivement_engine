@@ -92,17 +92,30 @@ public:
 				QMap<QString, QString> m = parseParams(str);
 				std::string user = m.value(AE::tag_user::Value).toStdString();
 				std::string proj = m.value(AE::tag_project::Value).toStdString();
-
+				//Hide removed achievements
+				QString removed = m.value(AE::tag_removed::Value);
+			    QJsonDocument jsDoc = QJsonDocument::fromJson(removed.toUtf8());
+			    if (jsDoc.isArray()) {
+			    	std::vector<int> arr_id;
+			    	QJsonArray jsArr = jsDoc.array();
+			    	for (auto iter = jsArr.begin(); iter != jsArr.end(); ++iter) {
+			    		QJsonValue vref = *iter;
+			    		QVariant v = vref.toVariant();
+			    		if (v.type()  == QVariant::Map) {
+			    			QVariantMap iter_map = v.value<QVariantMap>();
+			    			int iter_id = iter_map.value(AE::f_id::Value).toInt();
+			    			arr_id.push_back(iter_id);
+			    		}
+			    	}
+			    	AE::EngineImpl().hideAchievements(arr_id, user, proj);
+			    }
+			    //Parse content
 				QString content(m.value(AE::tag_content::Value));
 				QBuffer b;
 				b.setData(content.toUtf8().data(), content.toUtf8().length());
 				b.open(QIODevice::ReadOnly);
+				AE::EngineImpl().updateAchievementsFromXml(&b, user, proj);
 
-				std::vector<int> achivements;
-				achivements.push_back(1);
-				achivements.push_back(2);
-				AE::EngineImpl().hideAchievements(achivements, user, proj);
-//				AE::EngineImpl().synchroAchievements(&b, user, proj);
 				QBuffer buf_response;
 				buf_response.open(QIODevice::WriteOnly);
 				AE::EngineImpl().achievementsToXml(&buf_response, user, proj);

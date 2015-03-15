@@ -77,6 +77,7 @@ DECLARE_STRING_CONSTANT(tag_description, Description)
 DECLARE_STRING_CONSTANT(tag_content, content);
 DECLARE_STRING_CONSTANT(tag_project, project);
 DECLARE_STRING_CONSTANT(tag_user, user);
+DECLARE_STRING_CONSTANT(tag_removed, removed);
 DECLARE_STRING_CONSTANT(val_type_sql, sql);
 //helpers
 

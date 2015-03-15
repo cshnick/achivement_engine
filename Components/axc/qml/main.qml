@@ -63,6 +63,7 @@ ApplicationWindow {
             }
 
             onSaveRequested: {
+               Jsh.updateModel(top_level.lview_index)
                Jsh.save_achievemets()
             }
             onMoveRightRequested: {
