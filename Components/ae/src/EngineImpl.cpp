@@ -635,9 +635,22 @@ public:
 		QList<QVariantMap> xml_rows;
 		parseXmlRows(stream, xml_rows);
 
+		int user_id = idUser(user);
+		int proj_id = idProject(proj);
+
 		QSqlQuery q("", m_db);
 		for (int i = 0, cnt = 0; i < xml_rows.count(); i++, cnt=0) {
 			QVariantMap mit = xml_rows.at(i);
+
+			bool ok;
+			int iid = mit.value(f_id::Value).toInt(&ok);
+
+			auto s = Select(f_id::Value)
+					.from(t_achivements_list::Value)
+					.where(Condition(f_id::Value,"=",mit.value(f_id::Value)));
+
+			s.addConditions(condUserProj(user_id, proj_id));
+			s.exec(q);
 
 			q.prepare(QString("SELECT %1 FROM %2 WHERE %1=? AND %3=? AND %4=?")
 					.arg(f_id::Value)
