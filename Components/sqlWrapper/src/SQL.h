@@ -22,7 +22,7 @@ enum Operators {
 class SqlBase {
 public:
 	virtual ~SqlBase() {}
-	virtual int type() = 0;
+	virtual int type() const = 0;
 	virtual QString expression() const = 0;
 	virtual bool exec() = 0;
 protected:
@@ -94,18 +94,18 @@ class Select: public SqlBase {
 public:
 	Select();
 	Select(const QString &p_f1);
-	Select(const QString &p_f1, const QString &p_f2);
-	Select(const QString &p_f1, const QString &p_f2, const QString &p_f3);
-	Select(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4);
-	Select(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5);
-	Select(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5, const QString &p_f6);
+	Select(const QString &p_f1, const QString &p_k2);
+	Select(const QString &p_f1, const QString &p_k2, const QString &p_k3);
+	Select(const QString &p_f1, const QString &p_k2, const QString &p_k3, const QString &p_k4);
+	Select(const QString &p_f1, const QString &p_k2, const QString &p_k3, const QString &p_k4, const QString &p_k5);
+	Select(const QString &p_f1, const QString &p_k2, const QString &p_k3, const QString &p_k4, const QString &p_k5, const QString &p_f6);
 
 	Select &from(const QString &p_f1);
-	Select &from(const QString &p_f1, const QString &p_f2);
-	Select &from(const QString &p_f1, const QString &p_f2, const QString &p_f3);
-	Select &from(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4);
-	Select &from(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5);
-	Select &from(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5, const QString &p_f6);
+	Select &from(const QString &p_f1, const QString &p_k2);
+	Select &from(const QString &p_f1, const QString &p_k2, const QString &p_k3);
+	Select &from(const QString &p_f1, const QString &p_k2, const QString &p_k3, const QString &p_k4);
+	Select &from(const QString &p_f1, const QString &p_k2, const QString &p_k3, const QString &p_k4, const QString &p_k5);
+	Select &from(const QString &p_f1, const QString &p_k2, const QString &p_k3, const QString &p_k4, const QString &p_k5, const QString &p_f6);
 
 	Select &where(const Condition &p_f1);
 	Select &where(const Condition &p_f1, const Condition &p_f2);
@@ -115,18 +115,18 @@ public:
 	Select &where(const Condition &p_f1, const Condition &p_f2, const Condition &p_f3, const Condition &p_f4, const Condition &p_f5, const Condition &p_f6);
 
 	Select &orderBy(const QString &p_f1);
-	Select &orderBy(const QString &p_f1, const QString &p_f2);
-	Select &orderBy(const QString &p_f1, const QString &p_f2, const QString &p_f3);
-	Select &orderBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4);
-	Select &orderBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5);
-	Select &orderBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5, const QString &p_f6);
+	Select &orderBy(const QString &p_f1, const QString &p_k2);
+	Select &orderBy(const QString &p_f1, const QString &p_k2, const QString &p_k3);
+	Select &orderBy(const QString &p_f1, const QString &p_k2, const QString &p_k3, const QString &p_k4);
+	Select &orderBy(const QString &p_f1, const QString &p_k2, const QString &p_k3, const QString &p_k4, const QString &p_k5);
+	Select &orderBy(const QString &p_f1, const QString &p_k2, const QString &p_k3, const QString &p_k4, const QString &p_k5, const QString &p_f6);
 
 	Select &groupBy(const QString &p_f1);
-	Select &groupBy(const QString &p_f1, const QString &p_f2);
-	Select &groupBy(const QString &p_f1, const QString &p_f2, const QString &p_f3);
-	Select &groupBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4);
-	Select &groupBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5);
-	Select &groupBy(const QString &p_f1, const QString &p_f2, const QString &p_f3, const QString &p_f4, const QString &p_f5, const QString &p_f6);
+	Select &groupBy(const QString &p_f1, const QString &p_k2);
+	Select &groupBy(const QString &p_f1, const QString &p_k2, const QString &p_k3);
+	Select &groupBy(const QString &p_f1, const QString &p_k2, const QString &p_k3, const QString &p_k4);
+	Select &groupBy(const QString &p_f1, const QString &p_k2, const QString &p_k3, const QString &p_k4, const QString &p_k5);
+	Select &groupBy(const QString &p_f1, const QString &p_k2, const QString &p_k3, const QString &p_k4, const QString &p_k5, const QString &p_f6);
 
 	void addCondition(const Condition &c) {
 		m_conditions.append(c);
@@ -135,7 +135,7 @@ public:
 		m_conditions.append(lc);
 	}
 
-	int type() {return (int)SQL_TYPES::Select;}
+	int type() const {return (int)SQL_TYPES::Select;}
 	int variantType() const {return QVariant::fromValue(*this).type();}
 
 	QString variantName() {return QVariant::fromValue(*this).typeName();}
@@ -155,7 +155,7 @@ private:
 
 class Update: public SqlBase {
 public:
-	int type() {return (int)SQL_TYPES::Update;}
+	int type() const {return (int)SQL_TYPES::Update;}
 	QString expression() const;
 	bool exec();
 	QSqlQuery exec(QSqlQuery &q);
@@ -195,6 +195,39 @@ private:
 	QList<Condition> m_setConditions;
 	QList<Condition> m_whereConditions;
 
+};
+
+class InsertInto: public SqlBase {
+public:
+	InsertInto(const QString &p_tableName);
+	int type() const {return (int)SQL_TYPES::Insert;}
+	virtual QString expression() const;
+	virtual bool exec();
+	QSqlQuery exec(QSqlQuery &q);
+
+	InsertInto &keys(const QString &p_k1);
+	InsertInto &keys(const QString &p_k1, const QString &p_k2);
+	InsertInto &keys(const QString &p_k1, const QString &p_k2, const QString &p_k3);
+	InsertInto &keys(const QString &p_k1, const QString &p_k2, const QString &p_k3, const QString &p_k4);
+	InsertInto &keys(const QString &p_k1, const QString &p_k2, const QString &p_k3, const QString &p_k4, const QString &p_k5);
+	InsertInto &keys(const QString &p_k1, const QString &p_k2, const QString &p_k3, const QString &p_k4, const QString &p_k5, const QString &p_k6);
+
+	InsertInto &values(const QVariant &p_v1);
+	InsertInto &values(const QVariant &p_v1, const QVariant &p_v2);
+	InsertInto &values(const QVariant &p_v1, const QVariant &p_v2, const QVariant &p_v3);
+	InsertInto &values(const QVariant &p_v1, const QVariant &p_v2, const QVariant &p_v3, const QVariant &p_v4);
+	InsertInto &values(const QVariant &p_v1, const QVariant &p_v2, const QVariant &p_v3, const QVariant &p_v4, const QVariant &p_v5);
+	InsertInto &values(const QVariant &p_v1, const QVariant &p_v2, const QVariant &p_v3, const QVariant &p_v4, const QVariant &p_v5, const QVariant &p_v6);
+
+	InsertInto &append(const QString &key, const QVariant &value);
+	InsertInto &append(const QVariantMap &keyValues);
+	InsertInto &appendValue(const QVariant &val);
+	InsertInto &appendValues(const QVariantList &vl);
+
+private:
+	QString m_table;
+	QStringList m_keys;
+	QVariantList m_values;
 };
 } // namespace Wrap_Sql
 Q_DECLARE_METATYPE(Wrap_Sql::Select)

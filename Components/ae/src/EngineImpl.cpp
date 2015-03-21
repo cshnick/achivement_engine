@@ -28,6 +28,8 @@ using Wrap_Sql::Select;
 using Wrap_Sql::Func;
 using Wrap_Sql::Condition;
 using Wrap_Sql::Update;
+using Wrap_Sql::InsertInto;
+
 namespace AE {
 
 class EngineImplPrivate {
@@ -644,73 +646,33 @@ public:
 
 			bool ok;
 			int iid = mit.value(f_id::Value).toInt(&ok);
-
+			bool invalidId = !ok || iid == -1;
+			if (invalidId) {
+				mit.remove(f_id::Value);
+				iid = -1;
+			}
 			auto s = Select(f_id::Value)
 					.from(t_achivements_list::Value)
-					.where(Condition(f_id::Value,"=",mit.value(f_id::Value)));
-
+					.where(Condition(f_id::Value,"=",iid));
 			s.addConditions(condUserProj(user_id, proj_id));
 			s.exec(q);
 
-			q.prepare(QString("SELECT %1 FROM %2 WHERE %1=? AND %3=? AND %4=?")
-					.arg(f_id::Value)
-					.arg(t_achivements_list::Value)
-					.arg(f_user::Value)
-					.arg(f_project::Value)
-					);
-			q.bindValue(0, mit.value(f_id::Value).toInt());
-			q.bindValue(1, idUser(user));
-			q.bindValue(2, idProject(proj));
-			EXEC_AND_REPORT_COND;
-
+			//Insert
 			bool fst = q.first();
-			if (!fst) { //No such a record
-				QStringList kl = mit.keys();
-				kl.append(f_user::Value);
-				kl.append(f_project::Value);
-				QStringList ptrn;
-				for (int j = 0; j < mit.count() + 2; j++) ptrn.append("?");
-				q.prepare(QString("INSERT INTO %1 (%2) VALUES(%3)")
-						.arg(t_achivements_list::Value)
-						.arg(kl.join(","))
-						.arg(ptrn.join(","))
-						);
-				for (auto iter = mit.begin(); iter != mit.end(); iter++) {
-					QVariant val = iter.value();
-					if (iter.key() == f_id::Value) {
-						val = iter.value().toInt();
-					}
-					q.bindValue(cnt++, val);
-				}
-				q.bindValue(cnt++, idUser(user));
-				q.bindValue(cnt++, idProject(proj));
-				EXEC_AND_REPORT_COND;
+			if (invalidId || !fst) {
+				auto i = InsertInto(t_achivements_list::Value);
+				i.append(mit);
+				i.append(f_user::Value, user_id);
+				i.append(f_project::Value, proj_id);
+				i.exec(q);
 			} else {
-				QString fields;
-				QStringList kl = mit.keys();
-				kl.append(f_user::Value);
-				kl.append(f_project::Value);
-				kl.append("");
-				fields = kl.join(" = ?, ");
-				fields = fields.remove(fields.lastIndexOf(","), 2); //Revmove trailing ', '
-				q.prepare(QString("UPDATE %1 SET %2 WHERE %3 = ?")
-						.arg(t_achivements_list::Value)
-						.arg(fields)
-						.arg(f_id::Value)
-						);
-				int ind = 0;
+				auto u = Update(t_achivements_list::Value)
+						.where(Condition(f_id::Value,"=",iid));
 				for (auto iter = mit.begin(); iter != mit.end(); iter++) {
-					QVariant val = iter.value();
-					if (iter.key() == f_id::Value) {
-						ind = iter.value().toInt();
-						val = ind;
-					}
-					q.bindValue(cnt++, val);
+					u.addSetCondition(Condition(iter.key(),"=",iter.value()));
 				}
-				q.bindValue(cnt++, idUser(user));
-				q.bindValue(cnt++, idProject(proj));
-				q.bindValue(cnt, QVariant::fromValue(ind));
-				EXEC_AND_REPORT_COND;
+				u.addSetConditions(condUserProj(user_id, proj_id));
+				u.exec(q);
 			}
 		}
 
@@ -718,7 +680,7 @@ public:
 		return true;
 	}
 
-	bool achievementsToXml(QIODevice *stream, const std::string &user, const std::string &proj) {
+	bool achievementsToXml(QIODevice *stream, const std::string &user, const std::string &proj, bool showInvisible) {
 		refreshDB();
 		refreshTables();
 		if (!checkDB()) return false;
@@ -746,12 +708,19 @@ public:
 		writer.writeStartElement(AE::tag_root::Value);
 		while (q.isValid()) {
 			QSqlRecord rec = q.record();
+			//Showing invisible is disabled and the item is invisible due to database field f_visible
+			if (!showInvisible && !rec.value(f_visible::Value).toInt()) {
+				q.next();
+				continue;
+			}
 			writer.writeStartElement(AE::tag_element::Value);
 			writer.writeTextElement(f_description::Value, rec.value(f_description::Value).toString());
 			writer.writeTextElement(f_condition::Value, rec.value(f_condition::Value).toString());
 			writer.writeTextElement(f_name::Value, rec.value(f_name::Value).toString());
 			writer.writeTextElement(f_id::Value, rec.value(f_id::Value).toString());
-			writer.writeTextElement(f_visible::Value, rec.value(f_visible::Value).toString());
+			if (showInvisible) {
+				writer.writeTextElement(f_visible::Value, rec.value(f_visible::Value).toString());
+			}
 			writer.writeEndElement();
 			q.next();
 		}
@@ -1059,8 +1028,8 @@ bool EngineImpl::init(const std::string &project, const std::string &name, const
 std::vector<var_traits> EngineImpl::varMetas() {
 	return p->varMetas();
 }
-bool EngineImpl::achievementsToXml(QIODevice *stream, const std::string &user, const std::string &proj) {
-	return p->achievementsToXml(stream, user, proj);
+bool EngineImpl::achievementsToXml(QIODevice *stream, const std::string &user, const std::string &proj, bool showInvisible) {
+	return p->achievementsToXml(stream, user, proj, showInvisible);
 }
 bool EngineImpl::updateAchievementsFromXml(QIODevice *stream, const std::string &user, const std::string &proj) {
 	return p->updateAchievementsFromXml(stream, user, proj);

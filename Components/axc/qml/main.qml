@@ -38,7 +38,6 @@ ApplicationWindow {
             top_level.descriptionText = dict[f_description]
             top_level.conditionText = dict[f_condition]
             top_level.idLabel = dict[f_id] ? dict[f_id] : ""
-
         }
 
         TopPanel {
@@ -53,12 +52,12 @@ ApplicationWindow {
             color: "#00BCD4"
 
             onRemoveRequested: {
-                var dct = xml_model.remove(lview.currentIndex)
-                if (xml_model.count() >= lview.currentIndex) {
-                    lview.currentIndex = xml_model.count() - 1
-                }
-                console.log("Reporting dictionary result: " + dct["id"])
+                var index = lview.currentIndex
+                //change index if last element in list
+                var move_up = (index === xml_model.count() - 1)
+                var dct = xml_model.remove(index)
                 Jsh.registerRemoved(dct)
+                if (move_up) lview.currentIndex = index - 1
                 top_level.updateProperties()
             }
 

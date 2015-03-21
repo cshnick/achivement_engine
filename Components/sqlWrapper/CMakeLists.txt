@@ -16,6 +16,7 @@ set (HEADERS
 set (SOURCES
   ./src/Select.cpp
   ./src/Update.cpp
+  ./src/InsertInto.cpp
   ${AE_SRC}/Conventions.cpp
 )
 

@@ -64,9 +64,13 @@ function save_achievemets() {
     }
 
     var obj = top_level.deletedElements
-    request.send("content" + top_level.par_delimiter + str
-                 + top_level.req_delimiter + "user" + top_level.par_delimiter + top_level.user
+    request.send(                            "content" + top_level.par_delimiter + str
+                 + top_level.req_delimiter + "user"    + top_level.par_delimiter + top_level.user
                  + top_level.req_delimiter + "project" + top_level.par_delimiter + top_level.project
                  + top_level.req_delimiter + "removed" + top_level.par_delimiter + JSON.stringify(obj))
+}
+
+function empty(obj) {
+    return Object.getOwnPropertyNames(obj).length === 0
 }
 

@@ -67,11 +67,34 @@ void SqlClassesTest() {
 	u.addWhereConditions(defaultConditions);
 
 	DEBUG("u expression: %s\n", u.expression().toUtf8().data());
-	u.exec(q);
+//	u.exec(q);
 	DEBUG("last error: %s\n", q.lastError().text().toUtf8().data());
 //	QVariant v = QVariant::fromValue(s);
 //	DEBUG("Type of v: %d; own type: %d\n", v.type(), s.variantType());
 //	DEBUG("Select Variant to string: %s\n", v.toString().toUtf8().data());
+
+	auto i = InsertInto(t_users::Value)
+			.keys(f_name::Value)
+			.values("TestUser1");
+
+	DEBUG("INSERT INTO expression: %s\n", i.expression().toUtf8().data());
+
+	auto i1 = InsertInto(t_users::Value)
+			.values("TestUser1");
+
+	DEBUG("INSERT INTO expression: %s\n", i1.expression().toUtf8().data());
+
+	auto i2 = InsertInto(t_users::Value)
+			.keys(f_id::Value, f_name::Value, f_passwd::Value)
+			.values(1, "TestUser2", "lkskjt");
+
+	DEBUG("INSERT INTO expression: %s\n", i2.expression().toUtf8().data());
+
+	auto i3 = InsertInto(t_users::Value)
+			.keys(f_name::Value, f_passwd::Value)
+			.values("TestUser2", "sdstetwst");
+
+//	i3.exec(q);
 }
 
 int main (int argc, char ** argv)
