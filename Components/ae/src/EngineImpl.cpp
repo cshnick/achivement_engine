@@ -103,6 +103,7 @@ public:
 		 if (!checkDB()) return;
 		 QSqlQuery q("", m_db);
 		 auto s = Select().from(t_achivements_list::Value);
+		 s.addCondition(Condition(f_visible::Value,"=",1));
 		 s.addConditions(QList<Condition>()
 				 << Condition(f_user::Value,"=",m_User)
 				 << Condition(f_project::Value,"=",m_Project));
@@ -281,31 +282,18 @@ public:
 	}
 	void addAchivementToDb(const QVariantMap &m) {
 		QSqlQuery q("", m_db);
-		QStringList kl;
-		kl << f_condition::Value <<
-				f_description::Value <<
-				f_name::Value <<
-				f_time::Value <<
-				f_ach_id::Value <<
-				f_session_id::Value <<
-				f_user::Value <<
-				f_project::Value;
 
-		QString vl = "?,?,?,?,?,?,?,?";
-		q.prepare(QString("INSERT INTO %1 (%2) VALUES (%3)")
-				.arg(t_achivements_done::Value)
-				.arg(kl.join(","))
-				.arg(vl)
-		);
-		q.bindValue(0, m.value(f_condition::Value));
-		q.bindValue(1, m.value(f_description::Value));
-		q.bindValue(2, m.value(f_name::Value));
-		q.bindValue(3, currentTime());
-		q.bindValue(4, m.value(f_id::Value));
-		q.bindValue(5, m_session_id);
-		q.bindValue(6, m_User);
-		q.bindValue(7, m_Project);
-		EXEC_AND_REPORT_COND;
+		auto ins = InsertInto(t_achivements_done::Value);
+		ins.append(f_condition::Value,   m.value(f_condition::Value));
+		ins.append(f_description::Value, m.value(f_description::Value));
+		ins.append(f_name::Value,        m.value(f_name::Value));
+		ins.append(f_time::Value,        currentTime());
+		ins.append(f_ach_id::Value,      m.value(f_id::Value));
+		ins.append(f_session_id::Value,  m_session_id);
+		ins.append(f_user::Value,        m_User);
+		ins.append(f_project::Value,     m_Project);
+
+		ins.exec(q);
 	}
 	void refreshAhivementsList() {
 	}
@@ -671,7 +659,7 @@ public:
 				for (auto iter = mit.begin(); iter != mit.end(); iter++) {
 					u.addSetCondition(Condition(iter.key(),"=",iter.value()));
 				}
-				u.addSetConditions(condUserProj(user_id, proj_id));
+				u.addWhereConditions(condUserProj(user_id, proj_id));
 				u.exec(q);
 			}
 		}

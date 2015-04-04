@@ -28,7 +28,7 @@ QString Select::expression() const{
 	}
 	exp.append(st);
 	//Append conditions
-	QString cm = Condition::joinConditions(m_conditions); //conditions map
+	QString cm = Condition::joinConditions("AND", m_conditions); //conditions map
 	if (!cm.isEmpty()) {
 		exp.append(" WHERE ");
 		exp.append(cm);

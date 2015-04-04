@@ -48,7 +48,7 @@ public:
 		}
 		return QString();
 	}
-	static QString joinConditions(const QList<Condition> &p_conditions) {
+	static QString joinConditions(const QString &sep, const QList<Condition> &p_conditions) {
 		if (p_conditions.isEmpty()) {
 			return QString();
 		}
@@ -68,7 +68,7 @@ public:
 			zip_l.append((*n).key + (*n).strOp + decorated);
 		}
 
-		return zip_l.join(" AND ");
+		return zip_l.join(" " + sep + " ");
 	}
 
 public:

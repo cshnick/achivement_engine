@@ -11,7 +11,7 @@ QString Update::expression() const {
 	QString tn = m_table; //tn: table name
 	exp.append(m_table);
 	//Append set conditions
-	QString scm = Condition::joinConditions(m_setConditions); //scm: set conditions map
+	QString scm = Condition::joinConditions(",", m_setConditions); //scm: set conditions map
 	if (!scm.isEmpty()) {
 		exp.append(" SET ");
 		exp.append(scm);
@@ -19,7 +19,7 @@ QString Update::expression() const {
 		DEBUG_ERR("Update: set conditions map is empty");
 	}
 	//Append where conditions
-	QString wcm = Condition::joinConditions(m_whereConditions); //wcm: where conditions map
+	QString wcm = Condition::joinConditions("AND", m_whereConditions); //wcm: where conditions map
 	if (!wcm.isEmpty()) {
 		exp.append(" WHERE ");
 		exp.append(wcm);
