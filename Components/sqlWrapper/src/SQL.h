@@ -14,6 +14,14 @@ enum class SQL_TYPES {
 			,Create = 4
 			,Update = 8
 };
+
+enum dtype {
+	Undefined = 0
+			, INTEGER =  1
+			, STRING = 2
+			, DATETIME = 4
+};
+
 enum Operators {
 	equal = 0
 	, in = 1
@@ -27,6 +35,61 @@ public:
 	virtual bool exec() = 0;
 protected:
 	QSqlQuery q;
+};
+
+class FieldInfo {
+public:
+	static QString typeStr(dtype tp) {
+		switch (static_cast<int>(tp)) {
+		case DATETIME:
+			return "DATETIME";
+			break;
+		case STRING:
+			return "STRING";
+			break;
+		case INTEGER:
+			return "INTEGER";
+		default:
+			return "UNDEFINED";
+		}
+
+		return "UNDEFINED";
+	}
+
+	FieldInfo(const QString &p_name, dtype p_tp, const QString &p_addInfo = QString())
+	: m_name(p_name)
+	, m_type(p_tp)
+	, m_addInfo(p_addInfo)
+    {
+	}
+	QString expr() {
+		return m_name + " " + typeStr(m_type) + " " + m_addInfo;
+	}
+
+private:
+	QString m_name;
+	dtype m_type;
+	QString m_addInfo; //additional information like  primary key and so one
+};
+
+// Foreign key reference
+class Reference {
+public:
+	Reference(const QString &p_table, const QString &p_field): m_table(p_table), m_field(p_field) {}
+	QString expr() {return m_table + "(" + m_field + ")";}
+
+private:
+	QString m_table;
+	QString m_field;
+};
+
+class ForeignKey {
+public:
+	ForeignKey(const QString &p_field, const Reference &p_ref) : m_fieldName(p_field), m_ref(p_ref) {}
+	QString expr() {return "FOREIGN KEY (" + m_fieldName + ") REFERENCES " + m_ref.expr();}
+private:
+	QString m_fieldName;
+	Reference m_ref;
 };
 
 class Condition {
@@ -229,6 +292,28 @@ private:
 	QStringList m_keys;
 	QVariantList m_values;
 };
+
+class CreateTable : public SqlBase {
+public:
+
+
+	CreateTable(const QString &p_tableName);
+	int type() const {return (int)SQL_TYPES::Create;}
+	QString expression() const;
+	bool exec();
+	QSqlQuery exec(QSqlQuery &q);
+
+	CreateTable &add(const FieldInfo &p_fi);
+	CreateTable &add(const QList<FieldInfo> &p_fis);
+	CreateTable &add(const ForeignKey &p_fk);
+	CreateTable &add(const QList<ForeignKey> &p_fks);
+
+private:
+	QString m_tableName;
+	QList<FieldInfo> m_fields;
+	QList<ForeignKey> m_foreignKeys;
+};
+
 } // namespace Wrap_Sql
 Q_DECLARE_METATYPE(Wrap_Sql::Select)
 

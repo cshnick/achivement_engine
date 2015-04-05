@@ -17,6 +17,7 @@ set (SOURCES
   ./src/Select.cpp
   ./src/Update.cpp
   ./src/InsertInto.cpp
+  ./src/CreateTable.cpp
   ${AE_SRC}/Conventions.cpp
 )
 
