@@ -1,0 +1,6 @@
+DROP TABLE Users;
+/* DROP TABLE Projects; */
+DROP TABLE AchivementsDone;
+DROP TABLE AchivementsList;
+DROP TABLE Actions;
+DROP TABLE Sessions

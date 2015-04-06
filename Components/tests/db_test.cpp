@@ -104,8 +104,9 @@ void CreateTableTest(QSqlQuery &q) {
 	c1.add(FieldInfo("custom_id", dtype::INTEGER, "PRIMARY KEY"));
 	c1.add(FieldInfo("f4", dtype::DATETIME));
 	c1.add(FieldInfo("f5", dtype::STRING));
-	c1.add(FieldInfo("f6", dtype::INTEGER));
-	c1.add(ForeignKey("f6", Reference(t_users::Value, f_id::Value)));
+	c1.add(FieldInfo("f6", dtype::INTEGER).ForeignKey(Reference(t_users::Value, f_id::Value)));
+	c1.add(FieldInfo(f_project::Value, dtype::INTEGER).ForeignKey(Reference(t_projects::Value, f_id::Value)));
+//	c1.add(ForeignKey("f6", Reference(t_users::Value, f_id::Value)));
 	c1.exec(q);
 
 	q.exec("DROP TABLE " + testTable1);

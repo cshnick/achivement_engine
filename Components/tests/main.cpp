@@ -54,14 +54,14 @@ action_params genAction() {
 }
 
 void autoTest() {
-	//1000 sessions
+	/**
+	 *  \brief Generate EngineImpl interactions
+	 */
 	EngineImpl *e = new EngineImpl();
-	for (int i = 0; i < 2; i++) {
-		QTextCodec *c = QTextCodec::codecForName("Windows-1251");
-
-		e->init(c->toUnicode("Таблица умножения").toStdString(), c->toUnicode("Илья").toStdString());
+	for (int i = 0; i < 1; i++) {
+		e->init("РўР°Р±Р»РёС†Р° СѓРјРЅРѕР¶РµРЅРёСЏ", "РР»СЊСЏ");
 		e->begin();
-		for (int j = 0; j < 2; j++) {
+		for (int j = 0; j < 1; j++) {
 			e->addAction(genAction());
 		}
 		e->end();

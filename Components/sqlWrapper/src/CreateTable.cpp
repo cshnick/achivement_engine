@@ -53,11 +53,15 @@ QSqlQuery CreateTable::exec(QSqlQuery &q) {
 }
 CreateTable &CreateTable::add(const FieldInfo &p_fi) {
 	m_fields.append(p_fi);
+	if (p_fi.ref()) {
+		m_foreignKeys.append(ForeignKey(p_fi.name(), p_fi.ref()));
+	}
 	return *this;
-
 }
 CreateTable &CreateTable::add(const QList<FieldInfo> &p_fis) {
-	m_fields.append(p_fis);
+	for (auto iter = p_fis.begin(); iter != p_fis.end(); ++iter) {
+		add(*iter);
+	}
 	return *this;
 }
 CreateTable &CreateTable::add(const ForeignKey &p_fk) {

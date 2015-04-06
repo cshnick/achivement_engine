@@ -37,7 +37,36 @@ protected:
 	QSqlQuery q;
 };
 
+// Foreign key reference
+class Reference {
+public:
+	Reference() {}
+	Reference(const QString &p_table, const QString &p_field): m_table(p_table), m_field(p_field) {}
+	QString expr() {return m_table + "(" + m_field + ")";}
+
+	QString table() const {return m_table;}
+	QString field() const {return m_field;}
+
+	operator bool() {
+		return !m_table.isEmpty() && !m_field.isEmpty();
+	}
+
+private:
+	QString m_table;
+	QString m_field;
+};
+
+class ForeignKey {
+public:
+	ForeignKey(const QString &p_field, const Reference &p_ref) : m_fieldName(p_field), m_ref(p_ref) {}
+	QString expr() {return "FOREIGN KEY (" + m_fieldName + ") REFERENCES " + m_ref.expr();}
+private:
+	QString m_fieldName;
+	Reference m_ref;
+};
+
 class FieldInfo {
+	friend class CreateTable;
 public:
 	static QString typeStr(dtype tp) {
 		switch (static_cast<int>(tp)) {
@@ -65,30 +94,17 @@ public:
 	QString expr() {
 		return m_name + " " + typeStr(m_type) + " " + m_addInfo;
 	}
+	FieldInfo &ForeignKey(const Reference &ref) {
+		m_ref = ref;
+		return *this;
+	}
+	Reference ref() const {return m_ref;}
+	QString name() const {return m_name;}
 
 private:
 	QString m_name;
 	dtype m_type;
 	QString m_addInfo; //additional information like  primary key and so one
-};
-
-// Foreign key reference
-class Reference {
-public:
-	Reference(const QString &p_table, const QString &p_field): m_table(p_table), m_field(p_field) {}
-	QString expr() {return m_table + "(" + m_field + ")";}
-
-private:
-	QString m_table;
-	QString m_field;
-};
-
-class ForeignKey {
-public:
-	ForeignKey(const QString &p_field, const Reference &p_ref) : m_fieldName(p_field), m_ref(p_ref) {}
-	QString expr() {return "FOREIGN KEY (" + m_fieldName + ") REFERENCES " + m_ref.expr();}
-private:
-	QString m_fieldName;
 	Reference m_ref;
 };
 

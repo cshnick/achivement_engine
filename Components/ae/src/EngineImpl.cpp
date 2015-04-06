@@ -29,6 +29,11 @@ using Wrap_Sql::Func;
 using Wrap_Sql::Condition;
 using Wrap_Sql::Update;
 using Wrap_Sql::InsertInto;
+using Wrap_Sql::CreateTable;
+using Wrap_Sql::ForeignKey;
+using Wrap_Sql::Reference;
+using Wrap_Sql::FieldInfo;
+using Wrap_Sql::dtype;
 
 namespace AE {
 
@@ -303,6 +308,11 @@ public:
 		}
 	}
 
+	/**
+	 *  \Brief Start session
+	 *
+	 *  Start session fill database start time
+	 */
 	void begin() {
 		if (!testCredentials()) {
 			throw AECommonErrorException("Username or project name is empty, process refused...");
@@ -313,17 +323,11 @@ public:
 		STAT_IF_VERBOSE;
 
 		QSqlQuery q("", m_db);
-
-		q.prepare(QString("INSERT INTO %1 (%2,%3,%4) VALUES (?,?,?)")
-				.arg(t_sessions::Value)
-				.arg(f_start::Value)
-				.arg(f_user::Value)
-				.arg(f_project::Value)
-				);
-		q.bindValue(0, currentTime());
-		q.bindValue(1, m_User);
-		q.bindValue(2, m_Project);
-		EXEC_AND_REPORT_COND;
+		auto i = InsertInto(t_sessions::Value);
+		i.append(f_start::Value, currentTime());
+		i.append(f_user::Value, m_User);
+		i.append(f_project::Value, m_Project);
+		i.exec(q);
 		m_session_id = q.lastInsertId().toInt();
 		PRINT_IF_VERBOSE("Starting session: %d\n", m_session_id);
 	}
@@ -339,13 +343,10 @@ public:
 		if (m_session_id == -1) {
 			DEBUG_ERR("m_session_id is negtive. Called end several times?\n");
 		}
-		q.prepare(QString("UPDATE %1 SET %2 = :fin_time WHERE %3 = :id")
-				.arg(t_sessions::Value)
-				.arg(f_finish::Value)
-				.arg(f_id::Value));
-		q.bindValue(":fin_time", currentTime());
-		q.bindValue(":id", m_session_id);
-		EXEC_AND_REPORT_COND;
+		auto u = Update(t_sessions::Value)
+				.set(Condition(f_finish::Value, "=", currentTime()))
+				.where(Condition(f_id::Value, "=", m_session_id));
+		u.exec(q);
 		m_session_id = -1;
 	}
 	void addAction(const action_params &p_actions) {
@@ -502,51 +503,37 @@ public:
 		refreshDB();
 		refreshTables();
 		QSqlQuery q("", m_db);
-		q.prepare(QString("SELECT * FROM %1 where %2 = ?")
-				.arg(t_projects::Value)
-				.arg(f_name::Value)
-		);
-		q.bindValue(0, QString::fromStdString(project));
-		EXEC_AND_REPORT_COND;
+		auto s = Select().from(t_projects::Value).where(Condition(f_name::Value, "=", QString::fromStdString(project)));
+		s.exec(q);
 		if (q.first()) {
 			return;
 		} else {
-			q.prepare(QString("INSERT INTO %1 (%2) VALUES(?)")
-					.arg(t_projects::Value)
-					.arg(f_name::Value)
-			);
-			q.bindValue(0, QString::fromStdString(project));
-			EXEC_AND_REPORT_COND;
+			auto i = InsertInto(t_projects::Value).keys(f_name::Value).values(QString::fromStdString(project));
+			i.exec(q);
 		}
 	}
 	void addUser(const std::string &name, const std::string &passwd) {
 		refreshDB();
 		refreshTables();
 		QSqlQuery q("", m_db);
-		q.prepare(QString("SELECT * FROM %1 where %2 = ?")
-				.arg(t_users::Value)
-				.arg(f_name::Value)
-				);
-		q.bindValue(0, QString::fromStdString(name));
-		EXEC_AND_REPORT_COND;
+		auto s = Select().from(t_users::Value).where(Condition(f_name::Value, "=", QString::fromStdString(name)));
+		s.exec(q);
 		if (q.first()) {
 			return;
 		} else {
-			q.prepare(QString("INSERT INTO %1 (%2,%3) VALUES(?,?)")
-					.arg(t_users::Value)
-					.arg(f_name::Value)
-					.arg(f_passwd::Value)
-			);
-			q.bindValue(0, QString::fromStdString(name));
-			q.bindValue(1, QString::fromStdString(passwd));
-			EXEC_AND_REPORT_COND;
+			auto i = InsertInto(t_projects::Value);
+			i.append(f_name::Value, QString::fromStdString(name));
+			i.append(f_passwd::Value, QString::fromStdString(passwd));
+			i.exec(q);
 		}
 	}
 	bool init(const std::string &project, const std::string &name, const std::string &passwd = std::string()) {
 		refreshDB();
-		int p = idProject(project);
-		int n = idUser(name);
-		initGlobal(p, n);
+		refreshTables();
+		m_Project = idProject(project);
+		m_User = idUser(name);
+		refreshAchievements();
+		refreshCalcVarDelegates();
 
 		return true;
 	}
@@ -659,7 +646,6 @@ public:
 				for (auto iter = mit.begin(); iter != mit.end(); iter++) {
 					u.addSetCondition(Condition(iter.key(),"=",iter.value()));
 				}
-				u.addWhereConditions(condUserProj(user_id, proj_id));
 				u.exec(q);
 			}
 		}
@@ -802,7 +788,7 @@ private:
 		tablesToDrop
 				<< t_sessions::Value
 				<< t_actions::Value
-//				<< t_achivements_list::Value
+				<< t_achivements_list::Value
 				<< t_users::Value
 				<< t_projects::Value
 				<< t_achivements_done::Value;
@@ -815,108 +801,81 @@ private:
 
 	void addDefaultTables() {
 		QSqlQuery q("", m_db);
+		/**
+		 *	\brief Users table
+		 */
 		if (!m_db.tables().contains(t_users::Value)) {
-			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 STRING, %4 STRING)")
-					.arg(t_users::Value)
-					.arg(f_id::Value)
-					.arg(f_name::Value)
-					.arg(f_passwd::Value)
-					);
-			EXEC_AND_REPORT_COND;
+			auto c = CreateTable(t_users::Value);
+			c.add(FieldInfo(f_id::Value, dtype::INTEGER, "PRIMARY KEY"));
+			c.add(FieldInfo(f_name::Value, dtype::STRING));
+			c.add(FieldInfo(f_passwd::Value, dtype::STRING));
+			c.exec(q);
 		}
+		/**
+		 *	\brief Projects table
+		 */
 		if (!m_db.tables().contains(t_projects::Value)) {
-			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 STRING)")
-					.arg(t_projects::Value)
-					.arg(f_id::Value)
-					.arg(f_name::Value));
-			EXEC_AND_REPORT_COND;
+			auto c = CreateTable(t_projects::Value);
+			c.add(FieldInfo(f_id::Value, dtype::INTEGER, "PRIMARY KEY"));
+			c.add(FieldInfo(f_name::Value, dtype::STRING));
+		    c.exec(q);
 		}
+		/**
+		 *	\brief Sessions table
+		 */
 		if (!m_db.tables().contains(t_sessions::Value)) {
-			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 DATETIME, %5 INTEGER, %7 INTEGER"
-					",FOREIGN KEY(%5) REFERENCES %6(%2)"
-					",FOREIGN KEY(%7) REFERENCES %8(%2)"
-					")")
-					.arg(t_sessions::Value)
-					.arg(f_id::Value)
-					.arg(f_start::Value)
-					.arg(f_finish::Value)
-					.arg(f_user::Value)
-					.arg(t_users::Value)
-					.arg(f_project::Value)
-					.arg(t_projects::Value)
-					);
-			EXEC_AND_REPORT_COND;
+			auto c = CreateTable(t_sessions::Value);
+			c.add(FieldInfo(f_id::Value, dtype::INTEGER, "PRIMARY KEY"));
+			c.add(FieldInfo(f_start::Value, dtype::DATETIME));
+			c.add(FieldInfo(f_finish::Value, dtype::DATETIME));
+			c.add(FieldInfo(f_user::Value, dtype::INTEGER).ForeignKey(Reference(t_users::Value, f_id::Value)));
+			c.add(FieldInfo(f_project::Value, dtype::INTEGER).ForeignKey(Reference(t_projects::Value, f_id::Value)));
+			c.exec(q);
 		}
-		//Actions table
+		/**
+		 *	\brief Actions table
+		 */
 		if (!m_db.tables().contains(t_actions::Value)) {
-			q.prepare(QString("CREATE TABLE %1 ("
-					"%2 INTEGER PRIMARY KEY, "
-					"%3 STRING,"
-					"%4 INTEGER,"
-					"%6 DATETIME,"
-					"%7 INTEGER,"
-					"%8 INTEGER,"
-					"%10 INTEGER,"
-					"FOREIGN KEY(%4) REFERENCES %5(%2)"
-					",FOREIGN KEY(%8) REFERENCES %9(%2)"
-					",FOREIGN KEY(%10) REFERENCES %11(%2)"
-					")")
-					.arg(t_actions::Value)
-					.arg(f_id::Value)
-					.arg(f_name::Value)
-					.arg(f_session_id::Value)
-					.arg(t_sessions::Value)
-					.arg(f_time::Value)
-					.arg(f_actTime::Value)
-					.arg(f_user::Value)
-					.arg(t_users::Value)
-					.arg(f_project::Value)
-					.arg(t_projects::Value)
-					);
-			EXEC_AND_REPORT_COND;
+			auto c = CreateTable(t_actions::Value);
+			c.add(FieldInfo(f_id::Value, dtype::INTEGER, "PRIMARY KEY"));
+			c.add(FieldInfo(f_name::Value, dtype::STRING));
+			c.add(FieldInfo(f_time::Value, dtype::DATETIME));
+			c.add(FieldInfo(f_actTime::Value, dtype::INTEGER));
+			c.add(FieldInfo(f_session_id::Value, dtype::INTEGER).ForeignKey(Reference(t_sessions::Value, f_id::Value)));
+			c.add(FieldInfo(f_user::Value, dtype::INTEGER).ForeignKey(Reference(t_users::Value, f_id::Value)));
+			c.add(FieldInfo(f_project::Value, dtype::INTEGER).ForeignKey(Reference(t_projects::Value, f_id::Value)));
+			c.exec(q);
 		}
+		/**
+		 *	\brief Achievements table
+		 */
 		if (!m_db.tables().contains(t_achivements_list::Value)) {
-			q.prepare(QString("CREATE TABLE %1 (%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 STRING, %5 STRING, %6 STRING, %11 INTEGER, %7 INTEGER, %9 INTEGER"
-					",FOREIGN KEY(%7) REFERENCES %8(%2)"
-					",FOREIGN KEY(%9) REFERENCES %10(%2)"
-					")")
-					.arg(t_achivements_list::Value)
-					.arg(f_id::Value)
-					.arg(f_time::Value)
-					.arg(f_name::Value)
-					.arg(f_description::Value)
-					.arg(f_condition::Value)
-					.arg(f_user::Value)
-					.arg(t_users::Value)
-					.arg(f_project::Value)
-					.arg(t_projects::Value)
-					.arg(f_visible::Value)
-					);
-			EXEC_AND_REPORT_COND;
+			auto c = CreateTable(t_achivements_list::Value);
+			c.add(FieldInfo(f_id::Value, dtype::INTEGER, "PRIMARY KEY"));
+			c.add(FieldInfo(f_name::Value, dtype::STRING));
+			c.add(FieldInfo(f_time::Value, dtype::DATETIME));
+			c.add(FieldInfo(f_description::Value, dtype::STRING));
+			c.add(FieldInfo(f_condition::Value, dtype::STRING));
+			c.add(FieldInfo(f_visible::Value, dtype::INTEGER));
+			c.add(FieldInfo(f_user::Value, dtype::INTEGER).ForeignKey(Reference(t_users::Value, f_id::Value)));
+			c.add(FieldInfo(f_project::Value, dtype::INTEGER).ForeignKey(Reference(t_projects::Value, f_id::Value)));
+			c.exec(q);
 		}
+		/**
+		 *	\brief Reached achievements table
+		 */
 		if (!m_db.tables().contains(t_achivements_done::Value)) {
-			q.prepare(QString("CREATE TABLE %1 "
-					"(%2 INTEGER PRIMARY KEY, %3 DATETIME, %4 STRING,"
-					" %5 STRING, %6 STRING, %7 INTEGER, %8 INTEGER, %10 INTEGER, %12 INTEGER"
-					",FOREIGN KEY(%7) REFERENCES %9(%2)"
-					",FOREIGN KEY(%10) REFERENCES %11(%2)"
-					",FOREIGN KEY(%12) REFERENCES %13(%2)"
-					")")
-					.arg(t_achivements_done::Value)
-					.arg(f_id::Value)
-					.arg(f_time::Value)
-					.arg(f_name::Value)
-					.arg(f_description::Value)
-					.arg(f_condition::Value)
-					.arg(f_ach_id::Value)
-					.arg(f_session_id::Value)
-					.arg(t_achivements_list::Value)
-					.arg(f_user::Value)
-					.arg(t_users::Value)
-					.arg(f_project::Value)
-					.arg(t_projects::Value)
-			);
-			EXEC_AND_REPORT_COND;
+			auto c = CreateTable(t_achivements_done::Value);
+			c.add(FieldInfo(f_id::Value, dtype::INTEGER, "PRIMARY KEY"));
+			c.add(FieldInfo(f_name::Value, dtype::STRING));
+			c.add(FieldInfo(f_time::Value, dtype::DATETIME));
+			c.add(FieldInfo(f_description::Value, dtype::STRING));
+			c.add(FieldInfo(f_condition::Value, dtype::STRING));
+			c.add(FieldInfo(f_ach_id::Value, dtype::INTEGER).ForeignKey(Reference(t_achivements_list::Value, f_id::Value)));
+			c.add(FieldInfo(f_session_id::Value, dtype::INTEGER).ForeignKey(Reference(t_sessions::Value, f_id::Value)));
+			c.add(FieldInfo(f_user::Value, dtype::INTEGER).ForeignKey(Reference(t_users::Value, f_id::Value)));
+			c.add(FieldInfo(f_project::Value, dtype::INTEGER).ForeignKey(Reference(t_projects::Value, f_id::Value)));
+			c.exec(q);
 		}
 	}
 
