@@ -88,6 +88,8 @@ public:
 	virtual void addProject(const std::string &project) = 0;
 	virtual void addUser(const std::string &name, const std::string &passwd) = 0;
 	virtual bool init(const std::string &project, const std::string &name, const std::string &passwd = std::string()) = 0;
+
+	virtual achievements_params session_achievements() = 0;
 };
 
 } //namespace AE

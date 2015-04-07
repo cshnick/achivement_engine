@@ -34,6 +34,7 @@ using Wrap_Sql::ForeignKey;
 using Wrap_Sql::Reference;
 using Wrap_Sql::FieldInfo;
 using Wrap_Sql::dtype;
+using Wrap_Sql::AlterTable;
 
 namespace AE {
 
@@ -362,111 +363,60 @@ public:
 		if (!checkDB()) return;
 		QSqlQuery q("", m_db);
 		if (m_session_id == -1) {
-			DEBUG_ERR("m_session_id is negtive. Haven't called begin method for engine?\n");
+			DEBUG_ERR("m_session_id is negative. Haven't called begin method for engine?\n");
+			throw AECommonErrorException("m_session_id is negative. Haven't called begin method for engine?\n");
 		}
 		//Insert new actions passed from the client
 		QSqlRecord rec = m_db.record(t_actions::Value);
 		if (!rec.isEmpty()) {
-			action_params::const_iterator i = p_actions.begin();
-			action_params::const_iterator end = p_actions.end();
-			QStringList kl, vl; //Store keys and values
-			QList<QVariant> vvl;
-			while (i != end) {
-				QString nm = QString::fromStdString(i->first);
-				AE::variant v = i->second;
-				kl << nm;
-				vl << "?";
-				vvl << fromAeVariant(v);
+			auto ins = InsertInto(t_actions::Value);
+			for (auto iter = p_actions.begin(); iter != p_actions.end(); ++iter) {
+				QString nm = QString::fromStdString(iter->first);
+				AE::variant v = iter->second;
+				ins.append(nm, fromAeVariant(v));
 				//Create non existent fields
 				if (!rec.contains(nm)) {
-					q.prepare(QString("ALTER TABLE %1 ADD %2 %3")
-							.arg(t_actions::Value)
-							.arg(nm)
-							.arg(QString::fromStdString(v.typeDBString()))
-					);
-					EXEC_AND_REPORT_COND;
+					auto a = AlterTable(t_actions::Value).add(FieldInfo(nm, v.typeDBString().c_str()));
+					a.exec(q);
 				}
-				i++;
 			}
-			q.clear();
-			q = QSqlQuery("", m_db);
-
 			QDateTime curTime = currentTime();
 			int et = calculateElapsedSecsTo(curTime);
-			// Prepare strings to INSERT statement
-			QString kp = kl.join(",");
-			QString vp = vl.join(",");
-			kp.append(QString(",%1").arg(f_session_id::Value));
-			kp.append(QString(",%1").arg(f_time::Value));
-			kp.append(QString(",%1").arg(f_actTime::Value));
-			kp.append(QString(",%1").arg(f_user::Value));
-			kp.append(QString(",%1").arg(f_project::Value));
-			vp.append(",?"); //session id
-			vp.append(",?"); //action time
-			vp.append(",?"); //action time elapsed
-			vp.append(",?"); //user
-			vp.append(",?"); //project
-			q.prepare(QString("INSERT INTO %1 (%2) VALUES (%3)")
-					.arg(t_actions::Value)
-					.arg(kp)
-					.arg(vp));
-			int k = 0;
-			for (; k < vvl.count(); k++) {
-				q.bindValue(k, vvl.at(k));
-			}
-			q.bindValue(k++, m_session_id);
-			q.bindValue(k++, currentTime());
-			q.bindValue(k++, et);
-			q.bindValue(k++, m_User);
-			q.bindValue(k++, m_Project);
-			EXEC_AND_REPORT_COND;
+			ins.append(f_session_id::Value, m_session_id);
+			ins.append(f_time::Value, curTime);
+			ins.append(f_actTime::Value, et);
+			ins.append(f_user::Value, m_User);
+			ins.append(f_project::Value, m_Project);
 
-			SQL_DEBUG("Rec is not empty\n");
-			SQL_DEBUG("Fields names are:\n");
-			for (int i = 0; i < rec.count(); i++) {
-				SQL_DEBUG("\t%s;\n", qPrintable(rec.fieldName(i)));
-			}
-			SQL_DEBUG("Finished checking field names\n");
+			ins.exec(q);
 		}
 	}
-
+	/**
+	 * Calculate action time from previous action to current one
+	 */
 	int calculateElapsedSecsTo(const QDateTime &ct) {
 		QSqlQuery q("", m_db);
-		//check previous time
+		//check previous time from actions
 		int result = -1;
-		q.prepare(QString("SELECT MAX(%1) FROM %2 WHERE %3=? AND %4=? AND %5=?")
-				.arg(f_time::Value)
-				.arg(t_actions::Value)
-				.arg(f_session_id::Value)
-				.arg(f_user::Value)
-				.arg(f_project::Value)
-		);
-		q.bindValue(0, m_session_id);
-		q.bindValue(1, m_User);
-		q.bindValue(2, m_Project);
-		EXEC_AND_REPORT_COND;
+		auto s = Select(Func("MAX", f_time::Value))
+								.from(t_actions::Value)
+								.where(Condition(f_session_id::Value, "=", m_session_id));
+		s.addConditions(condUserProj(m_User, m_Project));
+		s.exec(q);
 		q.first();
 		QDateTime dt = q.value(0).toDateTime();
 		if (dt.isValid()) {
 			SQL_DEBUG("DateTime value: %s, current time: %s\n", qPrintable(dt.toString()), qPrintable(ct.toString()));
 			result = dt.secsTo(ct);
-		} else { //Take time from session start time
-			q.prepare(QString("SELECT %1 FROM %2 WHERE %3=? AND %4=? AND %5=?")
-					.arg(f_start::Value)
-					.arg(t_sessions::Value)
-					.arg(f_id::Value)
-					.arg(f_user::Value)
-					.arg(f_project::Value)
-					);
-			q.bindValue(0, m_session_id);
-			q.bindValue(1, m_User);
-			q.bindValue(2, m_Project);
-			EXEC_AND_REPORT_COND;
+		} else { //! Take time from session start time
+			auto s = Select(f_start::Value).from(t_sessions::Value).where(Condition(f_id::Value, "=", m_session_id));
+			s.addConditions(condUserProj(m_User, m_Project));
+			s.exec(q);
 			q.first();
 			QDateTime st = q.value(0).toDateTime();
 			SQL_DEBUG("DateTime value: %s, current time: %s\n", qPrintable(st.toString()), qPrintable(ct.toString()));
 			if (!st.isValid()) {
-				DEBUG_ERR("Unable to retreive session start id... \n");
+				DEBUG_ERR("Unable to retrieve session start id... \n");
 			}
 			result = st.secsTo(ct);
 		}
@@ -499,33 +449,15 @@ public:
 		return apl;
 	}
 
+	achievements_params sessionAchievements() {
+		return achievements_params();
+	}
+
 	void addProject(const std::string &project) {
-		refreshDB();
-		refreshTables();
-		QSqlQuery q("", m_db);
-		auto s = Select().from(t_projects::Value).where(Condition(f_name::Value, "=", QString::fromStdString(project)));
-		s.exec(q);
-		if (q.first()) {
-			return;
-		} else {
-			auto i = InsertInto(t_projects::Value).keys(f_name::Value).values(QString::fromStdString(project));
-			i.exec(q);
-		}
+		idProject(project);
 	}
 	void addUser(const std::string &name, const std::string &passwd) {
-		refreshDB();
-		refreshTables();
-		QSqlQuery q("", m_db);
-		auto s = Select().from(t_users::Value).where(Condition(f_name::Value, "=", QString::fromStdString(name)));
-		s.exec(q);
-		if (q.first()) {
-			return;
-		} else {
-			auto i = InsertInto(t_projects::Value);
-			i.append(f_name::Value, QString::fromStdString(name));
-			i.append(f_passwd::Value, QString::fromStdString(passwd));
-			i.exec(q);
-		}
+		idUser(name, passwd);
 	}
 	bool init(const std::string &project, const std::string &name, const std::string &passwd = std::string()) {
 		refreshDB();
@@ -567,37 +499,44 @@ public:
 		updateAchievementsFromXml(stream, "", "");
 		return true;
 	}
-	int idUser(const std::string &name) {
+	int idUser(const std::string &name, const std::string &passwd = "") {
+		if (name.empty()) {
+			return -1;
+		}
+		refreshDB();
+		refreshTables();
 		QSqlQuery q("", m_db);
-		auto s = Select(f_id::Value).from(t_users::Value).where(Condition(f_name::Value,"=",name.c_str()));
+		auto s = Select(f_id::Value).from(t_users::Value).where(Condition(f_name::Value, "=", QString::fromStdString(name)));
 		s.exec(q);
 		if (q.first()) {
 			return q.value(0).toInt();
-		} else if (!name.empty()) {
-			q.prepare(QString("INSERT INTO %1 (%2) VALUES (?)")
-					.arg(t_users::Value)
-					.arg(f_name::Value)
-					);
-			q.bindValue(0, QString::fromStdString(name));
-			EXEC_AND_REPORT_COND;
+		} else {
+			auto i = InsertInto(t_users::Value);
+			i.append(f_name::Value, QString::fromStdString(name));
+			i.append(f_passwd::Value, QString::fromStdString(passwd));
+			i.exec(q);
+
 			return q.lastInsertId().toInt();
 		}
 
 		return -1;
 	}
 	int idProject(const std::string &name) {
+		if (name.empty()) {
+			return -1;
+		}
+		refreshDB();
+		refreshTables();
 		QSqlQuery q("", m_db);
-		auto s = Select(f_id::Value).from(t_projects::Value).where(Condition(f_name::Value,"=",name.c_str()));
+		auto s = Select(f_id::Value).from(t_projects::Value).where(Condition(f_name::Value, "=", QString::fromStdString(name)));
 		s.exec(q);
 		if (q.first()) {
 			return q.value(0).toInt();
-		} else if (!name.empty()) {
-			q.prepare(QString("INSERT INTO %1 (%2) VALUES (?)")
-					.arg(t_projects::Value)
-					.arg(f_name::Value)
-			);
-			q.bindValue(0, QString::fromStdString(name));
-			EXEC_AND_REPORT_COND;
+		} else {
+			auto i = InsertInto(t_projects::Value);
+			i.append(f_name::Value, QString::fromStdString(name));
+			i.exec(q);
+
 			return q.lastInsertId().toInt();
 		}
 
@@ -658,17 +597,10 @@ public:
 		refreshDB();
 		refreshTables();
 		if (!checkDB()) return false;
-
 		QSqlQuery q("", m_db);
-
-		q.prepare(QString("SELECT * FROM %1 WHERE %2=? AND %3=?")
-				.arg(t_achivements_list::Value)
-				.arg(f_user::Value)
-				.arg(f_project::Value)
-				);
-		q.bindValue(0, idUser(user));
-		q.bindValue(1, idProject(proj));
-		EXEC_AND_REPORT_COND;
+		auto s = Select().from(t_achivements_list::Value);
+		s.addConditions(condUserProj(idUser(user), idProject(proj)));
+		s.exec(q);
 		q.first();
 		if (!stream->isWritable()) {
 			DEBUG_ERR("Can't write to stream...\n");
@@ -961,7 +893,9 @@ void EngineImpl::addAction(const action_params &p_actions)
 achievements_params EngineImpl::take_ach_params() {
 	return p->take_ach_params();
 }
-
+achievements_params EngineImpl::session_achievements() {
+	return p->sessionAchievements();
+}
 void EngineImpl::addProject(const std::string &project) {
 	p->addProject(project);
 }

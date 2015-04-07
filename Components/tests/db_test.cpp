@@ -112,6 +112,21 @@ void CreateTableTest(QSqlQuery &q) {
 	q.exec("DROP TABLE " + testTable1);
 	q.exec("DROP TABLE " + testTable2);
 }
+void AlterTableTest(QSqlQuery &q) {
+	QString testTable1 = "TestTable1";
+	auto c = CreateTable(testTable1);
+	c.add(FieldInfo("custom_id", dtype::INTEGER, "PRIMARY KEY"));
+	c.add(FieldInfo("f1", dtype::DATETIME));
+	c.add(FieldInfo("f2", dtype::STRING));
+	c.add(FieldInfo("f3", dtype::INTEGER));
+	c.exec(q);
+
+	auto a = AlterTable(testTable1);
+	a.add(FieldInfo("Alter1", dtype::STRING));
+	a.exec(q);
+
+	q.exec("DROP TABLE " + testTable1);
+}
 
 void SqlClassesTest() {
 	const char lc[] = "UTF-8";
@@ -126,7 +141,8 @@ void SqlClassesTest() {
 //	SelectTest(q);
 //	UpdateTest(q);
 //	InsertIntoTest(q);
-	CreateTableTest(q);
+//	CreateTableTest(q);
+	AlterTableTest(q);
 }
 
 int main (int argc, char ** argv)

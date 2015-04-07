@@ -61,7 +61,7 @@ void autoTest() {
 	for (int i = 0; i < 1; i++) {
 		e->init("Таблица умножения", "Илья");
 		e->begin();
-		for (int j = 0; j < 1; j++) {
+		for (int j = 0; j < 3; j++) {
 			e->addAction(genAction());
 		}
 		e->end();

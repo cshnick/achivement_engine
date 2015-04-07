@@ -45,6 +45,7 @@ public:
 	void end();
 	void addAction(const action_params &p_actions);
 	achievements_params take_ach_params();
+	achievements_params session_achievements();
 
 	void addProject(const std::string &project);
 	void addUser(const std::string &name, const std::string &passwd);

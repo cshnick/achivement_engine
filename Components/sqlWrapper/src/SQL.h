@@ -3,7 +3,7 @@
 
 #include <QtCore>
 #include <QtSql>
-
+#include <unordered_map>
 
 namespace Wrap_Sql {
 
@@ -13,6 +13,7 @@ enum class SQL_TYPES {
 			,Insert = 2
 			,Create = 4
 			,Update = 8
+			,Alter  = 16
 };
 
 enum dtype {
@@ -91,8 +92,14 @@ public:
 	, m_addInfo(p_addInfo)
     {
 	}
+	FieldInfo(const QString &p_name, const QString &p_tpStr, const QString &p_addInfo = QString())
+	: m_name(p_name)
+	, m_typeStr(p_tpStr)
+	, m_addInfo(p_addInfo)
+	{
+	}
 	QString expr() {
-		return m_name + " " + typeStr(m_type) + " " + m_addInfo;
+		return m_name + " " +  (m_type == Undefined ? m_typeStr : typeStr(m_type)) + " " + m_addInfo;
 	}
 	FieldInfo &ForeignKey(const Reference &ref) {
 		m_ref = ref;
@@ -103,7 +110,8 @@ public:
 
 private:
 	QString m_name;
-	dtype m_type;
+	dtype m_type = Undefined;
+	QString m_typeStr = "Undefined";
 	QString m_addInfo; //additional information like  primary key and so one
 	Reference m_ref;
 };
@@ -311,8 +319,6 @@ private:
 
 class CreateTable : public SqlBase {
 public:
-
-
 	CreateTable(const QString &p_tableName);
 	int type() const {return (int)SQL_TYPES::Create;}
 	QString expression() const;
@@ -328,6 +334,49 @@ private:
 	QString m_tableName;
 	QList<FieldInfo> m_fields;
 	QList<ForeignKey> m_foreignKeys;
+};
+
+class AlterTable: public SqlBase {
+public:
+	enum class Action {
+		NONE = 0,
+		DROP = 1,
+		ADD = 2,
+	};
+	AlterTable(const QString &p_tableName);
+	int type() const {return (int)SQL_TYPES::Alter;}
+	QString expression() const;
+	bool exec();
+	QSqlQuery exec(QSqlQuery &q);
+
+	AlterTable &add(const FieldInfo &p_fi);
+	AlterTable &add(const QList<FieldInfo> &p_fis);
+	AlterTable &add(const ForeignKey &p_fk);
+	AlterTable &add(const QList<ForeignKey> &p_fks);
+	static QString actionString(Action p_ac) {
+		switch (p_ac) {
+		case Action::DROP:
+			return "DROP";
+			break;
+		case Action::ADD:
+			return "ADD";
+			break;
+		default:
+			return "NONE";
+			break;
+		}
+		return "NONE";
+	}
+
+private:
+	/**
+	 *  Only first action counts. All the others ignored
+	 */
+	void checkAction(Action p_ac) {if (m_action == Action::NONE) m_action = p_ac;}
+	Action m_action = Action::NONE;
+	QString m_tableName;
+	std::multimap<int, FieldInfo> m_fields;
+	std::multimap<int, ForeignKey> m_foreignKeys;
 };
 
 } // namespace Wrap_Sql
