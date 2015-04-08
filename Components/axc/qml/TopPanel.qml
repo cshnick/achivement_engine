@@ -195,6 +195,7 @@ ShadowRect {
                     dict["Name"] = "Имя"
                     dict["Description"] = "Описание достижения"
                     dict["Condition"] = "Условие достижения"
+                    dict["Type"] = Jsh.AE_TYPE_INSTANT
 
                     xml_model.append(dict)
                     lview.currentIndex = xml_model.count() - 1

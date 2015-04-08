@@ -13,6 +13,11 @@ typedef std::list<action_params> achievements_params;
 
 namespace AE {
 
+enum a_type {
+	AE_TYPE_INSTANT = 0x00,
+	AE_TYPE_SESSION_WIDE,
+};
+
 enum varType {
 	AE_VAR_INVALID = 0x00,
 	AE_VAR_STRING,

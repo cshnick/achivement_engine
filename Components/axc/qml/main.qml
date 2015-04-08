@@ -18,6 +18,7 @@ ApplicationWindow {
         property alias descriptionText: block_description.text
         property alias conditionText: text_condition.text
         property alias idLabel: label_id.text
+        property alias achType: ach_type.checked
 
         property string user: user_view.model.get(0).name
         property string project: 'Таблица умножения'
@@ -38,6 +39,7 @@ ApplicationWindow {
             top_level.descriptionText = dict[f_description]
             top_level.conditionText = dict[f_condition]
             top_level.idLabel = dict[f_id] ? dict[f_id] : ""
+            top_level.achType = dict[f_type]
         }
 
         TopPanel {
@@ -109,7 +111,7 @@ ApplicationWindow {
                         x: 10
                         width: 40
                         height: 40
-                        color: lview.currentIndex === index ? "#EFFB41" : "#EFFB41"
+                        color: Type == Jsh.AE_TYPE_INSTANT ? "#EFFB41" : "#000"
                         Text {
                             anchors.centerIn: parent
                             color: "#303030"
@@ -203,6 +205,19 @@ ApplicationWindow {
                 x: g_margin
                 height: 80
                 t_label.text: "Название"
+            }
+
+            CheckBox {
+                id: ach_type
+                anchors.left: block_name.right
+                anchors.leftMargin: 20
+                anchors.top: parent.top
+                anchors.topMargin: block_name.g_margin
+                text: "Мгновенное"
+                checked: true
+                onCheckedChanged: {
+                    console.log("Checked to " + checked)
+                }
             }
 
             LabeledTextArea {

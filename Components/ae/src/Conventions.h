@@ -66,6 +66,7 @@ DECLARE_CONVENTION_TYPE(f_session_id, SessionId);
 DECLARE_CONVENTION_TYPE(f_description, Description);
 DECLARE_CONVENTION_TYPE(f_condition, Condition);
 DECLARE_CONVENTION_TYPE(f_visible, Visible);
+DECLARE_CONVENTION_TYPE(f_type, Type);
 //Tags
 DECLARE_STRING_CONSTANT(tag_element, achivement);
 DECLARE_STRING_CONSTANT(tag_lastId, lastId);

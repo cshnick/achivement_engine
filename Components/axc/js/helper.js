@@ -35,6 +35,7 @@ function updateModel(ind) {
     dict[f_name] = block_name.text
     dict[f_description] = block_description.text
     dict[f_condition] = text_condition.text
+    dict[f_type] = ach_type.checked
 
     xml_model.update(ind, dict)
 }
@@ -73,4 +74,8 @@ function save_achievemets() {
 function empty(obj) {
     return Object.getOwnPropertyNames(obj).length === 0
 }
+
+var AE_TYPE_INSTANT = 0
+var AE_TYPE_SESSION_WIDE = 1
+
 

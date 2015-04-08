@@ -789,6 +789,7 @@ private:
 			c.add(FieldInfo(f_description::Value, dtype::STRING));
 			c.add(FieldInfo(f_condition::Value, dtype::STRING));
 			c.add(FieldInfo(f_visible::Value, dtype::INTEGER));
+			c.add(FieldInfo(f_type::Value, dtype::INTEGER));
 			c.add(FieldInfo(f_user::Value, dtype::INTEGER).ForeignKey(Reference(t_users::Value, f_id::Value)));
 			c.add(FieldInfo(f_project::Value, dtype::INTEGER).ForeignKey(Reference(t_projects::Value, f_id::Value)));
 			c.exec(q);

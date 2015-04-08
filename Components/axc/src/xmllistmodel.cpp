@@ -7,7 +7,8 @@
 static const QStringList s_fields(QString(QString(  AE::f_id::Value) + "," +
 													AE::f_name::Value + "," +
 													AE::f_description::Value + "," +
-													AE::f_condition::Value
+                                                    AE::f_condition::Value + "," +
+                                                    AE::f_type::Value
 												).split(','));
 
 static const QString filePath = AE::g_achivements_path::Value;
