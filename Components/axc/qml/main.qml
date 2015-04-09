@@ -18,7 +18,7 @@ ApplicationWindow {
         property alias descriptionText: block_description.text
         property alias conditionText: text_condition.text
         property alias idLabel: label_id.text
-        property alias achType: ach_type.checked
+        property alias achType: ach_type.currentIndex
 
         property string user: user_view.model.get(0).name
         property string project: 'Таблица умножения'
@@ -111,7 +111,7 @@ ApplicationWindow {
                         x: 10
                         width: 40
                         height: 40
-                        color: Type == Jsh.AE_TYPE_INSTANT ? "#EFFB41" : "#000"
+                        color: Type == Jsh.AE_TYPE_INSTANT ? "#EFFB41" : "#E65F8E"
                         Text {
                             anchors.centerIn: parent
                             color: "#303030"
@@ -152,6 +152,8 @@ ApplicationWindow {
                             top_level.nameText = Name
                             top_level.descriptionText = Description
                             top_level.conditionText = Condition
+                            top_level.achType = Type
+                            console.log("Achivement type: " + Type)
                             top_level.idLabel = id
                         }
                     }
@@ -207,16 +209,20 @@ ApplicationWindow {
                 t_label.text: "Название"
             }
 
-            CheckBox {
+            ComboBox {
                 id: ach_type
                 anchors.left: block_name.right
                 anchors.leftMargin: 20
                 anchors.top: parent.top
                 anchors.topMargin: block_name.g_margin
-                text: "Мгновенное"
-                checked: true
-                onCheckedChanged: {
-                    console.log("Checked to " + checked)
+                model: ListModel {
+                    id: cbItems
+                    ListElement { text: "Мгновенное"; color: "Yellow" }
+                    ListElement { text: "Достижение сессии"; color: "Green" }
+                 }
+                currentIndex: 0
+                onCurrentIndexChanged: {
+                    console.log("Checked to " + currentIndex)
                 }
             }
 

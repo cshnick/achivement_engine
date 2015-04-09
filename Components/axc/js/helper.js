@@ -35,7 +35,7 @@ function updateModel(ind) {
     dict[f_name] = block_name.text
     dict[f_description] = block_description.text
     dict[f_condition] = text_condition.text
-    dict[f_type] = ach_type.checked
+    dict[f_type] = ach_type.currentIndex
 
     xml_model.update(ind, dict)
 }

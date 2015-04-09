@@ -14,6 +14,7 @@ void passConventionsTo(QQmlContext *context) {
     AE::conv_map m;
     AE::fillConventions(m);
     for (auto iter = m.begin(); iter != m.end(); iter++) {
+        qDebug() << "Passing" << iter->first << "; " << iter->second;
         context->setContextProperty((*iter).first, QVariant::fromValue(QString((*iter).second)));
     }
 }

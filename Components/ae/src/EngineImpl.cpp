@@ -624,6 +624,7 @@ public:
 			writer.writeTextElement(f_condition::Value, rec.value(f_condition::Value).toString());
 			writer.writeTextElement(f_name::Value, rec.value(f_name::Value).toString());
 			writer.writeTextElement(f_id::Value, rec.value(f_id::Value).toString());
+			writer.writeTextElement(f_type::Value, rec.value(f_type::Value).toString());
 			if (showInvisible) {
 				writer.writeTextElement(f_visible::Value, rec.value(f_visible::Value).toString());
 			}
@@ -788,7 +789,7 @@ private:
 			c.add(FieldInfo(f_time::Value, dtype::DATETIME));
 			c.add(FieldInfo(f_description::Value, dtype::STRING));
 			c.add(FieldInfo(f_condition::Value, dtype::STRING));
-			c.add(FieldInfo(f_visible::Value, dtype::INTEGER));
+			c.add(FieldInfo(f_visible::Value, dtype::INTEGER, "DEFAULT 1"));
 			c.add(FieldInfo(f_type::Value, dtype::INTEGER));
 			c.add(FieldInfo(f_user::Value, dtype::INTEGER).ForeignKey(Reference(t_users::Value, f_id::Value)));
 			c.add(FieldInfo(f_project::Value, dtype::INTEGER).ForeignKey(Reference(t_projects::Value, f_id::Value)));

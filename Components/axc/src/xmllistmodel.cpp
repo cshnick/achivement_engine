@@ -169,6 +169,8 @@ public:
                 } else if (elAttr.tagName() == AE::f_visible::Value && !elAttr.text().toInt()) {
                     skip = true;
                     break;
+                } else if (elAttr.tagName() == AE::f_type::Value) {
+                    value = elAttr.text().toInt();
                 } else {
                     value = elAttr.text();
                 }
