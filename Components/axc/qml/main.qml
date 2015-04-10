@@ -26,6 +26,9 @@ ApplicationWindow {
         property string par_delimiter: '=***'
         property int lview_index: -1
 
+        property int round_radius: 5
+        property int label_height: 40
+
         property var deletedElements: [];
 
         function updateProperties() {
@@ -215,11 +218,23 @@ ApplicationWindow {
                 anchors.leftMargin: 20
                 anchors.top: parent.top
                 anchors.topMargin: block_name.g_margin
+                height: top_level.label_height
+                width: 300
                 model: ListModel {
                     id: cbItems
                     ListElement { text: "Мгновенное"; color: "Yellow" }
                     ListElement { text: "Достижение сессии"; color: "Green" }
                  }
+                style: ComboBoxStyle {
+                    background: Rectangle {
+                        radius: top_level.round_radius
+                        color: "#eee"
+                    }
+                    font: block_name.t_label.font
+                    textColor: block_name.t_label.color
+
+                }
+
                 currentIndex: 0
                 onCurrentIndexChanged: {
                     console.log("Checked to " + currentIndex)

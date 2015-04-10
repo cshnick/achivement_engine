@@ -34,6 +34,7 @@ public:
 	virtual int type() const = 0;
 	virtual QString expression() const = 0;
 	virtual bool exec() = 0;
+
 protected:
 	QSqlQuery q;
 };
@@ -228,6 +229,7 @@ public:
 	QString variantName() {return QVariant::fromValue(*this).typeName();}
 	QString expression() const;
 	QString toString() const {return expression();}
+	operator QString() {return "(" + expression() + ")";}
 	bool exec();
 	QSqlQuery exec(QSqlQuery &q);
 	~Select();

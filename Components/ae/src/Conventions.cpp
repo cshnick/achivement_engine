@@ -51,6 +51,9 @@ const char *printable(const QVariant &v) {
 
 	return result;
 }
+/**
+ * Convert AE::variant to QVariant
+ */
 QVariant fromAeVariant(const AE::variant &ae_val) {
 	QVariant result;
 	switch (ae_val.type()) {
@@ -74,7 +77,9 @@ QVariant fromAeVariant(const AE::variant &ae_val) {
 
 	return result;
 }
-
+/**
+ *  Convert QVariant to AE::variant
+ */
 variant fromQVariant(const QVariant &q_val) {
 	variant result;
 	switch (q_val.type()) {

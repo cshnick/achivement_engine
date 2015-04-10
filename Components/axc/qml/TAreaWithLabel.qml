@@ -17,7 +17,7 @@ Rectangle {
     Label {
         id: label_condition
 
-        height: 40
+        height: top_level.label_height
         width: parent.width
         verticalAlignment: Qt.AlignVCenter
         anchors.top: parent.top

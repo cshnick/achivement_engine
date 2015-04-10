@@ -136,15 +136,23 @@ public:
 			PRINT_IF_VERBOSE("\t[%s] = %s;\n", d->varName().c_str(), printable(d->var()));
 		}
 	}
-	void checkAchivements() {
+	void checkAchivements(a_type type) {
 		STAT_IF_VERBOSE;
 		for (int i = 0; i < m_achivements.count(); i++) {
 			QVariantMap m = m_achivements[i];
+			if (m.value(f_type::Value).toInt() != (int)type)
+				continue; //! Skip achievement with inappropriate type
 			QString condition = m.value(f_condition::Value).toString();
 			if (parseCondition(condition)) {
-				addAchivement(m);
+				addAchivement(type, m);
 			}
 		}
+	}
+	void checkInstantAchievements() {
+		checkAchivements(AE_TYPE_INSTANT);
+	}
+	void checkSessionWideAchievements() {
+		checkAchivements(AE_TYPE_SESSION_WIDE);
 	}
 	bool parseCondition(const QString &str_cond) {
 		PRINT_IF_VERBOSE("Parsing condition: %s\n", str_cond.toUtf8().constData());
@@ -281,10 +289,17 @@ public:
 	    return [](QVariant , QVariant ) -> QVariant {return QVariant();};
 	}
 
-	void addAchivement(const QVariantMap &m) {
+	void addAchivement(a_type ach_type, const QVariantMap &m) {
 		PRINT_IF_VERBOSE("Reached an achivement: %s!\n", qPrintable(m.value(f_name::Value).toString()));
 		addAchivementToDb(m);
-		m_instant_achievements << m;
+		switch (ach_type) {
+			case a_type::AE_TYPE_INSTANT:
+				m_instant_achievements << m;
+				break;
+			case a_type::AE_TYPE_SESSION_WIDE:
+//				m_session_wide_achievments
+				break;
+		}
 	}
 	void addAchivementToDb(const QVariantMap &m) {
 		QSqlQuery q("", m_db);
@@ -357,7 +372,7 @@ public:
 			return;
 		}
 		addActionToDB(p_actions);
-		checkAchivements();
+		checkAchivements(AE_TYPE_INSTANT);
 	}
 	void addActionToDB(const action_params &p_actions) {
 		if (!checkDB()) return;
@@ -663,6 +678,19 @@ public:
 
 		return true;
 	}
+	bool fill_session_wide_achievements() {
+		/**
+		 *  Take session achievements
+		 */
+		QSqlQuery q("", m_db);
+		auto s = Select().from(t_achivements_done::Value).where(Condition(f_session_id::Value, "=", m_session_id));
+		s.exec(q);
+		q.first();
+		while (q.isValid()) {
+			m_session_wide_achievments.append(qVariantMapForRecord(q.record()));
+			q.next();
+		}
+	}
 
 private:
 	void refreshDB() {
@@ -854,6 +882,27 @@ private:
 				;
 	}
 
+	/**
+	 *  Convert QSqlRecord to QVariantMap
+	 */
+	QVariantMap qVariantMapForRecord(const QSqlRecord &rec) {
+		QVariantMap result;
+		for (int i = 0; i < rec.count(); ++i) {
+			result[rec.fieldName(i)] = rec.value(i);
+		}
+		return result;
+	}
+	/**
+	 *  Convert QSqlRecord to AE::variant map (action_params)
+	 */
+	action_params aeVariantMapForRecord(const QSqlRecord &rec) {
+		action_params result;
+		for (int i = 0; i < rec.count(); ++i) {
+			result[rec.fieldName(i).toStdString()] = fromQVariant(rec.value(i));
+		}
+		return result;
+	}
+
 	static int atomic_cnt() {
 		volatile static int cnt = 0;
 		__sync_fetch_and_add(&cnt, 1);
@@ -872,6 +921,7 @@ private:
 	QList<QVariantMap> m_achivements;
 	QMap<QString, CalcVarDelegateBase*> m_calcVars;
 	QList<QVariantMap> m_instant_achievements;
+	QList<QVariantMap> m_session_wide_achievments;
 	DelegateContainer* m_calc_vars_container = nullptr;
 	std::mutex m_mutex;
 };

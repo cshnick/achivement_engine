@@ -38,17 +38,18 @@ void smallTest()
 using namespace Wrap_Sql;
 
 void SelectTest(QSqlQuery &q) {
-	auto s = Select(f_id::Value, f_name::Value)
-						.from(t_achivements_list::Value)
-						.where(Condition(AE::f_id::Value,"=",2)
-						);
-
+	int session_id = -1;
+	auto s = Select(f_session_id::Value)
+							.from(Select(Func("max", f_time::Value), f_session_id::Value).from(t_actions::Value));
 	s.exec(q);
-	bool first = q.first();
-	bool valid = q.isValid();
+	if (q.first())
+		session_id = q.value(0).toInt();
 
-	DEBUG("Result 0: %s\n", printable(q.value(0)));
-	DEBUG("Result 1: %s\n", printable(q.value(1)));
+	s = Select(Func("COUNT", f_id::Value)).from(t_actions::Value).where(Condition(f_session_id::Value, "=", session_id));
+	s.exec(q);
+	q.first();
+	int v = q.value(0).toInt();
+	DEBUG("");
 }
 void UpdateTest(QSqlQuery &q) {
 	auto u = Update(t_achivements_list::Value)
@@ -138,11 +139,11 @@ void SqlClassesTest() {
 		DEBUG_ERR("Unable to open database. An error occurred while opening the connection: %s\n", qPrintable(db.lastError().text()));
 	}
 	QSqlQuery q("", db);
-//	SelectTest(q);
+	SelectTest(q);
 //	UpdateTest(q);
 //	InsertIntoTest(q);
 //	CreateTableTest(q);
-	AlterTableTest(q);
+//	AlterTableTest(q);
 }
 
 int main (int argc, char ** argv)

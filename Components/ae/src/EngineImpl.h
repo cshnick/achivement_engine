@@ -57,8 +57,6 @@ public:
 	bool updateAchievementsFromXml(QIODevice *stream, const std::string &user, const std::string &proj);
 	bool hideAchievements(const std::vector<int> &ids,const std::string &user, const std::string &proj);
 
-
-
 	~EngineImpl();
 
 public:

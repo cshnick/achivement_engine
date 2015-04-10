@@ -236,6 +236,27 @@ BEGIN_DECLARE_DELEGATE(FalseActionsCount, "$faCount", "FalseActionsCount", "Stat
 		}
 	}
 END_DECLARE_DELEGATE(FalseActionCount)
+BEGIN_DECLARE_DELEGATE(SessionIssues, "$sIss", "Session issues", "Statistics")
+	;
+	std::string varDescription() const {
+		return "Number of incorrect actions per session.";
+	}
+	void refresh(const variant &) {
+		QSqlQuery q("", *m_db);
+		int session_id = -1;
+		auto s = Select(f_session_id::Value)
+				.from(Select(Func("max", f_time::Value), f_session_id::Value).from(t_actions::Value));
+		s.exec(q);
+		if (q.first())
+			session_id = q.value(0).toInt();
+
+		s = Select(Func("COUNT", f_id::Value)).from(t_actions::Value).where(Condition(f_session_id::Value, "=", session_id));
+		s.exec(q);
+		q.first();
+		QVariant v = q.value(0).toInt();
+		m_var = fromQVariant(v);
+	}
+END_DECLARE_DELEGATE(SessionIssues)
 
 class DCDB: public DelegateContainer {
 public:
@@ -252,6 +273,7 @@ public:
 		ADD_DELEGATE(ActionsCount);
 		ADD_DELEGATE(TrueActionsCount);
 		ADD_DELEGATE(FalseActionsCount);
+		ADD_DELEGATE(SessionIssues);
 	}
 	std::vector<CalcVarDelegateBase*> *delegates() {
 		return &m_delegates;
