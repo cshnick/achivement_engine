@@ -8,6 +8,8 @@
 #include <fstream>
 #include <cstdlib>
 #include <ctime>
+#include <unordered_map>
+#include "CachedVector.h"
 
 #include <QtCore>
 
@@ -68,6 +70,70 @@ void autoTest() {
 	}
 }
 
+using namespace std;
+class VectorMap {
+public:
+	VectorMap() {}
+private:
+	vector<int> v;
+//	unordered_map<string, int> m;
+};
+
+class test1 {
+public:
+	test1(const std::string &m) : marker(m) {}
+	test1(const test1 &v_o) {
+		marker = v_o.marker;
+	}
+	test1 & operator=(test1 &&v_o) {
+		DEBUG("operator = for &&; name -> %s\n", v_o.marker.c_str());
+		return *this;
+	}
+	test1 & operator=(const test1 &v_o) {
+		DEBUG("operator = for &; name -> %s\n", v_o.marker.c_str());
+		return *this;
+	}
+    std::string marker;
+};
+
+test1 d1() {
+//	return test1("& dima");
+}
+
+void DimaTest() {
+	test1 t("init");
+	t = test1("&& ref");
+//	test1 t2("& ref");
+	t = static_cast<const test1 &>(d1());
+}
+
+void CachedVectorTest() {
+    utils::CachedVector<std::string ,int> v;
+
+    v.emplace("first" ,1);
+    v.emplace("second", 2);
+    v.emplace("third", 3);
+
+    for (int i: v) {
+    	DEBUG("Next value: %d\n", i);
+    }
+
+    std::vector<std::string> keys = {"first", "third", "second"};
+    for (std::string key: keys) {
+//    	DEBUG("Search key: %s\n" , key.c_str());
+//    	int n = v.get(key);
+
+    	DEBUG("Val for key: %s -> %d\n", key.c_str(), v.get(key));
+    }
+
+
+//    for ( int i = 0; i < 100; i++ )
+//    {
+//        v.set( i , i );
+//    }
+//    for ( int i : v ) { cout << i << endl; }
+}
+
 void smallTest() {
 	getWords(g_words);
 	const char lc[] = "UTF-8";
@@ -95,19 +161,16 @@ void smallTest() {
 }
 
 void misc_test() {
-	AE::conv_map m;
-	fillConventions(m);
-	DEBUG("Reporting conventions map:\n");
-	for (auto iter = m.begin(); iter != m.end(); ++iter) {
-		DEBUG("\tm[%s] = %s\n", iter->first, iter->second);
-	}
+	DEBUG("Sizeof int: %d\n", sizeof(int));
+	DEBUG("Sizeof long: %d\n", sizeof(long));
+	DEBUG("Sizeof double: %d\n", sizeof(double));
 }
 
 int main (int argc, char ** argv)
 {
 	setenv("FAKE_TIME", "1", 0);
 	DEBUG("Main start\n");
-	autoTest();
+	misc_test();
 	DEBUG("Main finished\n");
 	return 0;
 }

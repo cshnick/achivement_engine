@@ -13,6 +13,9 @@ SET(AE_SRC
 SET(SQL_WRAPPER_SRC
 	"../sqlWrapper/src"
 )
+SET(UTILS_SRC
+	"../utils/src"
+)	
 SET(DEF_COMMON
   #-DENABLE_TESTS
   #-DNDEBUG
@@ -39,6 +42,6 @@ MESSAGE("Qt 5 directory: ${QT_5_DIR}")
 
 set (AeCore ${CMAKE_CURRENT_BINARY_DIR}/bin/libAeCore.so)
 set (sqlWrapper ${CMAKE_CURRENT_BINARY_DIR}/bin/libsqlWrapper.so)
-
+set (utils ${CMAKE_CURRENT_BINARY_DIR}/bin/libutils.so)
 
 add_subdirectory(Components)

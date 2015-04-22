@@ -250,7 +250,9 @@ BEGIN_DECLARE_DELEGATE(SessionIssues, "$sIss", "Session issues", "Statistics")
 		if (q.first())
 			session_id = q.value(0).toInt();
 
-		s = Select(Func("COUNT", f_id::Value)).from(t_actions::Value).where(Condition(f_session_id::Value, "=", session_id));
+		s = Select(Func("COUNT", f_id::Value)).from(t_actions::Value);
+		s.addCondition(f_session_id::Value, "=", session_id);
+		s.addCondition(f_success::Value, "=", 0);
 		s.exec(q);
 		q.first();
 		QVariant v = q.value(0).toInt();

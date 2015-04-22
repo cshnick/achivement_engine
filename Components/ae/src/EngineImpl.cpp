@@ -297,7 +297,7 @@ public:
 				m_instant_achievements << m;
 				break;
 			case a_type::AE_TYPE_SESSION_WIDE:
-//				m_session_wide_achievments
+				m_session_wide_achievments << m;
 				break;
 		}
 	}
@@ -465,7 +465,15 @@ public:
 	}
 
 	achievements_params sessionAchievements() {
-		return achievements_params();
+		m_session_wide_achievments.clear();
+		checkAchivements(AE_TYPE_SESSION_WIDE);
+
+		achievements_params apl;
+		for (QVariantMap vp: m_session_wide_achievments) {
+			action_params ap = toActionParams(vp);
+			apl.push_back(ap);
+		}
+		return apl;
 	}
 
 	void addProject(const std::string &project) {

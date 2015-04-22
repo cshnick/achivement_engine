@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.11)
 
+add_subdirectory(utils)
 add_subdirectory(sqlWrapper)
 add_subdirectory(ae)
 add_subdirectory(axc)

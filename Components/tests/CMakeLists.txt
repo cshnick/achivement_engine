@@ -10,6 +10,7 @@ include_directories(
   .
   ${AE_SRC}
   ${SQL_WRAPPER_SRC}
+  ${UTILS_SRC}
 )
 add_definitions (
   ${DEF_COMMON}
@@ -54,7 +55,7 @@ ADD_CUSTOM_COMMAND(
    COMMAND /usr/bin/cp -rvf ${CMAKE_CURRENT_BINARY_DIR}/${main_http_test} ${BIN_PATH}
 )
 
-target_link_libraries(${PROJECT_NAME} ${EXT_LIBS} ${AeCore})
+target_link_libraries(${PROJECT_NAME} ${EXT_LIBS} ${AeCore} ${utils})
 target_link_libraries(${db_test} ${EXT_LIBS} ${AeCore} ${sqlWrapper})
 target_link_libraries(${main_http_test} ${EXT_LIBS} ${AeCore})
 

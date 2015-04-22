@@ -219,6 +219,9 @@ public:
 	void addCondition(const Condition &c) {
 		m_conditions.append(c);
 	}
+	void addCondition(const QString &key, const QString &str_op, const QVariant &value) {
+		m_conditions.append(Condition(key, str_op, value));
+	}
 	void addConditions(const QList<Condition> &lc) {
 		m_conditions.append(lc);
 	}
